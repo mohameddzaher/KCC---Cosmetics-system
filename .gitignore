@@ -14,8 +14,10 @@
 /coverage
 
 # next.js
-/.next/
+.next/
 /out/
+trace
+trace-build
 
 # production
 /build
