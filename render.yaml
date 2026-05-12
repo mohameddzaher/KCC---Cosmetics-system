@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: kcc-cosmetics-system
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: npm install --legacy-peer-deps && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: NEXT_PUBLIC_APP_NAME
+        value: KCC
+      - key: NEXT_PUBLIC_SOCKET_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: UPLOADS_DIR
+        value: ./public/uploads
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        value: noreply@kcc.sa

@@ -1,0 +1,346 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  /* Logo brand */
+  --color-kcc-green: #2D6A4F;
+  --color-kcc-green-light: #40916C;
+  --color-kcc-green-dark: #1B4332;
+  /* Champagne */
+  --color-kcc-beige: #D4A574;
+  --color-kcc-beige-light: #E8C9A0;
+  --color-kcc-beige-dark: #B8864A;
+  --color-kcc-gold: #C9A84C;
+  --color-kcc-gold-light: #E0C778;
+  /* Rose / blush (cosmetics signature) */
+  --color-kcc-rose: #E8B4BC;
+  --color-kcc-rose-light: #F4D5D0;
+  --color-kcc-rose-dark: #D89BA3;
+  --color-kcc-blush: #F7E1DC;
+  --color-kcc-pearl: #FFF6F1;
+  /* Cream scale */
+  --color-cream-50: #FFFCF8;
+  --color-cream-100: #FFF9F5;
+  --color-cream-200: #FBF3EC;
+  --color-cream-300: #F5EADD;
+  --color-cream-400: #EBDDC9;
+  /* Espresso (warm dark) */
+  --color-espresso-700: #2F2014;
+  --color-espresso-800: #21160C;
+  --color-espresso-900: #160E07;
+  --color-espresso-950: #0C0805;
+  /* Ink (text on light) */
+  --color-ink-500: #4A3625;
+  --color-ink-600: #332417;
+  --color-ink-700: #23170E;
+  --color-ink-800: #160E08;
+  /* Legacy slate (preserved for any unconverted components) */
+  --color-dark-50: #f8fafc;
+  --color-dark-100: #f1f5f9;
+  --color-dark-200: #e2e8f0;
+  --color-dark-300: #cbd5e1;
+  --color-dark-400: #94a3b8;
+  --color-dark-500: #64748b;
+  --color-dark-600: #475569;
+  --color-dark-700: #334155;
+  --color-dark-800: #1e293b;
+  --color-dark-900: #0f172a;
+  --color-dark-950: #020617;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-arabic: 'Noto Sans Arabic', 'Tahoma', sans-serif;
+  --font-serif: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+}
+
+:root {
+  /* Light luxury defaults */
+  --background: #FFF9F5;
+  --foreground: #23170E;
+  --card: #FFFFFF;
+  --card-hover: #FBF3EC;
+  --border: #EBDDC9;
+  --muted: #B89A7E;
+  --accent-green: #2D6A4F;
+  --accent-green-light: #40916C;
+  --accent-beige: #D4A574;
+  --accent-beige-light: #E8C9A0;
+  --accent-rose: #D89BA3;
+  --accent-rose-light: #F4D5D0;
+  --accent-champagne: #C9A84C;
+  --accent-espresso: #2F2014;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']) {
+  cursor: pointer;
+}
+
+[dir="rtl"] body {
+  font-family: 'Noto Sans Arabic', 'Tahoma', sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FBF3EC;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #D89BA3, #D4A574);
+  border-radius: 8px;
+  border: 2px solid #FBF3EC;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #C57E87, #B8864A);
+}
+
+::selection {
+  background: rgba(216, 155, 163, 0.35);
+  color: #160E08;
+}
+
+/* ---------- Glass utilities ---------- */
+.glass {
+  background: rgba(255, 255, 255, 0.65);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 10px 30px -12px rgba(89, 70, 52, 0.18);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(235, 221, 201, 0.7);
+  border-radius: 20px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 14px 40px -18px rgba(89, 70, 52, 0.18);
+}
+
+.glass-card-blush {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(252, 232, 229, 0.55) 100%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(248, 210, 205, 0.55);
+  border-radius: 20px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 14px 40px -18px rgba(216, 155, 163, 0.25);
+}
+
+.glass-card-champagne {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(245, 234, 208, 0.55) 100%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(222, 195, 131, 0.45);
+  border-radius: 20px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 14px 40px -18px rgba(201, 168, 76, 0.25);
+}
+
+.glass-card-dark {
+  background: rgba(33, 22, 12, 0.55);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(216, 155, 163, 0.18);
+  border-radius: 20px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 14px 40px -18px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------- Gradient text utilities ---------- */
+.gradient-text {
+  background: linear-gradient(135deg, #2D6A4F 0%, #B8864A 45%, #D89BA3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradient-text-rose {
+  background: linear-gradient(135deg, #D89BA3 0%, #C9A84C 60%, #B8864A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradient-text-champagne {
+  background: linear-gradient(135deg, #B8864A 0%, #C9A84C 50%, #E0C778 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradient-text-light {
+  background: linear-gradient(135deg, #FFF6F1 0%, #F4D5D0 60%, #E0C778 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradient-border {
+  border-image: linear-gradient(135deg, #D89BA3, #D4A574) 1;
+}
+
+/* ---------- Glow utilities ---------- */
+.glow-rose {
+  box-shadow: 0 0 40px rgba(216, 155, 163, 0.35);
+}
+
+.glow-champagne {
+  box-shadow: 0 0 40px rgba(212, 165, 116, 0.30);
+}
+
+.glow-green {
+  box-shadow: 0 0 30px rgba(45, 106, 79, 0.25);
+}
+
+.glow-beige {
+  box-shadow: 0 0 30px rgba(212, 165, 116, 0.25);
+}
+
+/* ---------- Pattern utilities ---------- */
+.dot-pattern {
+  background-image: radial-gradient(rgba(89, 70, 52, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.dot-pattern-dark {
+  background-image: radial-gradient(rgba(255, 246, 241, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.diagonal-lines {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(216, 155, 163, 0.06) 0px,
+    rgba(216, 155, 163, 0.06) 1px,
+    transparent 1px,
+    transparent 14px
+  );
+}
+
+.noise-soft {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+  opacity: 0.04;
+}
+
+/* ---------- Decorative gradient overlays ---------- */
+.gradient-overlay {
+  background: linear-gradient(180deg, transparent 0%, var(--background) 100%);
+}
+
+.gradient-overlay-top {
+  background: linear-gradient(0deg, transparent 0%, var(--background) 100%);
+}
+
+.bg-cream-radial {
+  background:
+    radial-gradient(circle at 15% 10%, rgba(248, 210, 205, 0.35), transparent 45%),
+    radial-gradient(circle at 90% 0%, rgba(245, 234, 208, 0.45), transparent 50%),
+    radial-gradient(circle at 50% 100%, rgba(255, 246, 241, 0.6), transparent 55%),
+    #FFF9F5;
+}
+
+.bg-blush-radial {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(248, 210, 205, 0.6), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(245, 234, 208, 0.55), transparent 45%),
+    #FFF6F4;
+}
+
+.bg-champagne-radial {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(245, 234, 208, 0.7), transparent 45%),
+    radial-gradient(circle at 80% 70%, rgba(248, 210, 205, 0.5), transparent 50%),
+    #FBF3EC;
+}
+
+.bg-espresso-radial {
+  background:
+    radial-gradient(circle at 25% 20%, rgba(216, 155, 163, 0.18), transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(201, 168, 76, 0.15), transparent 55%),
+    #160E07;
+}
+
+/* ---------- Decorative chips ---------- */
+.chip-rose {
+  background: linear-gradient(135deg, rgba(255, 246, 244, 0.95), rgba(252, 232, 229, 0.85));
+  border: 1px solid rgba(216, 155, 163, 0.4);
+  color: #A05E68;
+}
+
+.chip-champagne {
+  background: linear-gradient(135deg, rgba(251, 246, 236, 0.95), rgba(245, 234, 208, 0.85));
+  border: 1px solid rgba(212, 165, 116, 0.45);
+  color: #7E6627;
+}
+
+.chip-on-dark-rose {
+  background: rgba(216, 155, 163, 0.15);
+  border: 1px solid rgba(216, 155, 163, 0.35);
+  color: #F4D5D0;
+}
+
+.chip-on-dark-champagne {
+  background: rgba(212, 165, 116, 0.15);
+  border: 1px solid rgba(212, 165, 116, 0.35);
+  color: #E8C9A0;
+}
+
+/* ---------- Buttons ---------- */
+.btn-luxe {
+  background: linear-gradient(135deg, #D89BA3 0%, #B8864A 100%);
+  color: #FFFCF8;
+  box-shadow: 0 14px 40px -16px rgba(184, 134, 74, 0.55);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+}
+
+.btn-luxe:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 18px 50px -16px rgba(184, 134, 74, 0.65);
+}
+
+.btn-luxe-outline {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid #D4A574;
+  color: #7E6627;
+  transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.btn-luxe-outline:hover {
+  background: #FBF3EC;
+  border-color: #B8864A;
+  color: #43301F;
+}
+
+/* ---------- Divider ---------- */
+.divider-soft {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(184, 134, 74, 0.55), transparent);
+}
+
+/* ---------- RTL helpers ---------- */
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}

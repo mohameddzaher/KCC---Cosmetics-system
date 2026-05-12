@@ -1,0 +1,452 @@
+{
+  "specCategories": [
+    {
+      "categoryKey": "oils-extracts",
+      "defaultTitleEn": "Oils & Extracts",
+      "defaultTitleAr": "الزيوت والمستخلصات",
+      "defaultSubtitleEn": "Choose the natural oils and botanical extracts you'd love in your formula.",
+      "defaultSubtitleAr": "اختر الزيوت الطبيعية والمستخلصات النباتية التي تحبها في تركيبتك.",
+      "widget": "chips-multi",
+      "options": [
+        { "value": "argan-oil", "labelEn": "Argan oil" },
+        { "value": "sesemi-oil", "labelEn": "Sesemi Oil" },
+        { "value": "eucalyptus-oil", "labelEn": "Eucalyptus Oil" },
+        { "value": "grapeseed-oil", "labelEn": "Grapeseed Oil" },
+        { "value": "watercress-oil", "labelEn": "Watercress Oil" },
+        { "value": "carrot-oil", "labelEn": "Carrot Oil" },
+        { "value": "jojoba-oil", "labelEn": "Jojoba Oil" },
+        { "value": "coconut-oil", "labelEn": "Coconut Oil" },
+        { "value": "castor-oil", "labelEn": "Castor Oil" },
+        { "value": "onion-oil", "labelEn": "Onion Oil" },
+        { "value": "tea-tree-oil", "labelEn": "Tea Tree Oil" },
+        { "value": "cinnamon-oil", "labelEn": "Cinnamon Oil" },
+        { "value": "clove-oil", "labelEn": "Clove Oil" },
+        { "value": "lemon-oil", "labelEn": "Lemon Oil" },
+        { "value": "wheat-germ-oil", "labelEn": "Wheat Germ Oil" },
+        { "value": "peppermint-oil", "labelEn": "Peppermint Oil" },
+        { "value": "olive-oil", "labelEn": "Olive Oil" },
+        { "value": "capsicum-oil", "labelEn": "Capsicum Oil" },
+        { "value": "peanut-oil", "labelEn": "Peanut Oil" },
+        { "value": "almond-oil", "labelEn": "Almond Oil" },
+        { "value": "neem-oil", "labelEn": "Neem Oil" },
+        { "value": "sunflower-oil", "labelEn": "Sun Flower Oil" },
+        { "value": "soybean-oil", "labelEn": "Soy Bean Oil" },
+        { "value": "rice-bran-oil", "labelEn": "Rice Bran Oil" },
+        { "value": "emu-oil", "labelEn": "Emu Oil" },
+        { "value": "pomegranate-oil", "labelEn": "Pomegranate Oil" },
+        { "value": "garlic-oil", "labelEn": "Garlic Oil" },
+        { "value": "ylang-ylang-oil", "labelEn": "Ylang Ylang Oil" },
+        { "value": "orange-oil", "labelEn": "Orange Oil" },
+        { "value": "aloe-vera-oil", "labelEn": "Aloe Vera Oil" },
+        { "value": "avocado-oil", "labelEn": "Avocado Oil" },
+        { "value": "lavender-oil", "labelEn": "Lavender Oil" },
+        { "value": "flaxseed-gel", "labelEn": "Flaxseed Gel" },
+        { "value": "saw-palmetto", "labelEn": "Saw Palmetto" },
+        { "value": "calendula-extract", "labelEn": "Calendula Ext." },
+        { "value": "vanilla-extract", "labelEn": "Vanilla Ext." },
+        { "value": "green-tea-extract", "labelEn": "Green Tea Ext." },
+        { "value": "rosemary-extract", "labelEn": "Rosemary Ext." },
+        { "value": "chamomile-extract", "labelEn": "Chamomile Ext." },
+        { "value": "thyme-extract", "labelEn": "Thyme Ext." },
+        { "value": "licorice-extract", "labelEn": "Licorice Extract" },
+        { "value": "aloevera-extract", "labelEn": "Aloe Vera Extract" },
+        { "value": "ginseng-extract", "labelEn": "Ginseng Extract" },
+        { "value": "propolis-extract", "labelEn": "Propolis Extract" },
+        { "value": "birch-extract", "labelEn": "Birch Extract" },
+        { "value": "nettle-extract", "labelEn": "Nettle Extract" },
+        { "value": "onion-extract", "labelEn": "Onion Extract" },
+        { "value": "milk-powder", "labelEn": "Milk Powder" },
+        { "value": "arrow-root-powder", "labelEn": "Arrow Root Powder" },
+        { "value": "rose-water", "labelEn": "Rose Water" },
+        { "value": "apple-cider-vinegar", "labelEn": "Apple Cider Vinegar" }
+      ]
+    },
+    {
+      "categoryKey": "actives",
+      "defaultTitleEn": "Actives",
+      "defaultTitleAr": "المواد الفعالة",
+      "defaultSubtitleEn": "Pick the active ingredients tailored to your formula's purpose.",
+      "defaultSubtitleAr": "اختر المواد الفعالة التي تناسب الغرض من تركيبتك.",
+      "widget": "chips-multi",
+      "options": [
+        { "value": "dermarol-has", "labelEn": "DERMAROL™ HAS" },
+        { "value": "alpha-arbutin", "labelEn": "Alpha Arbutin" },
+        { "value": "kojic-acid", "labelEn": "Kojic Acid" },
+        { "value": "ferulic-acid", "labelEn": "Ferulic Acid" },
+        { "value": "thio-glycolic-acid", "labelEn": "Thio Glycolic Acid" },
+        { "value": "avobenzone", "labelEn": "Avobenzone" },
+        { "value": "octocrylene", "labelEn": "Octocrylene" },
+        {
+          "value": "c12-15-alkyl-benzoate",
+          "labelEn": "C12-15 Alkyl Benzoate"
+        },
+        { "value": "erythromycin", "labelEn": "Erythromycin" },
+        {
+          "value": "nutrilan-keratin-w-pp",
+          "labelEn": "Nutrilan® Keratin W PP"
+        },
+        { "value": "gluadin-wlm-benz", "labelEn": "Gluadin® WLM Benz" },
+        { "value": "sodium-saccharin", "labelEn": "Sodium Saccharin" },
+        { "value": "bisabolol", "labelEn": "Bisabolol" },
+        { "value": "nutrilan-i-50-bp", "labelEn": "Nutrilan® I-50 BP" },
+        { "value": "vit-b3", "labelEn": "Vit B3" },
+        { "value": "tocopheryl-acetate", "labelEn": "Tocopheryl Acetate" },
+        { "value": "vit-a", "labelEn": "Vit A" },
+        { "value": "l-carnitine", "labelEn": "L-Carnitine" },
+        { "value": "glycolic-acid", "labelEn": "Glycolic Acid" },
+        { "value": "gluadin-kera-p-lm", "labelEn": "Gluadin® Kera-P LM" },
+        { "value": "l-arginine", "labelEn": "L-Arginine" },
+        { "value": "thymol", "labelEn": "Thymol" },
+        {
+          "value": "bis-aminopropyl-diglycol-dimaleate",
+          "labelEn": "Bis-aminopropyle Diglycol Dimaleate"
+        },
+        { "value": "sensiva-sc-50", "labelEn": "Sensiva® SC 50" },
+        { "value": "zinc-acetate", "labelEn": "Zinc Acetate" },
+        { "value": "allantoin", "labelEn": "Allantoin" },
+        { "value": "talc-powder", "labelEn": "Talc Powder" },
+        { "value": "glycoxilic-acid", "labelEn": "Glycoxilic Acid" },
+        { "value": "vaslin", "labelEn": "Vaslin" },
+        { "value": "genamin-kdmp", "labelEn": "Genamin KDMP" },
+        { "value": "genamin-btms", "labelEn": "Genamin BTMS" },
+        { "value": "shea-butter", "labelEn": "Shea Butter" },
+        { "value": "lanoline", "labelEn": "Lanoline" },
+        { "value": "lamesoft-po-65", "labelEn": "Lamesoft® PO 65" },
+        { "value": "ucare-jr-30m", "labelEn": "UCARE Polymer JR-30M" },
+        { "value": "miconium-pq10-j3000", "labelEn": "Miconium PQ10-J3000" },
+        { "value": "softcat-sx-1300x", "labelEn": "SoftCAT SX-1300X" },
+        { "value": "polyox-wsr301", "labelEn": "POLYOX WSR301" },
+        { "value": "honey", "labelEn": "Honey" },
+        { "value": "d-panthenol", "labelEn": "D-Panthenol" },
+        { "value": "glycerin", "labelEn": "Glycerin" },
+        { "value": "pq-7-flocare-c107", "labelEn": "PQ-7 FLOCARE C 107 LM PF" },
+        { "value": "pg", "labelEn": "PG" },
+        { "value": "saboderm-he-mb", "labelEn": "SABODERM HE MB" },
+        { "value": "sterol-cc-595", "labelEn": "STEROL CC/595" },
+        { "value": "eutanol-g", "labelEn": "Eutanol® G" },
+        { "value": "urea", "labelEn": "Urea" },
+        { "value": "natural-cocoa-butter", "labelEn": "Natural Cocoa Butter" },
+        { "value": "caffeine", "labelEn": "Caffeine" },
+        { "value": "ascorbic-acid", "labelEn": "Ascorbic Acid" },
+        { "value": "pva", "labelEn": "P.V.A" },
+        { "value": "glucosamine-sulfate", "labelEn": "Glucosamine Sulfate" },
+        { "value": "menthol-crystals", "labelEn": "Menthol Crystals" },
+        { "value": "lidocaine", "labelEn": "Lidocaine" },
+        { "value": "selenium-sulphide", "labelEn": "Selenium Sulphide" },
+        { "value": "ach-303", "labelEn": "ACH-303" },
+        { "value": "escalol-557", "labelEn": "Escalol™ 557" },
+        { "value": "salicylic-acid", "labelEn": "Salicylic Acid" },
+        { "value": "methyl-salicylate", "labelEn": "Methyl Salicylate" },
+        { "value": "glycine", "labelEn": "Glycine" },
+        { "value": "camphor", "labelEn": "Camphor" },
+        { "value": "zinc-pyrithione", "labelEn": "Zinc Pyrithione" },
+        { "value": "escalol-567", "labelEn": "Escalol™ 567" },
+        { "value": "hydroquinone", "labelEn": "Hydroquinone" },
+        { "value": "sulfur", "labelEn": "Sulfur" },
+        { "value": "pvp", "labelEn": "P.V.P" },
+        { "value": "folic-acid", "labelEn": "Folic Acid" },
+        { "value": "mandelic-acid", "labelEn": "Mandelic Acid" },
+        { "value": "tranexamic-acid", "labelEn": "Tranexamic Acid" },
+        {
+          "value": "plantcol",
+          "labelEn": "PlantCol (Acacia Senegal Gum Extract)"
+        }
+      ]
+    },
+    {
+      "categoryKey": "fine-actives",
+      "defaultTitleEn": "Fine Actives",
+      "defaultTitleAr": "مكونات نشطة دقيقة",
+      "defaultSubtitleEn": "Premium peptides and high-tech ingredients for advanced formulations.",
+      "defaultSubtitleAr": "ببتيدات ومكونات تقنية متقدمة للتركيبات الراقية.",
+      "widget": "chips-multi",
+      "options": [
+        { "value": "elestan-ls-9913", "labelEn": "Elestan™ LS 9913" },
+        {
+          "value": "trichogen-veg-ls-9922",
+          "labelEn": "Trichogen™ VEG LS 9922"
+        },
+        { "value": "fiberhance", "labelEn": "fiberHance™" },
+        { "value": "dermawhite-wf-c", "labelEn": "Dermawhite® WF C" },
+        { "value": "collalift-18", "labelEn": "Collalift® 18" },
+        { "value": "patch2o", "labelEn": "PatcH2O®" },
+        {
+          "value": "ultra-filling-spheres",
+          "labelEn": "Ultra Filling Spheres™"
+        },
+        { "value": "matmarine", "labelEn": "Matmarine™" },
+        { "value": "hilurlip-ws", "labelEn": "Hilurlip® WS" },
+        { "value": "stevisse", "labelEn": "Stevisse™" },
+        { "value": "eyeseryl", "labelEn": "Eyeseryl®" },
+        { "value": "adifyline", "labelEn": "Adifyline®" },
+        { "value": "argireline", "labelEn": "Argireline®" },
+        { "value": "actigym", "labelEn": "Actigym™" },
+        { "value": "dn-age-ls-9547", "labelEn": "DN-Age-LS 9547" },
+        { "value": "liposoma-vitamin-c", "labelEn": "Liposoma Vitamin C" },
+        { "value": "iuvenesens-b-16", "labelEn": "Iuvenesens® B-16" },
+        { "value": "hydagen-aquaporin", "labelEn": "Hydagen Aquaporin" },
+        { "value": "pro-liss-100", "labelEn": "Pro.Liss® 100" },
+        { "value": "procapil", "labelEn": "Procapil™" },
+        {
+          "value": "liposomal-glutathione",
+          "labelEn": "Liposomal Glutathione"
+        },
+        { "value": "nano-coq10", "labelEn": "Nano coenzyme Q10" },
+        { "value": "liposomal-caffeine", "labelEn": "Liposomal Caffeine" },
+        { "value": "liposomal-arbutin", "labelEn": "Liposomal Arbutin" },
+        { "value": "ceramide-a2", "labelEn": "Ceramide A2" },
+        { "value": "gp4g-sp", "labelEn": "GP4G SP" }
+      ]
+    },
+    {
+      "categoryKey": "product-color",
+      "defaultTitleEn": "Product Color",
+      "defaultTitleAr": "لون المنتج",
+      "defaultSubtitleEn": "What hue should the product itself be?",
+      "defaultSubtitleAr": "ما هو لون المنتج نفسه؟",
+      "widget": "color-swatches",
+      "options": [
+        { "value": "pink", "labelEn": "Pink", "meta": { "hex": "#F4B6C2" } },
+        { "value": "blue", "labelEn": "Blue", "meta": { "hex": "#5DA9E9" } },
+        { "value": "white", "labelEn": "White", "meta": { "hex": "#FFFFFF" } },
+        {
+          "value": "yellow",
+          "labelEn": "Yellow",
+          "meta": { "hex": "#F9D75A" }
+        },
+        {
+          "value": "purple",
+          "labelEn": "Purple",
+          "meta": { "hex": "#A77AC4" }
+        },
+        {
+          "value": "fuschia",
+          "labelEn": "Fuschia",
+          "meta": { "hex": "#D6336C" }
+        },
+        { "value": "red", "labelEn": "Red", "meta": { "hex": "#E03131" } },
+        {
+          "value": "baby-blue",
+          "labelEn": "Baby Blue",
+          "meta": { "hex": "#B8DDF7" }
+        },
+        { "value": "green", "labelEn": "Green", "meta": { "hex": "#52B788" } },
+        {
+          "value": "orange",
+          "labelEn": "Orange",
+          "meta": { "hex": "#FB923C" }
+        },
+        {
+          "value": "light-green",
+          "labelEn": "Light Green",
+          "meta": { "hex": "#C9E4CA" }
+        },
+        { "value": "black", "labelEn": "Black", "meta": { "hex": "#1A1A1A" } }
+      ]
+    },
+    {
+      "categoryKey": "product-packaging",
+      "defaultTitleEn": "Product Packaging",
+      "defaultTitleAr": "تغليف المنتج",
+      "defaultSubtitleEn": "Pick the packaging that best suits your formula and brand vibe.",
+      "defaultSubtitleAr": "اختر التغليف الأنسب لتركيبتك وأسلوب علامتك.",
+      "widget": "icon-cards",
+      "options": [
+        {
+          "value": "gel-pump",
+          "labelEn": "Gel Pump",
+          "meta": { "icon": "pump" }
+        },
+        { "value": "jar", "labelEn": "Jar", "meta": { "icon": "jar" } },
+        {
+          "value": "bottle",
+          "labelEn": "Bottle",
+          "meta": { "icon": "bottle" }
+        },
+        { "value": "tube", "labelEn": "Tube", "meta": { "icon": "tube" } },
+        { "value": "spray", "labelEn": "Spray", "meta": { "icon": "spray" } },
+        {
+          "value": "roll-on",
+          "labelEn": "Roll-On",
+          "meta": { "icon": "roll-on" }
+        },
+        {
+          "value": "dropper",
+          "labelEn": "Dropper",
+          "meta": { "icon": "dropper" }
+        },
+        { "value": "vial", "labelEn": "Vial", "meta": { "icon": "vial" } },
+        {
+          "value": "serum-pump",
+          "labelEn": "Serum Pump",
+          "meta": { "icon": "serum-pump" }
+        },
+        {
+          "value": "glass-ampoule",
+          "labelEn": "Glass Ampoule",
+          "meta": { "icon": "glass-ampoule" }
+        },
+        {
+          "value": "pvc-ampoule",
+          "labelEn": "PVC Ampoule",
+          "meta": { "icon": "pvc-ampoule" }
+        }
+      ]
+    },
+    {
+      "categoryKey": "package-color",
+      "defaultTitleEn": "Package Color",
+      "defaultTitleAr": "لون العلبة",
+      "defaultSubtitleEn": "Should your packaging show the product or hide it?",
+      "defaultSubtitleAr": "هل تريد التغليف يُظهر المنتج أم يخفيه؟",
+      "widget": "visual-cards",
+      "options": [
+        {
+          "value": "opaque",
+          "labelEn": "Opaque",
+          "meta": {
+            "description": "Solid color, hides the product completely."
+          }
+        },
+        {
+          "value": "translucent",
+          "labelEn": "Translucent",
+          "meta": { "description": "Lets light through, hints at the product." }
+        },
+        {
+          "value": "transparent",
+          "labelEn": "Transparent",
+          "meta": { "description": "Crystal clear, the product is the hero." }
+        }
+      ]
+    },
+    {
+      "categoryKey": "fragrances",
+      "defaultTitleEn": "Fragrance",
+      "defaultTitleAr": "العطر",
+      "defaultSubtitleEn": "Let's craft the scent profile that fits your brand mood.",
+      "defaultSubtitleAr": "هيا نصمم الرائحة التي تعكس روح علامتك.",
+      "widget": "fragrance-flow",
+      "options": [
+        {
+          "value": "fresh-clean",
+          "labelEn": "Fresh & Clean",
+          "meta": {
+            "subNotes": [
+              { "value": "aqua", "labelEn": "Aqua" },
+              { "value": "green-herbal", "labelEn": "Green / Herbal" },
+              {
+                "value": "citrus",
+                "labelEn": "Citrus (Lemon, Orange, Bergamot)"
+              },
+              { "value": "clean-scent", "labelEn": "Clean scent" }
+            ]
+          }
+        },
+        {
+          "value": "fruity-playful",
+          "labelEn": "Fruity & Playful",
+          "meta": {
+            "subNotes": [
+              {
+                "value": "tropical",
+                "labelEn": "Tropical (Mango, Coconut, Pineapple)"
+              },
+              { "value": "berry", "labelEn": "Berry (Strawberry, Raspberry)" },
+              { "value": "sweet-fruity", "labelEn": "Sweet fruity blends" },
+              { "value": "exotic-fruits", "labelEn": "Exotic fruits" }
+            ]
+          }
+        },
+        {
+          "value": "floral-soft",
+          "labelEn": "Floral & Soft",
+          "meta": {
+            "subNotes": [
+              { "value": "rose", "labelEn": "Rose" },
+              { "value": "jasmine", "labelEn": "Jasmine" },
+              { "value": "white-flowers", "labelEn": "White flowers" },
+              { "value": "powdery-floral", "labelEn": "Powdery floral" }
+            ]
+          }
+        },
+        {
+          "value": "luxury-perfume",
+          "labelEn": "Luxury & Perfume-Inspired",
+          "meta": { "subNotes": [] }
+        },
+        {
+          "value": "oriental",
+          "labelEn": "Oriental",
+          "meta": {
+            "subNotes": [
+              { "value": "amber", "labelEn": "Amber" },
+              { "value": "musk", "labelEn": "Musk" },
+              { "value": "oud", "labelEn": "Oud-inspired" },
+              { "value": "vanilla-warm", "labelEn": "Vanilla & warm notes" }
+            ]
+          }
+        },
+        {
+          "value": "herbal",
+          "labelEn": "Herbal",
+          "meta": {
+            "subNotes": [
+              { "value": "mint", "labelEn": "Mint" },
+              { "value": "rosemary", "labelEn": "Rosemary" },
+              { "value": "other-herbal", "labelEn": "Other" }
+            ]
+          }
+        },
+        {
+          "value": "earthy-woody",
+          "labelEn": "Earthy / Woody",
+          "meta": { "subNotes": [] }
+        },
+        {
+          "value": "essential-oil-like",
+          "labelEn": "Essential oil-like",
+          "meta": { "subNotes": [] }
+        },
+        {
+          "value": "sweet",
+          "labelEn": "Sweet",
+          "meta": {
+            "subNotes": [
+              { "value": "vanilla", "labelEn": "Vanilla" },
+              { "value": "caramel", "labelEn": "Caramel" },
+              { "value": "coconut-cream", "labelEn": "Coconut cream" },
+              { "value": "dessert", "labelEn": "Dessert-inspired" }
+            ]
+          }
+        },
+        {
+          "value": "fragrance-free",
+          "labelEn": "Fragrance-Free / Hypoallergenic",
+          "meta": {
+            "subNotes": [
+              { "value": "no-fragrance", "labelEn": "No fragrance" },
+              {
+                "value": "low-allergen",
+                "labelEn": "Very low allergen fragrance"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "categoryKey": "fragrance-intensity",
+      "defaultTitleEn": "Fragrance intensity",
+      "defaultTitleAr": "قوة الرائحة",
+      "defaultSubtitleEn": "How strong should the scent be on the final product?",
+      "defaultSubtitleAr": "قد إيه تكون الرائحة قوية في المنتج النهائي؟",
+      "widget": "chips-single",
+      "options": [
+        { "value": "light", "labelEn": "Light", "labelAr": "خفيفة" },
+        { "value": "medium", "labelEn": "Medium", "labelAr": "متوسطة" },
+        { "value": "strong", "labelEn": "Strong / Long-lasting", "labelAr": "قوية / تدوم طويلاً" }
+      ]
+    }
+  ]
+}

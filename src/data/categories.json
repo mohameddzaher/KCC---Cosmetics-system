@@ -1,0 +1,146 @@
+{
+  "schema": {
+    "version": "1.1",
+    "source": "ECC Hub - Categories",
+    "max_depth": 3,
+    "total_main_categories": 10
+  },
+  "categories": [
+    {
+      "id": 1,
+      "name": "Hair Care",
+      "slug": "hair-care",
+      "level": 1,
+      "subcategories": [
+        { "name": "Shampoo", "slug": "shampoo", "level": 2, "items": ["Anti Dandruff (Sulphate Free)","Anti Dandruff (Low Sulphate)","Anti Dandruff - Ultra Cleansing (Low Sulphate)","Anti Hairloss","Cleansing (Sulphate Free)","Conditioning (Sulphate Free)","Conditioning (Low Sulphate)","Dry & Damaged (Sulphate Free)","Dry Shampoo","For All Hair Types","For Black Hair","For Curly Hair","Natural Shampoo","Oily to Combination (Low Sulphate)","Pearly (Low Sulphate)","Shampoo Bar","Silver Shampoo","Ultra Cleansing (Sulphate Free)","Scalp Scrub"] },
+        { "name": "Conditioner", "slug": "conditioner", "level": 2, "items": ["Deep Conditioner","Co-Wash","Conditioner Bar"] },
+        { "name": "Hair Mask", "slug": "hair-mask", "level": 2, "items": ["For Curly Hair","For All Hair Types","Deep Conditioning","For Dry & Damaged"] },
+        { "name": "Beard Styling", "slug": "beard-styling", "level": 2, "items": ["Beard Wax","Beard Balm","Beard Oil"] },
+        { "name": "Hair Styling", "slug": "hair-styling", "level": 2, "items": ["Leave-In Conditioner For Curly Hair","Leave-In Conditioner For All Hair Types","Flaxseed Gel","Flaxseed Cream","Curling Gel","Curling Cream","Creamy Hair Detangler","Liquid Hair Detangler","Hair Wax","Hair Cream","Hair Gel","Spider Wax","Hair Cream Deep Conditioning","Hair Wax Stick"] },
+        { "name": "Hair Serum", "slug": "hair-serum", "level": 2, "items": ["Heavy Serum","Medium Serum","Light Serum","Serum (Silicone Free)","Water Serum","Anti-Hairloss Oil"] },
+        { "name": "Hair Ampoules", "slug": "hair-ampoules", "level": 2, "items": ["Anti-Hair Loss Ampoules (Brown)","Anti-Hair Loss & Moisturizing Ampoules (Brown)","Anti-Hair Loss, Moisturizing & Energizing Ampoules (Brown)","Nourishing Ampoules (Light)","Anti-Hair Loss Ampoules (Light)"] },
+        { "name": "Hair Lotion", "slug": "hair-lotion", "level": 2, "items": ["Anti-Hair Loss Lotion","Anti-Hair Loss & Moisturizing Lotion","Anti-Hair Loss, Moisturizing & Energizing Lotion","Bonding Hair Lotion"] },
+        { "name": "Professional Care", "slug": "professional-care", "level": 2, "items": ["Protein Straightening Cream","Keratin Straightening Cream","Silver Shampoo"] }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Skin Care",
+      "slug": "skin-care",
+      "level": 1,
+      "subcategories": [
+        { "name": "Whitening", "slug": "whitening", "level": 2, "items": ["Instant Whitening Cream","Whitening Cream SPF","HD Whitening Cream","Whitening Soft Lotion"] },
+        { "name": "Acne Prone & Oily Skin", "slug": "acne-oily", "level": 2, "items": ["Moisturizing Cream","Acne Spot Cream","Moisturizing Gel","Moisturizing Gel (Transparent)","Creamy Facial Wash","Gel Facial Wash","Light Gel Facial Wash","Foaming Facial Wash"] },
+        { "name": "Eye Contour", "slug": "eye-contour", "level": 2, "items": ["Eye Contour Gel","Eye Contour Soft Lotion","Tinted Eye Contour Soft Lotion","Ultra Soft Eye Contour Lotion","Translucent Eye Contour Gel"] },
+        { "name": "Facial Wash", "slug": "facial-wash", "level": 2, "items": ["Gel Facial Wash (For All Skin Types)","Brightening Facial Wash","Foaming Facial Wash (For All Skin Types)"] },
+        { "name": "Skin Serum", "slug": "skin-serum", "level": 2, "items": ["Hyaluronic Acid Serum","Vitamin C Serum","Collagen Serum","Retinol Serum","Niacinamide Serum","Caffeine Serum","Glycolic Acid Serum","Argireline Peptide Serum","Youth Serum","Mineral Serum","Gold Serum","Lash & Brow Serum","Anti-Wrinkle Serum","Anti-Aging Serum","Age-Rewind Serum","Anti-Pollution Serum"] },
+        { "name": "Face Cream", "slug": "face-cream", "level": 2, "items": ["Moisturizer (Combination to Oily)","Face & Neck Day Cream","Anti-Aging Night Cream","Matt Emollient","Panthenol"] },
+        { "name": "Skin Soap", "slug": "skin-soap", "level": 2, "items": ["Whitening","Acne","Charcoal"] },
+        { "name": "Toner", "slug": "toner", "level": 2, "items": ["Face Toner (All Skin Types)"] },
+        { "name": "Makeup Remover", "slug": "makeup-remover", "level": 2, "items": ["Liquid Makeup Remover","Lotion Makeup Remover","Waterproof Makeup Remover"] },
+        { "name": "Micellar Water", "slug": "micellar-water", "level": 2, "items": ["Hydrating Micellar Water","Whitening Micellar Water"] },
+        { "name": "Peel Off Mask", "slug": "peel-off-mask", "level": 2, "items": ["Charcoal Mask","Hyaluronic Acid Mask"] },
+        { "name": "Mud Mask", "slug": "mud-mask", "level": 2, "items": ["Charcoal Mud Mask","Shea Butter Mud Mask"] },
+        { "name": "Sheet Mask", "slug": "sheet-mask", "level": 2, "items": ["Hyaluronic Acid Sheet Mask","Vitamin C Sheet Mask","Charcoal Sheet Mask"] },
+        { "name": "Lip Care", "slug": "lip-care", "level": 2, "items": ["Lip Balm","Lip Scrub","Lip Oil"] },
+        { "name": "Peeling", "slug": "peeling", "level": 2, "items": ["Mask","Whitening Cream","Solution","Pre-Peeling Solution","Peeling Gel"] }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Body Care",
+      "slug": "body-care",
+      "level": 1,
+      "subcategories": [
+        { "name": "Ointment", "slug": "ointment", "level": 2, "items": ["Burn & Anti-inflammatory","Wound Healing","Urea","Panthenol"] },
+        { "name": "Deodorant", "slug": "deodorant", "level": 2, "items": ["Transparent","Whitening","Whitening (Alum Free)","Deodorant Natural Stick"] },
+        { "name": "Scar", "slug": "scar", "level": 2, "items": ["Scar Cream","Scar Serum","Scar Gel"] },
+        { "name": "Shower Gel", "slug": "shower-gel", "level": 2, "items": ["Deep Cleansing","Moisturizing","Cleansing","Shower Scrub","Creamy"] },
+        { "name": "Body Lotion", "slug": "body-lotion", "level": 2, "items": ["Deep Moisturizer","Light Moisturizer","Shimmering"] },
+        { "name": "Body Cream", "slug": "body-cream", "level": 2, "items": ["Rejuvenating","Deep Moisturizing","Light Moisturizing","Medium Moisturizing"] },
+        { "name": "Body Firming", "slug": "body-firming", "level": 2, "items": ["Firming Cream","Firming Gel"] },
+        { "name": "Post Laser", "slug": "post-laser", "level": 2, "items": ["Gel","Lotion"] },
+        { "name": "Body Scrub", "slug": "body-scrub", "level": 2, "items": ["Scrub Gel","Scrub Cream","Scrub Salt","Moroccan Soap"] },
+        { "name": "Foot Care", "slug": "foot-care", "level": 2, "items": ["Foot Cream","Red Tint Lotion"] },
+        { "name": "Body Butter", "slug": "body-butter", "level": 2, "items": ["Milk Body Butter","Whipped Body Butter","Body Butter"] },
+        { "name": "Body Oil", "slug": "body-oil", "level": 2, "items": ["Dry Oil","Shimmering Dry Oil"] },
+        { "name": "Nail Care", "slug": "nail-care", "level": 2, "items": ["Nail Strengthening Oil","Moisturizing Cuticle Lotion"] },
+        { "name": "Body Gel", "slug": "body-gel", "level": 2, "items": ["Marina Collagen Gel"] }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Sun Care",
+      "slug": "sun-care",
+      "level": 1,
+      "subcategories": [
+        { "name": "Sunblock", "slug": "sunblock", "level": 2, "items": ["Sunblock Cream","Sunblock Lotion"] },
+        { "name": "Sunscreen", "slug": "sunscreen", "level": 2, "items": ["Sunscreen Gel","Sunscreen Cream (For Kids)","Sunscreen Lotion (For Kids)","Sunscreen Spray","Tinted Sunscreen","Sunscreen Cream (Acne Prone)"] },
+        { "name": "Tanning", "slug": "tanning", "level": 2, "items": ["Body Lotion","Oil","Gel"] },
+        { "name": "After Sun", "slug": "after-sun", "level": 2, "items": ["After Sun Gel"] },
+        { "name": "Thermal", "slug": "thermal", "level": 2, "items": ["Thermal Water"] }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Baby Care",
+      "slug": "baby-care",
+      "level": 1,
+      "subcategories": [
+        { "name": "Diaper & Body", "slug": "diaper-body", "level": 2, "items": ["Baby Cream","Light Baby Cream","Oil Cologne","Heavy Diaper Cream (Anti-Rash)"] },
+        { "name": "Bath & Shower", "slug": "bath-shower", "level": 2, "items": ["Shampoo & Body Wash","Shampoo, Body Wash & Bubble Bath","Detangling Hair Spray"] }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Makeup",
+      "slug": "makeup",
+      "level": 1,
+      "subcategories": [
+        { "name": "Tint", "slug": "tint", "level": 2, "items": ["Lip & Cheek Cream"] },
+        { "name": "Colored Suncare", "slug": "colored-suncare", "level": 2, "items": ["Tinted Sunscreen"] }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Fragrance",
+      "slug": "fragrance",
+      "level": 1,
+      "subcategories": [
+        { "name": "Body", "slug": "body-fragrance", "level": 2, "items": ["Perfume","Body Splash"] },
+        { "name": "Hair", "slug": "hair-fragrance", "level": 2, "items": ["Hair Mist"] }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Hygiene",
+      "slug": "hygiene",
+      "level": 1,
+      "subcategories": [
+        { "name": "General", "slug": "general", "level": 2, "items": ["Hair Removal","Feminine Care","Sexual Wellness","Bar Soap","Hand Soap"] }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Massage",
+      "slug": "massage",
+      "level": 1,
+      "subcategories": [
+        { "name": "Cream", "slug": "massage-cream", "level": 2, "items": ["Massage Cream (White)","Massage Cream (Yellow)"] },
+        { "name": "Gel", "slug": "massage-gel", "level": 2, "items": ["Massage Gel","Massage Creamy Gel","Massage Creamy Gel (Cold Effect)","Massage Gel (Cold Effect)"] },
+        { "name": "Spray", "slug": "massage-spray", "level": 2, "items": ["Massage Spray"] },
+        { "name": "Roll-On", "slug": "massage-roll-on", "level": 2, "items": ["Massage Roll On"] }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Oral Care",
+      "slug": "oral-care",
+      "level": 1,
+      "subcategories": [
+        { "name": "Cleanse", "slug": "cleanse", "level": 2, "items": ["Mouthwash","Tooth Gel"] },
+        { "name": "Refresh", "slug": "refresh", "level": 2, "items": ["Mouth Spray"] }
+      ]
+    }
+  ]
+}

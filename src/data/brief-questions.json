@@ -1,0 +1,242 @@
+{
+  "questions": [
+    {
+      "questionKey": "developmentType",
+      "order": 1,
+      "widget": "cards",
+      "titleEn": "What are you looking to develop?",
+      "titleAr": "إيه نوع المنتج اللي عايز تطوّره؟",
+      "subtitleEn": "Tell us where you're starting from — every great formula begins with a clear intent.",
+      "subtitleAr": "حدّد نقطة البداية — كل تركيبة عظيمة تبتدي بنية واضحة.",
+      "required": true,
+      "allowNote": true,
+      "category": "general",
+      "options": [
+        {"value":"new-formula","labelEn":"New formula from scratch","labelAr":"تركيبة جديدة من الصفر","description":"Build something completely original from a blank canvas."},
+        {"value":"reformulation","labelEn":"Reformulation of an existing product","labelAr":"إعادة تركيب منتج موجود","description":"Refine, upgrade, or fix an existing formula."},
+        {"value":"benchmark","labelEn":"Matching a benchmark product","labelAr":"محاكاة منتج موجود في السوق","description":"Recreate the feel and performance of a reference product."},
+        {"value":"ready-made","labelEn":"Ready-made formula","labelAr":"تركيبة جاهزة","description":"Pick from our curated, market-ready formulas."}
+      ]
+    },
+    {
+      "questionKey": "targetGender",
+      "order": 2,
+      "widget": "chips-single",
+      "titleEn": "Who is this product for?",
+      "titleAr": "المنتج موجّه لمين؟",
+      "subtitleEn": "We'll tailor the language, scent, and finish around your audience.",
+      "subtitleAr": "هنفصّل اللغة والرائحة والإحساس على جمهورك.",
+      "required": true,
+      "allowNote": true,
+      "category": "general",
+      "options": [
+        {"value":"female","labelEn":"Female","labelAr":"نساء"},
+        {"value":"male","labelEn":"Male","labelAr":"رجال"},
+        {"value":"unisex","labelEn":"Unisex","labelAr":"للجنسين"},
+        {"value":"kids","labelEn":"Kids","labelAr":"أطفال"}
+      ]
+    },
+    {
+      "questionKey": "targetAgeGroup",
+      "order": 3,
+      "widget": "chips-single",
+      "titleEn": "What's the target age group?",
+      "titleAr": "الفئة العمرية المستهدفة؟",
+      "required": true,
+      "allowNote": true,
+      "category": "general",
+      "options": [
+        {"value":"under-18","labelEn":"Under 18","labelAr":"أقل من 18"},
+        {"value":"18-25","labelEn":"18 – 25","labelAr":"18 – 25"},
+        {"value":"25-40","labelEn":"25 – 40","labelAr":"25 – 40"},
+        {"value":"40-plus","labelEn":"40+","labelAr":"+40"}
+      ]
+    },
+    {
+      "questionKey": "consumerSegment",
+      "order": 4,
+      "widget": "cards",
+      "titleEn": "Which consumer segment?",
+      "titleAr": "أي شريحة من المستهلكين؟",
+      "subtitleEn": "Positioning shapes everything — from price to packaging.",
+      "subtitleAr": "التموضع بيحدّد كل حاجة — من السعر للتغليف.",
+      "required": true,
+      "allowNote": true,
+      "category": "general",
+      "options": [
+        {"value":"mass-market","labelEn":"Mass market","labelAr":"السوق العام","description":"Wide reach, accessible pricing."},
+        {"value":"premium","labelEn":"Premium","labelAr":"بريميوم","description":"Elevated experience, refined details."},
+        {"value":"professional-salon","labelEn":"Professional salon","labelAr":"احترافي للصالونات","description":"Salon-grade strength and results."},
+        {"value":"derma-pharma","labelEn":"Dermatological / Pharma","labelAr":"دوائي / صيدلي","description":"Clinical claims, doctor-trusted."}
+      ]
+    },
+    {
+      "questionKey": "productCategory",
+      "order": 5,
+      "widget": "cards",
+      "titleEn": "What category is this product for?",
+      "titleAr": "المنتج لأي فئة؟",
+      "subtitleEn": "Pick the lane — the next questions adapt to what you choose.",
+      "subtitleAr": "اختار المسار — الأسئلة الجاية بتتكيّف على اختيارك.",
+      "required": true,
+      "allowNote": true,
+      "category": "general",
+      "options": [
+        {"value":"hair-care","labelEn":"Hair","labelAr":"العناية بالشعر","description":"Shampoo, conditioner, masks, styling, serums."},
+        {"value":"skin-care","labelEn":"Skin","labelAr":"العناية بالبشرة","description":"Moisturizers, cleansers, serums, masks."},
+        {"value":"sun-care","labelEn":"Sun","labelAr":"العناية من الشمس","description":"Sunscreens and after-sun care."},
+        {"value":"baby-care","labelEn":"Baby","labelAr":"العناية بالأطفال","description":"Gentle, dermatologically-tested formulas."}
+      ]
+    },
+    {
+      "questionKey": "primaryHairType",
+      "order": 6,
+      "widget": "image-cards",
+      "titleEn": "Primary hair type",
+      "titleAr": "نوع الشعر الأساسي",
+      "subtitleEn": "Pick the texture your formula speaks to.",
+      "subtitleAr": "اختار الملمس اللي التركيبة هتركّز عليه.",
+      "required": true,
+      "allowNote": true,
+      "category": "hair",
+      "conditions": [{"questionKey":"_categoryMain","value":"hair-care"}],
+      "options": [
+        {"value":"straight","labelEn":"Straight","labelAr":"مسترسل","imageUrl":"https://i.pinimg.com/webp80/736x/d1/9f/74/d19f74f27b8ccbbc8b162555db7377b5.webp"},
+        {"value":"wavy","labelEn":"Wavy","labelAr":"مموج","imageUrl":"https://i.pinimg.com/webp80/1200x/49/62/a2/4962a21057662a6bb941a8178cb7c0d2.webp"},
+        {"value":"curly","labelEn":"Curly","labelAr":"كيرلي","imageUrl":"https://i.pinimg.com/736x/ad/4e/5f/ad4e5f688c839f170c7a5e92d6cc90b9.jpg"}
+      ]
+    },
+    {
+      "questionKey": "hairCondition",
+      "order": 7,
+      "widget": "chips-multi",
+      "titleEn": "Hair condition",
+      "titleAr": "حالة الشعر",
+      "subtitleEn": "Choose up to 3 — what's the formula meant to address?",
+      "subtitleAr": "اختار لحد 3 — التركيبة هتعالج إيه؟",
+      "required": true,
+      "maxSelect": 3,
+      "allowNote": true,
+      "category": "hair",
+      "conditions": [{"questionKey":"_categoryMain","value":"hair-care"}],
+      "options": [
+        {"value":"dry","labelEn":"Dry","labelAr":"جاف"},
+        {"value":"damaged","labelEn":"Damaged","labelAr":"تالف"},
+        {"value":"chemically-treated","labelEn":"Chemically treated","labelAr":"معالج كيميائياً"},
+        {"value":"colored","labelEn":"Colored","labelAr":"مصبوغ"},
+        {"value":"fine","labelEn":"Fine","labelAr":"ناعم/خفيف"},
+        {"value":"oily","labelEn":"Oily","labelAr":"دهني"}
+      ]
+    },
+    {
+      "questionKey": "scalpCondition",
+      "order": 8,
+      "widget": "chips-single",
+      "titleEn": "Scalp condition",
+      "titleAr": "حالة فروة الرأس",
+      "required": false,
+      "allowNote": true,
+      "category": "hair",
+      "conditions": [{"questionKey":"_categoryMain","value":"hair-care"}],
+      "options": [
+        {"value":"normal","labelEn":"Normal","labelAr":"طبيعية"},
+        {"value":"oily","labelEn":"Oily","labelAr":"دهنية"},
+        {"value":"dry","labelEn":"Dry","labelAr":"جافة"},
+        {"value":"sensitive","labelEn":"Sensitive","labelAr":"حساسة"},
+        {"value":"dandruff-prone","labelEn":"Dandruff-prone","labelAr":"معرّضة للقشرة"}
+      ]
+    },
+    {
+      "questionKey": "mainConcerns",
+      "order": 9,
+      "widget": "chips-multi",
+      "titleEn": "Main concern (choose up to 3)",
+      "titleAr": "اختار لحد 3 من الاهتمامات الأساسية",
+      "subtitleEn": "Tell us what we're solving for — the formula will be built around these.",
+      "subtitleAr": "احنا بنحل إيه بالظبط — التركيبة هتتبني حواليهم.",
+      "required": true,
+      "maxSelect": 3,
+      "allowNote": true,
+      "category": "hair",
+      "options": [
+        {"value":"hair-fall","labelEn":"Hair fall / Breakage","labelAr":"تساقط / تكسر"},
+        {"value":"frizz","labelEn":"Frizz","labelAr":"هيشان"},
+        {"value":"shine","labelEn":"Lack of shine","labelAr":"فقدان اللمعان"},
+        {"value":"split-ends","labelEn":"Split ends","labelAr":"أطراف مقصفة"},
+        {"value":"volume","labelEn":"Volume loss","labelAr":"فقدان الحجم"},
+        {"value":"scalp-health","labelEn":"Scalp health","labelAr":"صحة فروة الرأس"}
+      ]
+    },
+    {
+      "questionKey": "marketingClaims",
+      "order": 10,
+      "widget": "chips-multi",
+      "titleEn": "Marketing claims required",
+      "titleAr": "الـ Claims التسويقية المطلوبة",
+      "subtitleEn": "Pick all the badges your packaging should proudly carry.",
+      "subtitleAr": "اختار كل الـ claims اللي هتظهر على التغليف.",
+      "required": false,
+      "allowNote": true,
+      "category": "general",
+      "options": [
+        {"value":"sulfate-free","labelEn":"Sulfate-free","labelAr":"خالٍ من السلفات"},
+        {"value":"silicone-free","labelEn":"Silicone-free","labelAr":"خالٍ من السيليكون"},
+        {"value":"paraben-free","labelEn":"Paraben-free","labelAr":"خالٍ من البارابين"},
+        {"value":"vegan","labelEn":"Vegan","labelAr":"فيجن"},
+        {"value":"natural","labelEn":"Natural / % natural","labelAr":"طبيعي / % طبيعي"},
+        {"value":"clean-beauty","labelEn":"Clean beauty","labelAr":"كلين بيوتي"}
+      ]
+    },
+    {
+      "questionKey": "heroIngredient",
+      "order": 11,
+      "widget": "hero-ingredient",
+      "titleEn": "Want to highlight a hero ingredient?",
+      "titleAr": "عاوز تبرز مكوّن بطل؟",
+      "subtitleEn": "Up to 2 ingredients can take the spotlight on your label.",
+      "subtitleAr": "تقدر تختار لحد 2 مكوّن يكونوا في الواجهة.",
+      "required": false,
+      "allowNote": false,
+      "category": "general",
+      "options": [
+        {"value":"yes","labelEn":"Yes","labelAr":"نعم"},
+        {"value":"no","labelEn":"No","labelAr":"لا"}
+      ]
+    },
+    {
+      "questionKey": "preferredTexture",
+      "order": 12,
+      "widget": "chips-single",
+      "titleEn": "Preferred texture",
+      "titleAr": "الملمس المفضّل",
+      "required": true,
+      "allowNote": true,
+      "category": "general",
+      "options": [
+        {"value":"lightweight","labelEn":"Lightweight","labelAr":"خفيف","description":"Airy, weightless feel."},
+        {"value":"creamy","labelEn":"Creamy","labelAr":"كريمي","description":"Smooth and indulgent."},
+        {"value":"rich","labelEn":"Rich","labelAr":"مكثّف","description":"Deeply nourishing, dense."},
+        {"value":"gel","labelEn":"Gel","labelAr":"جل","description":"Cool, refreshing, slip."}
+      ]
+    },
+    {
+      "questionKey": "desiredFinish",
+      "order": 13,
+      "widget": "cards",
+      "titleEn": "Desired finish on hair",
+      "titleAr": "النتيجة النهائية على الشعر",
+      "subtitleEn": "How should it look in the mirror?",
+      "subtitleAr": "هتبان إزاي في المراية؟",
+      "required": true,
+      "allowNote": true,
+      "category": "hair",
+      "conditions": [{"questionKey":"_categoryMain","value":"hair-care"}],
+      "options": [
+        {"value":"smooth-sleek","labelEn":"Smooth & sleek","labelAr":"ناعم ومفرود","description":"Polished, glass-hair finish."},
+        {"value":"soft-natural","labelEn":"Soft & natural","labelAr":"ناعم وطبيعي","description":"Touchable, lived-in."},
+        {"value":"voluminous","labelEn":"Voluminous","labelAr":"حجم وكثافة","description":"Bouncy, full-body."},
+        {"value":"defined-curls","labelEn":"Defined curls","labelAr":"كيرلز محدّدة","description":"Sculpted spirals, frizz-free."}
+      ]
+    }
+  ]
+}
