@@ -128,3 +128,29 @@ export async function PUT(
     );
   }
 }
+
+// DELETE /api/orders/[id] -> admins only
+export async function DELETE(req: NextRequest, context: RouteContext) {
+  try {
+    const user = await getSession();
+    if (!user || !isAdmin(user.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    await connectDB();
+    const { id } = await context.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
+    }
+    const order = await Order.findByIdAndDelete(id);
+    if (!order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+    return NextResponse.json({ message: 'Order deleted successfully' });
+  } catch (error: any) {
+    console.error('Orders DELETE [id] error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

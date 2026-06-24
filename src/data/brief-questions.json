@@ -9,6 +9,7 @@
       "subtitleEn": "Tell us where you're starting from — every great formula begins with a clear intent.",
       "subtitleAr": "حدّد نقطة البداية — كل تركيبة عظيمة تبتدي بنية واضحة.",
       "required": true,
+      "active": true,
       "allowNote": true,
       "category": "general",
       "options": [
@@ -27,6 +28,7 @@
       "subtitleEn": "We'll tailor the language, scent, and finish around your audience.",
       "subtitleAr": "هنفصّل اللغة والرائحة والإحساس على جمهورك.",
       "required": true,
+      "active": true,
       "allowNote": true,
       "category": "general",
       "options": [
@@ -43,6 +45,7 @@
       "titleEn": "What's the target age group?",
       "titleAr": "الفئة العمرية المستهدفة؟",
       "required": true,
+      "active": true,
       "allowNote": true,
       "category": "general",
       "options": [
@@ -61,6 +64,7 @@
       "subtitleEn": "Positioning shapes everything — from price to packaging.",
       "subtitleAr": "التموضع بيحدّد كل حاجة — من السعر للتغليف.",
       "required": true,
+      "active": true,
       "allowNote": true,
       "category": "general",
       "options": [
@@ -79,15 +83,23 @@
       "subtitleEn": "Pick the lane — the next questions adapt to what you choose.",
       "subtitleAr": "اختار المسار — الأسئلة الجاية بتتكيّف على اختيارك.",
       "required": true,
+      "active": true,
       "allowNote": true,
       "category": "general",
       "options": [
-        {"value":"hair-care","labelEn":"Hair","labelAr":"العناية بالشعر","description":"Shampoo, conditioner, masks, styling, serums."},
-        {"value":"skin-care","labelEn":"Skin","labelAr":"العناية بالبشرة","description":"Moisturizers, cleansers, serums, masks."},
-        {"value":"sun-care","labelEn":"Sun","labelAr":"العناية من الشمس","description":"Sunscreens and after-sun care."},
-        {"value":"baby-care","labelEn":"Baby","labelAr":"العناية بالأطفال","description":"Gentle, dermatologically-tested formulas."}
+        {"value":"hair-care","labelEn":"Hair Care","labelAr":"العناية بالشعر","description":"Shampoo, conditioner, masks, styling, serums."},
+        {"value":"skin-care","labelEn":"Skin Care","labelAr":"العناية بالبشرة","description":"Moisturizers, cleansers, serums, masks."},
+        {"value":"body-care","labelEn":"Body Care","labelAr":"العناية بالجسم","description":"Lotions, scrubs, deodorants, body oils."},
+        {"value":"sun-care","labelEn":"Sun Care","labelAr":"العناية من الشمس","description":"Sunscreens, tanning and after-sun care."},
+        {"value":"baby-care","labelEn":"Baby Care","labelAr":"العناية بالأطفال","description":"Gentle, dermatologically-tested formulas."},
+        {"value":"makeup","labelEn":"Makeup","labelAr":"المكياج","description":"Tints, tinted suncare, color cosmetics."},
+        {"value":"fragrance","labelEn":"Fragrance","labelAr":"العطور","description":"Perfumes, body splash, hair mist."},
+        {"value":"hygiene","labelEn":"Hygiene","labelAr":"النظافة الشخصية","description":"Hair removal, feminine care, soaps."},
+        {"value":"massage","labelEn":"Massage","labelAr":"المساج","description":"Massage creams, gels, sprays, roll-ons."},
+        {"value":"oral-care","labelEn":"Oral Care","labelAr":"العناية بالفم","description":"Mouthwash, tooth gel, mouth spray."}
       ]
     },
+
     {
       "questionKey": "primaryHairType",
       "order": 6,
@@ -97,6 +109,7 @@
       "subtitleEn": "Pick the texture your formula speaks to.",
       "subtitleAr": "اختار الملمس اللي التركيبة هتركّز عليه.",
       "required": true,
+      "active": true,
       "allowNote": true,
       "category": "hair",
       "conditions": [{"questionKey":"_categoryMain","value":"hair-care"}],
@@ -116,6 +129,7 @@
       "subtitleAr": "اختار لحد 3 — التركيبة هتعالج إيه؟",
       "required": true,
       "maxSelect": 3,
+      "active": true,
       "allowNote": true,
       "category": "hair",
       "conditions": [{"questionKey":"_categoryMain","value":"hair-care"}],
@@ -135,6 +149,7 @@
       "titleEn": "Scalp condition",
       "titleAr": "حالة فروة الرأس",
       "required": false,
+      "active": true,
       "allowNote": true,
       "category": "hair",
       "conditions": [{"questionKey":"_categoryMain","value":"hair-care"}],
@@ -150,14 +165,16 @@
       "questionKey": "mainConcerns",
       "order": 9,
       "widget": "chips-multi",
-      "titleEn": "Main concern (choose up to 3)",
-      "titleAr": "اختار لحد 3 من الاهتمامات الأساسية",
+      "titleEn": "Main hair concern (choose up to 3)",
+      "titleAr": "اختار لحد 3 من اهتمامات الشعر الأساسية",
       "subtitleEn": "Tell us what we're solving for — the formula will be built around these.",
       "subtitleAr": "احنا بنحل إيه بالظبط — التركيبة هتتبني حواليهم.",
       "required": true,
       "maxSelect": 3,
+      "active": true,
       "allowNote": true,
       "category": "hair",
+      "conditions": [{"questionKey":"_categoryMain","value":"hair-care"}],
       "options": [
         {"value":"hair-fall","labelEn":"Hair fall / Breakage","labelAr":"تساقط / تكسر"},
         {"value":"frizz","labelEn":"Frizz","labelAr":"هيشان"},
@@ -168,6 +185,466 @@
       ]
     },
     {
+      "questionKey": "desiredFinish",
+      "order": 9.5,
+      "widget": "cards",
+      "titleEn": "Desired finish on hair",
+      "titleAr": "النتيجة النهائية على الشعر",
+      "subtitleEn": "How should it look in the mirror?",
+      "subtitleAr": "هتبان إزاي في المراية؟",
+      "required": true,
+      "active": true,
+      "allowNote": true,
+      "category": "hair",
+      "conditions": [{"questionKey":"_categoryMain","value":"hair-care"}],
+      "options": [
+        {"value":"smooth-sleek","labelEn":"Smooth & sleek","labelAr":"ناعم ومفرود","description":"Polished, glass-hair finish."},
+        {"value":"soft-natural","labelEn":"Soft & natural","labelAr":"ناعم وطبيعي","description":"Touchable, lived-in."},
+        {"value":"voluminous","labelEn":"Voluminous","labelAr":"حجم وكثافة","description":"Bouncy, full-body."},
+        {"value":"defined-curls","labelEn":"Defined curls","labelAr":"كيرلز محدّدة","description":"Sculpted spirals, frizz-free."}
+      ]
+    },
+
+    {
+      "questionKey": "skinType",
+      "order": 6,
+      "widget": "chips-single",
+      "titleEn": "Primary skin type",
+      "titleAr": "نوع البشرة الأساسي",
+      "subtitleEn": "We'll balance the formula around this base.",
+      "subtitleAr": "هنوازن التركيبة على الأساس ده.",
+      "required": true,
+      "active": true,
+      "allowNote": true,
+      "category": "skin",
+      "conditions": [{"questionKey":"_categoryMain","value":"skin-care"}],
+      "options": [
+        {"value":"normal","labelEn":"Normal","labelAr":"عادية"},
+        {"value":"dry","labelEn":"Dry","labelAr":"جافة"},
+        {"value":"oily","labelEn":"Oily","labelAr":"دهنية"},
+        {"value":"combination","labelEn":"Combination","labelAr":"مختلطة"},
+        {"value":"sensitive","labelEn":"Sensitive","labelAr":"حساسة"}
+      ]
+    },
+    {
+      "questionKey": "skinConcerns",
+      "order": 7,
+      "widget": "chips-multi",
+      "titleEn": "Main skin concern (choose up to 3)",
+      "titleAr": "اختار لحد 3 من اهتمامات البشرة",
+      "subtitleEn": "These define the actives we build around.",
+      "subtitleAr": "دي بتحدّد المكونات الفعّالة اللي هنبني حواليها.",
+      "required": true,
+      "maxSelect": 3,
+      "active": true,
+      "allowNote": true,
+      "category": "skin",
+      "conditions": [{"questionKey":"_categoryMain","value":"skin-care"}],
+      "options": [
+        {"value":"acne","labelEn":"Acne / Blemishes","labelAr":"حبوب / بثور"},
+        {"value":"pigmentation","labelEn":"Pigmentation / Dark spots","labelAr":"تصبغات / بقع داكنة"},
+        {"value":"wrinkles","labelEn":"Wrinkles / Fine lines","labelAr":"تجاعيد / خطوط دقيقة"},
+        {"value":"dehydration","labelEn":"Dryness / Dehydration","labelAr":"جفاف / نقص ترطيب"},
+        {"value":"redness","labelEn":"Redness / Sensitivity","labelAr":"احمرار / حساسية"},
+        {"value":"dullness","labelEn":"Dullness","labelAr":"بهتان البشرة"},
+        {"value":"pores","labelEn":"Enlarged pores","labelAr":"مسام واسعة"}
+      ]
+    },
+    {
+      "questionKey": "skinFinish",
+      "order": 8,
+      "widget": "chips-single",
+      "titleEn": "Preferred finish",
+      "titleAr": "اللمسة النهائية المفضّلة",
+      "required": false,
+      "active": true,
+      "allowNote": true,
+      "category": "skin",
+      "conditions": [{"questionKey":"_categoryMain","value":"skin-care"}],
+      "options": [
+        {"value":"matte","labelEn":"Matte","labelAr":"مطفي"},
+        {"value":"natural","labelEn":"Natural","labelAr":"طبيعي"},
+        {"value":"dewy","labelEn":"Dewy / Glow","labelAr":"لامع / مشرق"}
+      ]
+    },
+
+    {
+      "questionKey": "bodyConcerns",
+      "order": 6,
+      "widget": "chips-multi",
+      "titleEn": "Main body concern (choose up to 3)",
+      "titleAr": "اختار لحد 3 من اهتمامات الجسم",
+      "subtitleEn": "What should this body product solve?",
+      "subtitleAr": "منتج الجسم ده هيحل إيه؟",
+      "required": true,
+      "maxSelect": 3,
+      "active": true,
+      "allowNote": true,
+      "category": "body",
+      "conditions": [{"questionKey":"_categoryMain","value":"body-care"}],
+      "options": [
+        {"value":"dryness","labelEn":"Dryness","labelAr":"جفاف"},
+        {"value":"firmness","labelEn":"Firmness / Sagging","labelAr":"شد / ترهل"},
+        {"value":"cellulite","labelEn":"Cellulite","labelAr":"السيلوليت"},
+        {"value":"whitening","labelEn":"Whitening / Dark spots","labelAr":"تفتيح / بقع داكنة"},
+        {"value":"scars","labelEn":"Stretch marks / Scars","labelAr":"علامات تمدد / ندبات"},
+        {"value":"odor","labelEn":"Body odor","labelAr":"رائحة الجسم"}
+      ]
+    },
+    {
+      "questionKey": "bodyGoal",
+      "order": 7,
+      "widget": "chips-single",
+      "titleEn": "Primary goal",
+      "titleAr": "الهدف الأساسي",
+      "required": false,
+      "active": true,
+      "allowNote": true,
+      "category": "body",
+      "conditions": [{"questionKey":"_categoryMain","value":"body-care"}],
+      "options": [
+        {"value":"deep-moisture","labelEn":"Deep moisturizing","labelAr":"ترطيب عميق"},
+        {"value":"light-hydration","labelEn":"Lightweight hydration","labelAr":"ترطيب خفيف"},
+        {"value":"firming","labelEn":"Firming","labelAr":"شد ونعومة"},
+        {"value":"soothing","labelEn":"Soothing / Repair","labelAr":"تهدئة / إصلاح"}
+      ]
+    },
+
+    {
+      "questionKey": "spfLevel",
+      "order": 6,
+      "widget": "chips-single",
+      "titleEn": "SPF protection level",
+      "titleAr": "مستوى الحماية SPF",
+      "subtitleEn": "How strong should the UV defense be?",
+      "subtitleAr": "قد إيه قوة الحماية من الأشعة؟",
+      "required": true,
+      "active": true,
+      "allowNote": true,
+      "category": "sun",
+      "conditions": [{"questionKey":"_categoryMain","value":"sun-care"}],
+      "options": [
+        {"value":"spf30","labelEn":"SPF 30","labelAr":"SPF 30"},
+        {"value":"spf50","labelEn":"SPF 50","labelAr":"SPF 50"},
+        {"value":"spf50plus","labelEn":"SPF 50+","labelAr":"+SPF 50"}
+      ]
+    },
+    {
+      "questionKey": "sunFormat",
+      "order": 7,
+      "widget": "chips-single",
+      "titleEn": "Preferred format",
+      "titleAr": "الشكل المفضّل",
+      "required": true,
+      "active": true,
+      "allowNote": true,
+      "category": "sun",
+      "conditions": [{"questionKey":"_categoryMain","value":"sun-care"}],
+      "options": [
+        {"value":"cream","labelEn":"Cream","labelAr":"كريم"},
+        {"value":"lotion","labelEn":"Lotion","labelAr":"لوشن"},
+        {"value":"gel","labelEn":"Gel","labelAr":"جل"},
+        {"value":"spray","labelEn":"Spray","labelAr":"سبراي"},
+        {"value":"tinted","labelEn":"Tinted","labelAr":"ملوّن"}
+      ]
+    },
+    {
+      "questionKey": "sunFeatures",
+      "order": 8,
+      "widget": "chips-multi",
+      "titleEn": "Special features (choose up to 3)",
+      "titleAr": "مميزات إضافية (اختار لحد 3)",
+      "required": false,
+      "maxSelect": 3,
+      "active": true,
+      "allowNote": true,
+      "category": "sun",
+      "conditions": [{"questionKey":"_categoryMain","value":"sun-care"}],
+      "options": [
+        {"value":"water-resistant","labelEn":"Water-resistant","labelAr":"مقاوم للماء"},
+        {"value":"for-kids","labelEn":"For kids","labelAr":"للأطفال"},
+        {"value":"acne-prone","labelEn":"Oily / Acne-prone","labelAr":"للبشرة الدهنية / المعرضة للحبوب"},
+        {"value":"anti-aging","labelEn":"Anti-aging","labelAr":"مقاوم للشيخوخة"},
+        {"value":"after-sun","labelEn":"After-sun soothing","labelAr":"تهدئة بعد الشمس"}
+      ]
+    },
+
+    {
+      "questionKey": "babyAge",
+      "order": 6,
+      "widget": "chips-single",
+      "titleEn": "Baby's age range",
+      "titleAr": "الفئة العمرية للطفل",
+      "subtitleEn": "Gentleness is calibrated to age.",
+      "subtitleAr": "نعومة التركيبة بتتظبط حسب العمر.",
+      "required": true,
+      "active": true,
+      "allowNote": true,
+      "category": "baby",
+      "conditions": [{"questionKey":"_categoryMain","value":"baby-care"}],
+      "options": [
+        {"value":"newborn","labelEn":"Newborn (0–6m)","labelAr":"حديث الولادة (0–6 شهور)"},
+        {"value":"infant","labelEn":"Infant (6–24m)","labelAr":"رضيع (6–24 شهر)"},
+        {"value":"toddler","labelEn":"Toddler (2–4y)","labelAr":"دارج (2–4 سنوات)"}
+      ]
+    },
+    {
+      "questionKey": "babyConcerns",
+      "order": 7,
+      "widget": "chips-multi",
+      "titleEn": "What should it focus on? (choose up to 3)",
+      "titleAr": "هيركّز على إيه؟ (اختار لحد 3)",
+      "required": true,
+      "maxSelect": 3,
+      "active": true,
+      "allowNote": true,
+      "category": "baby",
+      "conditions": [{"questionKey":"_categoryMain","value":"baby-care"}],
+      "options": [
+        {"value":"diaper-rash","labelEn":"Diaper rash","labelAr":"التهاب الحفاض"},
+        {"value":"dryness","labelEn":"Dryness","labelAr":"الجفاف"},
+        {"value":"cradle-cap","labelEn":"Cradle cap","labelAr":"قشرة الرأس عند الرضع"},
+        {"value":"gentle-cleansing","labelEn":"Gentle cleansing","labelAr":"تنظيف لطيف"},
+        {"value":"tear-free","labelEn":"Tear-free","labelAr":"لا يسبب الدموع"}
+      ]
+    },
+
+    {
+      "questionKey": "makeupType",
+      "order": 6,
+      "widget": "chips-single",
+      "titleEn": "Makeup product type",
+      "titleAr": "نوع منتج المكياج",
+      "required": true,
+      "active": true,
+      "allowNote": true,
+      "category": "makeup",
+      "conditions": [{"questionKey":"_categoryMain","value":"makeup"}],
+      "options": [
+        {"value":"lip-cheek-tint","labelEn":"Lip & cheek tint","labelAr":"تنت للشفايف والخدود"},
+        {"value":"tinted-sunscreen","labelEn":"Tinted sunscreen","labelAr":"واقي شمس ملوّن"},
+        {"value":"bb-cc","labelEn":"BB / CC cream","labelAr":"كريم BB / CC"}
+      ]
+    },
+    {
+      "questionKey": "makeupCoverage",
+      "order": 7,
+      "widget": "chips-single",
+      "titleEn": "Coverage level",
+      "titleAr": "درجة التغطية",
+      "required": false,
+      "active": true,
+      "allowNote": true,
+      "category": "makeup",
+      "conditions": [{"questionKey":"_categoryMain","value":"makeup"}],
+      "options": [
+        {"value":"sheer","labelEn":"Sheer","labelAr":"خفيفة"},
+        {"value":"medium","labelEn":"Medium","labelAr":"متوسطة"},
+        {"value":"full","labelEn":"Full","labelAr":"كاملة"}
+      ]
+    },
+    {
+      "questionKey": "shadeFamily",
+      "order": 8,
+      "widget": "chips-multi",
+      "titleEn": "Shade family (choose up to 3)",
+      "titleAr": "عائلة الألوان (اختار لحد 3)",
+      "required": false,
+      "maxSelect": 3,
+      "active": true,
+      "allowNote": true,
+      "category": "makeup",
+      "conditions": [{"questionKey":"_categoryMain","value":"makeup"}],
+      "options": [
+        {"value":"nude","labelEn":"Nude","labelAr":"نود"},
+        {"value":"pink","labelEn":"Pink","labelAr":"وردي"},
+        {"value":"rose","labelEn":"Rose","labelAr":"روز"},
+        {"value":"coral","labelEn":"Coral","labelAr":"كورال"},
+        {"value":"red","labelEn":"Red","labelAr":"أحمر"},
+        {"value":"berry","labelEn":"Berry","labelAr":"بيري"}
+      ]
+    },
+
+    {
+      "questionKey": "fragranceType",
+      "order": 6,
+      "widget": "chips-single",
+      "titleEn": "Fragrance product type",
+      "titleAr": "نوع منتج العطر",
+      "required": true,
+      "active": true,
+      "allowNote": true,
+      "category": "fragrance",
+      "conditions": [{"questionKey":"_categoryMain","value":"fragrance"}],
+      "options": [
+        {"value":"perfume","labelEn":"Perfume (EDP)","labelAr":"عطر (EDP)"},
+        {"value":"body-splash","labelEn":"Body splash","labelAr":"بادي سبلاش"},
+        {"value":"hair-mist","labelEn":"Hair mist","labelAr":"معطر شعر"}
+      ]
+    },
+    {
+      "questionKey": "scentFamily",
+      "order": 7,
+      "widget": "chips-multi",
+      "titleEn": "Scent family (choose up to 3)",
+      "titleAr": "عائلة الرائحة (اختار لحد 3)",
+      "subtitleEn": "The direction of the fragrance story.",
+      "subtitleAr": "اتجاه قصة العطر.",
+      "required": true,
+      "maxSelect": 3,
+      "active": true,
+      "allowNote": true,
+      "category": "fragrance",
+      "conditions": [{"questionKey":"_categoryMain","value":"fragrance"}],
+      "options": [
+        {"value":"floral","labelEn":"Floral","labelAr":"زهري"},
+        {"value":"fruity","labelEn":"Fruity","labelAr":"فواكه"},
+        {"value":"citrus","labelEn":"Citrus / Fresh","labelAr":"حمضي / منعش"},
+        {"value":"woody","labelEn":"Woody","labelAr":"خشبي"},
+        {"value":"oriental","labelEn":"Oriental / Amber","labelAr":"شرقي / عنبر"},
+        {"value":"musky","labelEn":"Musky","labelAr":"مسكي"},
+        {"value":"gourmand","labelEn":"Gourmand / Sweet","labelAr":"حلو / جورماند"}
+      ]
+    },
+    {
+      "questionKey": "fragranceIntensity",
+      "order": 8,
+      "widget": "chips-single",
+      "titleEn": "Projection / Intensity",
+      "titleAr": "قوة العطر / الثبات",
+      "required": false,
+      "active": true,
+      "allowNote": true,
+      "category": "fragrance",
+      "conditions": [{"questionKey":"_categoryMain","value":"fragrance"}],
+      "options": [
+        {"value":"light","labelEn":"Light","labelAr":"خفيف"},
+        {"value":"moderate","labelEn":"Moderate","labelAr":"متوسط"},
+        {"value":"strong","labelEn":"Strong","labelAr":"قوي"}
+      ]
+    },
+
+    {
+      "questionKey": "hygieneType",
+      "order": 6,
+      "widget": "chips-single",
+      "titleEn": "Hygiene product type",
+      "titleAr": "نوع منتج النظافة",
+      "required": true,
+      "active": true,
+      "allowNote": true,
+      "category": "hygiene",
+      "conditions": [{"questionKey":"_categoryMain","value":"hygiene"}],
+      "options": [
+        {"value":"hair-removal","labelEn":"Hair removal","labelAr":"إزالة الشعر"},
+        {"value":"feminine-care","labelEn":"Feminine care","labelAr":"العناية النسائية"},
+        {"value":"intimate-wash","labelEn":"Intimate wash","labelAr":"غسول حميمي"},
+        {"value":"bar-soap","labelEn":"Bar soap","labelAr":"صابون قالب"},
+        {"value":"hand-soap","labelEn":"Hand soap","labelAr":"صابون يد"}
+      ]
+    },
+    {
+      "questionKey": "hygieneBenefits",
+      "order": 7,
+      "widget": "chips-multi",
+      "titleEn": "Key benefits (choose up to 3)",
+      "titleAr": "الفوائد الأساسية (اختار لحد 3)",
+      "required": false,
+      "maxSelect": 3,
+      "active": true,
+      "allowNote": true,
+      "category": "hygiene",
+      "conditions": [{"questionKey":"_categoryMain","value":"hygiene"}],
+      "options": [
+        {"value":"antibacterial","labelEn":"Antibacterial","labelAr":"مضاد للبكتيريا"},
+        {"value":"moisturizing","labelEn":"Moisturizing","labelAr":"مرطّب"},
+        {"value":"whitening","labelEn":"Whitening","labelAr":"تفتيح"},
+        {"value":"ph-balanced","labelEn":"pH-balanced","labelAr":"متوازن الحموضة"},
+        {"value":"fragrance-free","labelEn":"Fragrance-free","labelAr":"خالٍ من العطور"}
+      ]
+    },
+
+    {
+      "questionKey": "massageFormat",
+      "order": 6,
+      "widget": "chips-single",
+      "titleEn": "Massage product format",
+      "titleAr": "شكل منتج المساج",
+      "required": true,
+      "active": true,
+      "allowNote": true,
+      "category": "massage",
+      "conditions": [{"questionKey":"_categoryMain","value":"massage"}],
+      "options": [
+        {"value":"cream","labelEn":"Cream","labelAr":"كريم"},
+        {"value":"gel","labelEn":"Gel","labelAr":"جل"},
+        {"value":"creamy-gel","labelEn":"Creamy gel","labelAr":"جل كريمي"},
+        {"value":"spray","labelEn":"Spray","labelAr":"سبراي"},
+        {"value":"roll-on","labelEn":"Roll-on","labelAr":"رول أون"}
+      ]
+    },
+    {
+      "questionKey": "massageEffect",
+      "order": 7,
+      "widget": "chips-multi",
+      "titleEn": "Desired effect (choose up to 3)",
+      "titleAr": "التأثير المطلوب (اختار لحد 3)",
+      "required": true,
+      "maxSelect": 3,
+      "active": true,
+      "allowNote": true,
+      "category": "massage",
+      "conditions": [{"questionKey":"_categoryMain","value":"massage"}],
+      "options": [
+        {"value":"relaxing","labelEn":"Relaxing","labelAr":"استرخاء"},
+        {"value":"warming","labelEn":"Warming","labelAr":"تأثير دافئ"},
+        {"value":"cooling","labelEn":"Cooling","labelAr":"تأثير بارد"},
+        {"value":"pain-relief","labelEn":"Pain relief","labelAr":"تسكين الألم"},
+        {"value":"slimming","labelEn":"Slimming","labelAr":"تنحيف"},
+        {"value":"aromatherapy","labelEn":"Aromatherapy","labelAr":"عطري علاجي"}
+      ]
+    },
+
+    {
+      "questionKey": "oralType",
+      "order": 6,
+      "widget": "chips-single",
+      "titleEn": "Oral care product type",
+      "titleAr": "نوع منتج العناية بالفم",
+      "required": true,
+      "active": true,
+      "allowNote": true,
+      "category": "oral",
+      "conditions": [{"questionKey":"_categoryMain","value":"oral-care"}],
+      "options": [
+        {"value":"mouthwash","labelEn":"Mouthwash","labelAr":"غسول فم"},
+        {"value":"tooth-gel","labelEn":"Tooth gel","labelAr":"جل أسنان"},
+        {"value":"mouth-spray","labelEn":"Mouth spray","labelAr":"بخاخ فم"}
+      ]
+    },
+    {
+      "questionKey": "oralBenefits",
+      "order": 7,
+      "widget": "chips-multi",
+      "titleEn": "Key benefits (choose up to 3)",
+      "titleAr": "الفوائد الأساسية (اختار لحد 3)",
+      "required": false,
+      "maxSelect": 3,
+      "active": true,
+      "allowNote": true,
+      "category": "oral",
+      "conditions": [{"questionKey":"_categoryMain","value":"oral-care"}],
+      "options": [
+        {"value":"whitening","labelEn":"Whitening","labelAr":"تبييض"},
+        {"value":"fresh-breath","labelEn":"Fresh breath","labelAr":"نفس منعش"},
+        {"value":"anti-cavity","labelEn":"Anti-cavity","labelAr":"مقاوم للتسوس"},
+        {"value":"gum-care","labelEn":"Gum care","labelAr":"عناية باللثة"},
+        {"value":"sensitivity","labelEn":"Sensitivity relief","labelAr":"تخفيف الحساسية"},
+        {"value":"alcohol-free","labelEn":"Alcohol-free","labelAr":"خالٍ من الكحول"}
+      ]
+    },
+
+    {
       "questionKey": "marketingClaims",
       "order": 10,
       "widget": "chips-multi",
@@ -176,6 +653,7 @@
       "subtitleEn": "Pick all the badges your packaging should proudly carry.",
       "subtitleAr": "اختار كل الـ claims اللي هتظهر على التغليف.",
       "required": false,
+      "active": true,
       "allowNote": true,
       "category": "general",
       "options": [
@@ -196,6 +674,7 @@
       "subtitleEn": "Up to 2 ingredients can take the spotlight on your label.",
       "subtitleAr": "تقدر تختار لحد 2 مكوّن يكونوا في الواجهة.",
       "required": false,
+      "active": true,
       "allowNote": false,
       "category": "general",
       "options": [
@@ -210,6 +689,7 @@
       "titleEn": "Preferred texture",
       "titleAr": "الملمس المفضّل",
       "required": true,
+      "active": true,
       "allowNote": true,
       "category": "general",
       "options": [
@@ -217,25 +697,6 @@
         {"value":"creamy","labelEn":"Creamy","labelAr":"كريمي","description":"Smooth and indulgent."},
         {"value":"rich","labelEn":"Rich","labelAr":"مكثّف","description":"Deeply nourishing, dense."},
         {"value":"gel","labelEn":"Gel","labelAr":"جل","description":"Cool, refreshing, slip."}
-      ]
-    },
-    {
-      "questionKey": "desiredFinish",
-      "order": 13,
-      "widget": "cards",
-      "titleEn": "Desired finish on hair",
-      "titleAr": "النتيجة النهائية على الشعر",
-      "subtitleEn": "How should it look in the mirror?",
-      "subtitleAr": "هتبان إزاي في المراية؟",
-      "required": true,
-      "allowNote": true,
-      "category": "hair",
-      "conditions": [{"questionKey":"_categoryMain","value":"hair-care"}],
-      "options": [
-        {"value":"smooth-sleek","labelEn":"Smooth & sleek","labelAr":"ناعم ومفرود","description":"Polished, glass-hair finish."},
-        {"value":"soft-natural","labelEn":"Soft & natural","labelAr":"ناعم وطبيعي","description":"Touchable, lived-in."},
-        {"value":"voluminous","labelEn":"Voluminous","labelAr":"حجم وكثافة","description":"Bouncy, full-body."},
-        {"value":"defined-curls","labelEn":"Defined curls","labelAr":"كيرلز محدّدة","description":"Sculpted spirals, frizz-free."}
       ]
     }
   ]

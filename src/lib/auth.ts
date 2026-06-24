@@ -64,6 +64,13 @@ export function isStaff(role: string): boolean {
   return ['SUPER_ADMIN', 'ADMIN', 'STAFF'].includes(role);
 }
 
+export class AccountDisabledError extends Error {
+  constructor() {
+    super('Account disabled');
+    this.name = 'AccountDisabledError';
+  }
+}
+
 export async function authenticateUser(email: string, password: string) {
   await connectDB();
   const user = await User.findOne({ email: email.toLowerCase() });
@@ -71,6 +78,8 @@ export async function authenticateUser(email: string, password: string) {
 
   const valid = await verifyPassword(password, user.password);
   if (!valid) return null;
+
+  if (user.isActive === false) throw new AccountDisabledError();
 
   return {
     id: user._id.toString(),

@@ -39,6 +39,42 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const { referralCode, orderId, creditAmount } = body;
+    const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(user.role);
+
+    // ── Admin manual creation: pick referrer (by code) + referred (by email) ──
+    if (isAdmin && body.manual) {
+      if (!body.referralCode || !body.referredEmail) {
+        return NextResponse.json({ error: 'Referrer code and referred email are required' }, { status: 400 });
+      }
+      const referrerUser = await User.findOne({ referralCode: body.referralCode });
+      if (!referrerUser) {
+        return NextResponse.json({ error: 'Invalid referrer code' }, { status: 404 });
+      }
+      const referredUser = await User.findOne({ email: String(body.referredEmail).toLowerCase() });
+      if (!referredUser) {
+        return NextResponse.json({ error: 'No user found with that referred email' }, { status: 404 });
+      }
+      if (referrerUser._id.toString() === referredUser._id.toString()) {
+        return NextResponse.json({ error: 'Referrer and referred cannot be the same person' }, { status: 400 });
+      }
+      const status = body.status === 'credited' ? 'credited' : 'pending';
+      const amount = Number(body.creditAmount) || 0;
+      const referral = await Referral.create({
+        referrerId: referrerUser._id,
+        referredId: referredUser._id,
+        referralCode: body.referralCode,
+        creditAmount: amount,
+        status,
+        creditedAt: status === 'credited' ? new Date() : undefined,
+      });
+      if (status === 'credited' && amount > 0) {
+        await User.findByIdAndUpdate(referrerUser._id, { $inc: { referralBalance: amount } });
+      }
+      const populated = await Referral.findById(referral._id)
+        .populate('referrerId', 'name email referralCode')
+        .populate('referredId', 'name email');
+      return NextResponse.json(populated, { status: 201 });
+    }
 
     if (!referralCode || !orderId) {
       return NextResponse.json({ error: 'referralCode and orderId are required' }, { status: 400 });

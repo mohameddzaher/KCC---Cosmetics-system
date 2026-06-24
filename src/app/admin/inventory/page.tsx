@@ -17,6 +17,7 @@ export default function InventoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
   const [showAddMovement, setShowAddMovement] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   // Add item form state
   const [itemForm, setItemForm] = useState({
@@ -56,35 +57,61 @@ export default function InventoryPage() {
     }
   };
 
-  const handleCreateItem = async () => {
+  const resetItemForm = () => {
+    setItemForm({ sku: '', nameEn: '', nameAr: '', category: '', currentStock: 0, lowStockThreshold: 0, unit: 'pcs', costPerUnit: 0 });
+    setEditingItemId(null);
+  };
+
+  const handleOpenEdit = (item: any) => {
+    setEditingItemId(item._id);
+    setItemForm({
+      sku: item.sku || '',
+      nameEn: item.name?.en || '',
+      nameAr: item.name?.ar || '',
+      category: item.category || '',
+      currentStock: item.currentStock || 0,
+      lowStockThreshold: item.lowStockThreshold || 0,
+      unit: item.unit || 'pcs',
+      costPerUnit: item.costPerUnit || 0,
+    });
+    setShowAddItem(true);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSaveItem = async () => {
     setSaving(true);
     try {
-      const res = await fetch('/api/inventory', {
-        method: 'POST',
+      const payload = {
+        sku: itemForm.sku,
+        name: { en: itemForm.nameEn, ar: itemForm.nameAr },
+        category: itemForm.category,
+        currentStock: itemForm.currentStock,
+        lowStockThreshold: itemForm.lowStockThreshold,
+        unit: itemForm.unit,
+        costPerUnit: itemForm.costPerUnit,
+        isActive: true,
+      };
+      const res = await fetch(editingItemId ? `/api/inventory/${editingItemId}` : '/api/inventory', {
+        method: editingItemId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sku: itemForm.sku,
-          name: { en: itemForm.nameEn, ar: itemForm.nameAr },
-          category: itemForm.category,
-          currentStock: itemForm.currentStock,
-          lowStockThreshold: itemForm.lowStockThreshold,
-          unit: itemForm.unit,
-          costPerUnit: itemForm.costPerUnit,
-          isActive: true,
-        }),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
-        const created = await res.json();
-        setItems(prev => [created, ...prev]);
+        const saved = await res.json();
+        if (editingItemId) {
+          setItems(prev => prev.map(it => (it._id === editingItemId ? saved : it)));
+        } else {
+          setItems(prev => [saved, ...prev]);
+        }
         setShowAddItem(false);
-        setItemForm({ sku: '', nameEn: '', nameAr: '', category: '', currentStock: 0, lowStockThreshold: 0, unit: 'pcs', costPerUnit: 0 });
+        resetItemForm();
       } else {
         const data = await res.json();
-        alert(data.error || 'Failed to create item');
+        alert(data.error || 'Failed to save item');
       }
     } catch (error) {
-      console.error('Failed to create item:', error);
-      alert('Failed to create item');
+      console.error('Failed to save item:', error);
+      alert('Failed to save item');
     } finally {
       setSaving(false);
     }
@@ -124,16 +151,16 @@ export default function InventoryPage() {
   const handleDeleteItem = async (id: string) => {
     if (!confirm('Are you sure you want to delete this inventory item?')) return;
     try {
-      // Note: The API doesn't have a DELETE endpoint for inventory items, so we toggle isActive
-      const res = await fetch('/api/inventory', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ _id: id, isActive: false }),
-      });
-      // Optimistic update
-      setItems(prev => prev.filter(item => item._id !== id));
+      const res = await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setItems(prev => prev.filter(item => item._id !== id));
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to delete item');
+      }
     } catch (error) {
       console.error('Failed to delete item:', error);
+      alert('Failed to delete item');
     }
   };
 
@@ -208,7 +235,7 @@ export default function InventoryPage() {
           {activeTab === 'items' && (
             <button
               type="button"
-              onClick={() => setShowAddItem(!showAddItem)}
+              onClick={() => { if (showAddItem) { setShowAddItem(false); resetItemForm(); } else { resetItemForm(); setShowAddItem(true); } }}
               className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors"
             >
               <Plus size={16} />
@@ -244,8 +271,8 @@ export default function InventoryPage() {
       {showAddItem && (
         <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-dark-100">Add New Inventory Item</h3>
-            <button type="button" onClick={() => setShowAddItem(false)} className="text-dark-400 hover:text-dark-50" title="Close">
+            <h3 className="text-sm font-semibold text-dark-100">{editingItemId ? 'Edit Inventory Item' : 'Add New Inventory Item'}</h3>
+            <button type="button" onClick={() => { setShowAddItem(false); resetItemForm(); }} className="text-dark-400 hover:text-dark-50" title="Close">
               <X size={18} />
             </button>
           </div>
@@ -284,10 +311,10 @@ export default function InventoryPage() {
             </div>
           </div>
           <div className="flex justify-end gap-3 mt-4">
-            <button type="button" onClick={() => setShowAddItem(false)} className="px-4 py-2 text-sm text-dark-400 border border-dark-700 rounded-lg hover:text-dark-50">Cancel</button>
-            <button type="button" onClick={handleCreateItem} disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors disabled:opacity-50">
+            <button type="button" onClick={() => { setShowAddItem(false); resetItemForm(); }} className="px-4 py-2 text-sm text-dark-400 border border-dark-700 rounded-lg hover:text-dark-50">Cancel</button>
+            <button type="button" onClick={handleSaveItem} disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors disabled:opacity-50">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              Create Item
+              {editingItemId ? 'Save Changes' : 'Create Item'}
             </button>
           </div>
         </div>
@@ -395,7 +422,7 @@ export default function InventoryPage() {
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-center gap-2">
-                          <button type="button" className="p-1.5 text-dark-400 hover:text-kcc-green hover:bg-dark-800 rounded-lg transition-colors" title="Edit">
+                          <button type="button" onClick={() => handleOpenEdit(item)} className="p-1.5 text-dark-400 hover:text-kcc-green hover:bg-dark-800 rounded-lg transition-colors" title="Edit">
                             <Edit2 size={15} />
                           </button>
                           <button type="button" onClick={() => handleDeleteItem(item._id)} className="p-1.5 text-dark-400 hover:text-red-400 hover:bg-dark-800 rounded-lg transition-colors" title="Delete">

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { User, Package, ShoppingBag, Copy, Check, ArrowRight, Calendar } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import ProfileSettings from '@/components/account/ProfileSettings';
 
 // Demo data
 const demoRecentOrders = [
@@ -119,6 +120,9 @@ export default function AccountPage() {
         </div>
         <p className="text-xs text-dark-500 mt-2">{t('account.referralDesc')}</p>
       </motion.div>
+
+      {/* Profile & Security */}
+      <ProfileSettings />
 
       {/* Recent Orders */}
       <motion.div

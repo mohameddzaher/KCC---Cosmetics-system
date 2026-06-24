@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import { authenticateUser, createToken, AUTH_COOKIE_NAME, AUTH_MAX_AGE_SECONDS } from '@/lib/auth';
+import { authenticateUser, createToken, AccountDisabledError, AUTH_COOKIE_NAME, AUTH_MAX_AGE_SECONDS } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,7 +11,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    const user = await authenticateUser(email, password);
+    let user;
+    try {
+      user = await authenticateUser(email, password);
+    } catch (e) {
+      if (e instanceof AccountDisabledError) {
+        return NextResponse.json({ error: 'This account has been disabled. Contact an administrator.' }, { status: 403 });
+      }
+      throw e;
+    }
     if (!user) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }

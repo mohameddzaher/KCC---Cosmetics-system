@@ -3,8 +3,11 @@
 import { useEffect, useState } from 'react';
 import {
   DollarSign, FileText, CreditCard, Receipt, BarChart3,
-  Loader2, TrendingUp, TrendingDown, Plus, Eye, Download, Save
+  Loader2, TrendingUp, TrendingDown, Plus, Eye, Download, Save, Trash2
 } from 'lucide-react';
+
+const INVOICE_STATUSES = ['draft', 'sent', 'paid', 'overdue', 'cancelled'];
+const PAYMENT_STATUSES = ['pending', 'completed', 'failed', 'refunded'];
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer
@@ -63,6 +66,22 @@ export default function AccountingPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const deleteRecord = async (kind: 'invoices' | 'payments' | 'expenses', id: string) => {
+    if (!confirm('Delete this record permanently?')) return;
+    const res = await fetch(`/api/accounting/${kind}/${id}`, { method: 'DELETE' });
+    if (res.ok) fetchAccountingData();
+    else { const e = await res.json(); alert(e.error || 'Failed to delete'); }
+  };
+
+  const updateStatus = async (kind: 'invoices' | 'payments', id: string, status: string) => {
+    const res = await fetch(`/api/accounting/${kind}/${id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    if (res.ok) fetchAccountingData();
+    else { const e = await res.json(); alert(e.error || 'Failed to update'); }
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -218,6 +237,7 @@ export default function AccountingPage() {
                     <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Status</th>
                     <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Due Date</th>
                     <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Paid</th>
+                    <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-800">
@@ -227,12 +247,21 @@ export default function AccountingPage() {
                       <td className="px-5 py-3.5 text-sm text-dark-300">{inv.userId?.name || inv.userId?.email || '-'}</td>
                       <td className="px-5 py-3.5 text-end text-sm font-medium text-dark-200">${(inv.total || 0).toLocaleString()}</td>
                       <td className="px-5 py-3.5 text-center">
-                        <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full capitalize ${invoiceStatusClasses[inv.status] || ''}`}>
-                          {inv.status}
-                        </span>
+                        <select
+                          value={inv.status}
+                          onChange={(e) => updateStatus('invoices', inv._id, e.target.value)}
+                          title="Change invoice status"
+                          className={`text-xs font-medium rounded-full px-2 py-1 capitalize border-0 focus:outline-none cursor-pointer ${invoiceStatusClasses[inv.status] || 'bg-dark-700 text-dark-300'}`}
+                        >
+                          {INVOICE_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                        </select>
                       </td>
                       <td className="px-5 py-3.5 text-sm text-dark-400">{formatDate(inv.dueDate)}</td>
                       <td className="px-5 py-3.5 text-sm text-dark-400">{formatDate(inv.paidAt)}</td>
+                      <td className="px-5 py-3.5 text-center">
+                        <button type="button" onClick={() => deleteRecord('invoices', inv._id)} title="Delete invoice"
+                          className="p-1.5 text-dark-400 hover:text-red-400 hover:bg-dark-800 rounded-lg transition-colors"><Trash2 size={15} /></button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -260,6 +289,7 @@ export default function AccountingPage() {
                     <th className="text-end text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Amount</th>
                     <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Method</th>
                     <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Date</th>
+                    <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-800">
@@ -271,6 +301,10 @@ export default function AccountingPage() {
                       <td className="px-5 py-3.5 text-end text-sm font-medium text-green-400">${(pay.amount || 0).toLocaleString()}</td>
                       <td className="px-5 py-3.5 text-sm text-dark-400">{pay.method}</td>
                       <td className="px-5 py-3.5 text-sm text-dark-400">{formatDate(pay.paidAt || pay.createdAt)}</td>
+                      <td className="px-5 py-3.5 text-center">
+                        <button type="button" onClick={() => deleteRecord('payments', pay._id)} title="Delete payment"
+                          className="p-1.5 text-dark-400 hover:text-red-400 hover:bg-dark-800 rounded-lg transition-colors"><Trash2 size={15} /></button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -297,6 +331,7 @@ export default function AccountingPage() {
                     <th className="text-end text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Amount</th>
                     <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Vendor</th>
                     <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Date</th>
+                    <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-800">
@@ -305,10 +340,14 @@ export default function AccountingPage() {
                       <td className="px-5 py-3.5">
                         <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-kcc-beige/10 text-kcc-beige">{exp.category}</span>
                       </td>
-                      <td className="px-5 py-3.5 text-sm text-dark-300">{exp.description}</td>
+                      <td className="px-5 py-3.5 text-sm text-dark-300">{typeof exp.description === 'object' ? (exp.description?.en || exp.description?.ar || '-') : exp.description}</td>
                       <td className="px-5 py-3.5 text-end text-sm font-medium text-red-400">${(exp.amount || 0).toLocaleString()}</td>
                       <td className="px-5 py-3.5 text-sm text-dark-400">{exp.vendor}</td>
                       <td className="px-5 py-3.5 text-sm text-dark-400">{formatDate(exp.date || exp.createdAt)}</td>
+                      <td className="px-5 py-3.5 text-center">
+                        <button type="button" onClick={() => deleteRecord('expenses', exp._id)} title="Delete expense"
+                          className="p-1.5 text-dark-400 hover:text-red-400 hover:bg-dark-800 rounded-lg transition-colors"><Trash2 size={15} /></button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

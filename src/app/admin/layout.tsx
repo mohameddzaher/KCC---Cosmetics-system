@@ -8,23 +8,66 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import {
   LayoutDashboard, FileText, ShoppingCart, Users, Package,
   DollarSign, Search as SearchIcon, Tag, Share2, Brain, Settings,
-  Menu, X, ChevronLeft, Globe, LogOut, Bell, Sparkles
+  Menu, X, ChevronLeft, Globe, LogOut, Bell, Sparkles, ShieldCheck, Contact, Layers
 } from 'lucide-react';
 
-const sidebarItems = [
-  { key: 'dashboard', href: '/admin', icon: LayoutDashboard },
-  { key: 'cms', href: '/admin/cms', icon: FileText },
-  { key: 'orders', href: '/admin/orders', icon: ShoppingCart },
-  { key: 'customers', href: '/admin/customers', icon: Users },
-  { key: 'inventory', href: '/admin/inventory', icon: Package },
-  { key: 'accounting', href: '/admin/accounting', icon: DollarSign },
-  { key: 'seo', href: '/admin/seo', icon: SearchIcon },
-  { key: 'promos', href: '/admin/promos', icon: Tag },
-  { key: 'referrals', href: '/admin/referrals', icon: Share2 },
-  { key: 'knowledge', href: '/admin/knowledge', icon: Brain },
-  { key: 'sampleQuiz', href: '/admin/sample-quiz', icon: Sparkles },
-  { key: 'settings', href: '/admin/settings', icon: Settings },
+type NavItem = { key: string; href: string; icon: any; roles?: string[] };
+type NavGroup = { group: string; groupAr: string; items: NavItem[] };
+
+const sidebarGroups: NavGroup[] = [
+  {
+    group: 'Overview', groupAr: 'نظرة عامة',
+    items: [
+      { key: 'dashboard', href: '/admin', icon: LayoutDashboard },
+    ],
+  },
+  {
+    group: 'CRM & Sales', groupAr: 'العلاقات والمبيعات',
+    items: [
+      { key: 'crm', href: '/admin/crm', icon: Contact },
+      { key: 'customers', href: '/admin/customers', icon: Users },
+      { key: 'orders', href: '/admin/orders', icon: ShoppingCart },
+    ],
+  },
+  {
+    group: 'Catalog & Stock', groupAr: 'الكتالوج والمخزون',
+    items: [
+      { key: 'categories', href: '/admin/categories', icon: Layers },
+      { key: 'sampleQuiz', href: '/admin/sample-quiz', icon: Sparkles },
+      { key: 'inventory', href: '/admin/inventory', icon: Package },
+    ],
+  },
+  {
+    group: 'Marketing', groupAr: 'التسويق',
+    items: [
+      { key: 'promos', href: '/admin/promos', icon: Tag },
+      { key: 'referrals', href: '/admin/referrals', icon: Share2 },
+    ],
+  },
+  {
+    group: 'Finance', groupAr: 'المالية',
+    items: [
+      { key: 'accounting', href: '/admin/accounting', icon: DollarSign },
+    ],
+  },
+  {
+    group: 'Content', groupAr: 'المحتوى',
+    items: [
+      { key: 'cms', href: '/admin/cms', icon: FileText },
+      { key: 'knowledge', href: '/admin/knowledge', icon: Brain },
+      { key: 'seo', href: '/admin/seo', icon: SearchIcon },
+    ],
+  },
+  {
+    group: 'System', groupAr: 'النظام',
+    items: [
+      { key: 'users', href: '/admin/users', icon: ShieldCheck, roles: ['SUPER_ADMIN', 'ADMIN'] },
+      { key: 'settings', href: '/admin/settings', icon: Settings },
+    ],
+  },
 ];
+
+const sidebarItems: NavItem[] = sidebarGroups.flatMap((g) => g.items);
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -94,24 +137,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
 
-        {/* Nav items */}
-        <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon;
+        {/* Nav items (grouped) */}
+        <nav className="flex-1 py-4 px-2 overflow-y-auto">
+          {sidebarGroups.map((grp) => {
+            const items = grp.items.filter((item) => !item.roles || item.roles.includes(user.role));
+            if (items.length === 0) return null;
             return (
-              <Link
-                key={item.key}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  isActive(item.href)
-                    ? 'bg-kcc-green/10 text-kcc-green'
-                    : 'text-dark-400 hover:text-dark-50 hover:bg-dark-800'
-                } ${collapsed ? 'justify-center' : ''}`}
-                title={collapsed ? t(`admin.${item.key}`) : undefined}
-              >
-                <Icon size={18} />
-                {!collapsed && <span>{t(`admin.${item.key}`)}</span>}
-              </Link>
+              <div key={grp.group} className="mb-3">
+                {!collapsed && (
+                  <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-dark-600">
+                    {locale === 'ar' ? grp.groupAr : grp.group}
+                  </p>
+                )}
+                {collapsed && <div className="my-2 mx-2 border-t border-dark-800" />}
+                <div className="space-y-1">
+                  {items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.key}
+                        href={item.href}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                          isActive(item.href)
+                            ? 'bg-kcc-green/10 text-kcc-green'
+                            : 'text-dark-400 hover:text-dark-50 hover:bg-dark-800'
+                        } ${collapsed ? 'justify-center' : ''}`}
+                        title={collapsed ? t(`admin.${item.key}`) : undefined}
+                      >
+                        <Icon size={18} />
+                        {!collapsed && <span>{t(`admin.${item.key}`)}</span>}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </nav>
@@ -169,7 +228,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Globe size={14} />
               {locale === 'en' ? 'AR' : 'EN'}
             </button>
-            <div className="flex items-center gap-2 ps-3 border-s border-dark-700">
+            <Link href="/account" className="flex items-center gap-2 ps-3 border-s border-dark-700 hover:opacity-80 transition-opacity" title="My profile & settings">
               <div className="w-8 h-8 rounded-full bg-kcc-green/20 flex items-center justify-center text-kcc-green text-sm font-bold">
                 {user.name.charAt(0)}
               </div>
@@ -177,7 +236,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <p className="text-sm font-medium text-dark-50">{user.name}</p>
                 <p className="text-xs text-dark-500">{user.role}</p>
               </div>
-            </div>
+            </Link>
           </div>
         </header>
 
