@@ -1,0 +1,27 @@
+name: keep-render-awake
+
+# Render's free tier sleeps after ~15 min of inactivity, causing a slow
+# ~40s cold start that makes the site feel "not opening". This pings it
+# every 10 minutes so the first real visitor always gets an instant load.
+#
+# NOTE: GitHub only runs scheduled workflows from the DEFAULT branch (main),
+# so this takes effect once merged to main. You can also trigger it manually
+# from the Actions tab (Run workflow).
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render deployment
+        run: |
+          for url in \
+            "https://kcc-cosmetics-system.onrender.com/" \
+            "https://kcc-cosmetics-system.onrender.com/api/auth/me"; do
+            echo "Pinging $url"
+            curl -sS -m 90 -o /dev/null -w "  -> %{http_code} in %{time_total}s\n" "$url" || echo "  -> ping failed (ignored)"
+          done
