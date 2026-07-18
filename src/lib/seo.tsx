@@ -30,7 +30,7 @@ export const COMPANY = {
   city: 'Riyadh',
   country: 'SA',
   countryName: 'Saudi Arabia',
-  email: 'info@kcc.sa',
+  email: 'info@kcc-bv.com',
   phone: '+966 11 000 0000',
   foundingYear: '2010',
 } as const;

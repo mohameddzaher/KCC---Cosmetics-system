@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, CheckCircle, AlertCircle, Loader2, Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -25,6 +25,16 @@ export default function ContactFormSection() {
   const { locale } = useLanguage();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [settings, setSettings] = useState<any>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/settings/public', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled) setSettings(d); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const content = {
     title: {
@@ -67,30 +77,24 @@ export default function ContactFormSection() {
     },
     sidebar: {
       heading: { en: 'Contact Information', ar: 'معلومات الاتصال' },
-      email: {
-        label: { en: 'Email', ar: 'البريد الإلكتروني' },
-        value: 'info@kcc.sa',
-      },
-      phone: {
-        label: { en: 'Phone', ar: 'الهاتف' },
-        value: '+966 12 345 6789',
-      },
-      address: {
-        label: { en: 'Address', ar: 'العنوان' },
-        value: {
-          en: 'Riyadh, Saudi Arabia',
-          ar: 'الرياض، المملكة العربية السعودية',
-        },
-      },
+      email: { label: { en: 'Email', ar: 'البريد الإلكتروني' } },
+      phone: { label: { en: 'Phone', ar: 'الهاتف' } },
+      address: { label: { en: 'Address', ar: 'العنوان' } },
       hours: {
         label: { en: 'Business Hours', ar: 'ساعات العمل' },
         value: {
-          en: 'Sun - Thu: 8:00 AM - 5:00 PM',
-          ar: 'الأحد - الخميس: 8:00 ص - 5:00 م',
+          en: 'Sun - Thu: 9:00 AM - 5:00 PM',
+          ar: 'الأحد - الخميس: 9:00 ص - 5:00 م',
         },
       },
     },
   };
+
+  // Real, editable contact info from Site Settings (falls back to our domain).
+  const g = settings || {};
+  const realEmail = g.contactEmail || g.emails?.info || 'info@kcc-bv.com';
+  const realPhone = g.contactPhone || g.phones?.primary || '';
+  const realAddress = (g.contactAddress?.[locale] || g.contactAddress?.en) || '';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -125,26 +129,10 @@ export default function ContactFormSection() {
   const l = (field: { en: string; ar: string }) => (locale === 'ar' ? field.ar : field.en);
 
   const contactItems = [
-    {
-      icon: Mail,
-      label: l(content.sidebar.email.label),
-      value: content.sidebar.email.value,
-    },
-    {
-      icon: Phone,
-      label: l(content.sidebar.phone.label),
-      value: content.sidebar.phone.value,
-    },
-    {
-      icon: MapPin,
-      label: l(content.sidebar.address.label),
-      value: l(content.sidebar.address.value),
-    },
-    {
-      icon: Clock,
-      label: l(content.sidebar.hours.label),
-      value: l(content.sidebar.hours.value),
-    },
+    { icon: Mail, label: l(content.sidebar.email.label), value: realEmail, href: `mailto:${realEmail}` },
+    ...(realPhone ? [{ icon: Phone, label: l(content.sidebar.phone.label), value: realPhone, href: `tel:${realPhone.replace(/\s+/g, '')}` }] : []),
+    ...(realAddress ? [{ icon: MapPin, label: l(content.sidebar.address.label), value: realAddress, href: '' }] : []),
+    { icon: Clock, label: l(content.sidebar.hours.label), value: l(content.sidebar.hours.value), href: '' },
   ];
 
   return (
@@ -184,7 +172,7 @@ export default function ContactFormSection() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="lg:col-span-3"
           >
-            <div className="glass-card p-6 sm:p-8">
+            <div className="glass-card p-6 sm:p-8 h-full">
               <AnimatePresence mode="wait">
                 {status === 'success' ? (
                   <motion.div
@@ -369,9 +357,13 @@ export default function ContactFormSection() {
                       <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-kcc-rose-light to-kcc-beige-light flex items-center justify-center flex-shrink-0 shadow-soft">
                         <Icon size={18} className="text-kcc-rose-dark" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-xs font-semibold text-cream-700 mb-1 uppercase tracking-wide">{item.label}</p>
-                        <p className="text-sm text-ink-700 font-medium">{item.value}</p>
+                        {item.href ? (
+                          <a href={item.href} className="text-sm text-ink-700 font-medium hover:text-kcc-rose-dark transition-colors break-words">{item.value}</a>
+                        ) : (
+                          <p className="text-sm text-ink-700 font-medium break-words">{item.value}</p>
+                        )}
                       </div>
                     </motion.div>
                   );

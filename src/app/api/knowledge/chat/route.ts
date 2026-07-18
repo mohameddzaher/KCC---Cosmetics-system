@@ -78,8 +78,8 @@ const builtInKnowledge: { keywords: string[]; keywordsAr: string[]; en: string; 
   {
     keywords: ['contact', 'reach', 'phone', 'email', 'address', 'location', 'office', 'call'],
     keywordsAr: ['تواصل', 'اتصل', 'هاتف', 'بريد', 'عنوان', 'موقع', 'مكتب'],
-    en: 'You can reach KCC through several channels:\n\n• **Website:** Use our Contact page to send a message\n• **Email:** info@kcc.sa\n• **Phone:** +966 53 848 6109 / +966 53 848 7021\n• **Location:** Riyadh, Saudi Arabia\n• **Working Hours:** Sunday–Thursday, 8 AM – 5 PM (AST)\n\nOur team typically responds within 24 business hours. For urgent inquiries, please call during business hours.',
-    ar: 'يمكنك التواصل مع KCC عبر عدة قنوات:\n\n• **الموقع:** استخدم صفحة الاتصال لإرسال رسالة\n• **البريد:** info@kcc.sa\n• **الهاتف:** +966 53 848 6109 / +966 53 848 7021\n• **الموقع:** الرياض، المملكة العربية السعودية\n• **ساعات العمل:** الأحد–الخميس، 8 صباحاً – 5 مساءً\n\nفريقنا يرد عادة خلال 24 ساعة عمل.',
+    en: 'You can reach KCC through several channels:\n\n• **Website:** Use our Contact page to send a message\n• **Email:** info@kcc-bv.com\n• **Phone:** +966 53 848 6109 / +966 53 848 7021\n• **Location:** Riyadh, Saudi Arabia\n• **Working Hours:** Sunday–Thursday, 8 AM – 5 PM (AST)\n\nOur team typically responds within 24 business hours. For urgent inquiries, please call during business hours.',
+    ar: 'يمكنك التواصل مع KCC عبر عدة قنوات:\n\n• **الموقع:** استخدم صفحة الاتصال لإرسال رسالة\n• **البريد:** info@kcc-bv.com\n• **الهاتف:** +966 53 848 6109 / +966 53 848 7021\n• **الموقع:** الرياض، المملكة العربية السعودية\n• **ساعات العمل:** الأحد–الخميس، 8 صباحاً – 5 مساءً\n\nفريقنا يرد عادة خلال 24 ساعة عمل.',
   },
   {
     keywords: ['quiz', 'survey', 'questionnaire', 'how to order', 'how does sample', 'sample flow', 'sample order', 'process', 'steps'],

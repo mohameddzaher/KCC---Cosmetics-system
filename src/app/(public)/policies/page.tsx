@@ -116,7 +116,7 @@ export default function PoliciesPage() {
                   <p>
                     You have the right to access, correct, or delete your personal information. You may also
                     have the right to restrict or object to certain processing of your data. To exercise these
-                    rights, please contact us at privacy@kcc.sa.
+                    rights, please contact us at privacy@kcc-bv.com.
                   </p>
                 </div>
 
@@ -125,7 +125,7 @@ export default function PoliciesPage() {
                   <p>
                     If you have any questions about this Privacy Policy, please contact us at:
                     <br />
-                    Email: privacy@kcc.sa
+                    Email: privacy@kcc-bv.com
                     <br />
                     Phone: +966 11 XXX XXXX
                     <br />
@@ -198,7 +198,7 @@ export default function PoliciesPage() {
                   <p>
                     For questions about these Terms of Service, please contact us at:
                     <br />
-                    Email: legal@kcc.sa
+                    Email: legal@kcc-bv.com
                     <br />
                     Phone: +966 11 XXX XXXX
                   </p>
