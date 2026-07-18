@@ -45,14 +45,35 @@ const testimonials: Testimonial[] = [
 export default function TestimonialsSection() {
   const { t, locale } = useLanguage();
   const [current, setCurrent] = useState(0);
+  const [list, setList] = useState<Testimonial[]>(testimonials);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/content/testimonials', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (cancelled || !Array.isArray(data) || data.length === 0) return;
+        setList(
+          data.map((d: any) => ({
+            quote: d.content || d.quote || { en: '', ar: '' },
+            name: d.name || { en: '', ar: '' },
+            company: d.company || { en: '', ar: '' },
+            rating: d.rating || 5,
+          }))
+        );
+        setCurrent(0);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const nextSlide = useCallback(() => {
-    setCurrent((prev) => (prev + 1) % testimonials.length);
-  }, []);
+    setCurrent((prev) => (prev + 1) % list.length);
+  }, [list.length]);
 
   const prevSlide = useCallback(() => {
-    setCurrent((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-  }, []);
+    setCurrent((prev) => (prev - 1 + list.length) % list.length);
+  }, [list.length]);
 
   // Auto-rotate every 5 seconds
   useEffect(() => {
@@ -60,7 +81,7 @@ export default function TestimonialsSection() {
     return () => clearInterval(timer);
   }, [nextSlide]);
 
-  const testimonial = testimonials[current];
+  const testimonial = list[Math.min(current, list.length - 1)] || list[0];
 
   return (
     <section className="relative py-16 lg:py-24 bg-cream-50 overflow-hidden">
@@ -155,7 +176,7 @@ export default function TestimonialsSection() {
 
             {/* Dots */}
             <div className="flex items-center gap-2">
-              {testimonials.map((_, index) => (
+              {list.map((_, index) => (
                 <button
                   key={index}
                   type="button"

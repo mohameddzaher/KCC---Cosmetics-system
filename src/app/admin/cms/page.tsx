@@ -20,6 +20,38 @@ const contentTabs = [
   { key: 'faqs', label: 'FAQs', icon: HelpCircle },
 ];
 
+// Tabs backed by dedicated content models (served by /api/content/[type]).
+// The rest (sections, vision2030) are CmsSection blocks served by /api/cms.
+const CONTENT_MODEL_TABS = ['services', 'testimonials', 'certificates', 'factories', 'portfolio', 'news', 'faqs'];
+const isContentTab = (tab: string) => CONTENT_MODEL_TABS.includes(tab);
+
+// Map the generic CMS form fields to each dedicated model's shape.
+function buildContentPayload(tab: string, f: any) {
+  const en = f.titleEn, ar = f.titleAr;
+  const dEn = f.descriptionEn, dAr = f.descriptionAr;
+  const title = { en, ar };
+  const description = { en: dEn, ar: dAr };
+  const base: any = { enabled: f.enabled };
+  switch (tab) {
+    case 'services':
+      return { ...base, title, description, icon: 'Beaker', image: '' };
+    case 'certificates':
+      return { ...base, title, description, issuer: { en: '', ar: '' }, imageUrl: '', issuedDate: new Date() };
+    case 'factories':
+      return { ...base, name: title, description, location: { en: f.subtitleEn, ar: f.subtitleAr }, capacity: { en: '', ar: '' }, imageUrl: '', features: [] };
+    case 'portfolio':
+      return { ...base, title, description, category: { en: f.subtitleEn, ar: f.subtitleAr }, client: '', imageUrl: '', slug: f.slug || en.toLowerCase().replace(/\s+/g, '-') };
+    case 'faqs':
+      return { ...base, question: title, answer: description, category: 'general' };
+    case 'testimonials':
+      return { ...base, name: title, company: { en: f.subtitleEn, ar: f.subtitleAr }, content: description, rating: 5 };
+    case 'news':
+      return { title, excerpt: { en: f.subtitleEn, ar: f.subtitleAr }, content: description, slug: f.slug || en.toLowerCase().replace(/\s+/g, '-'), status: f.enabled ? 'published' : 'draft', author: 'KCC' };
+    default:
+      return { ...base, title, description };
+  }
+}
+
 export default function CmsPage() {
   const { locale } = useLanguage();
   const [activeTab, setActiveTab] = useState('sections');
@@ -51,8 +83,8 @@ export default function CmsPage() {
   const loadItems = async (tab: string) => {
     setLoading(true);
     try {
-      const cmsType = tab === 'vision2030' ? 'vision2030' : tab;
-      const res = await fetch(`/api/cms?type=${cmsType}`);
+      const url = isContentTab(tab) ? `/api/content/${tab}?all=true` : `/api/cms?type=${tab === 'vision2030' ? 'vision2030' : tab}`;
+      const res = await fetch(url, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setItems(Array.isArray(data) ? data : []);
@@ -71,7 +103,8 @@ export default function CmsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this item?')) return;
     try {
-      const res = await fetch(`/api/cms/${id}`, { method: 'DELETE' });
+      const delUrl = isContentTab(activeTab) ? `/api/content/${activeTab}/${id}` : `/api/cms/${id}`;
+      const res = await fetch(delUrl, { method: 'DELETE' });
       if (res.ok) {
         setItems(prev => prev.filter(item => item._id !== id));
       } else {
@@ -88,7 +121,8 @@ export default function CmsPage() {
     const item = items.find(i => i._id === id);
     if (!item) return;
     try {
-      const res = await fetch(`/api/cms/${id}`, {
+      const toggleUrl = isContentTab(activeTab) ? `/api/content/${activeTab}/${id}` : `/api/cms/${id}`;
+      const res = await fetch(toggleUrl, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [field]: !item[field] }),
@@ -142,7 +176,9 @@ export default function CmsPage() {
 
   const handleSubmit = async () => {
     setSaving(true);
-    const payload: any = activeTab === 'vision2030'
+    const payload: any = isContentTab(activeTab)
+      ? buildContentPayload(activeTab, formData)
+      : activeTab === 'vision2030'
       ? {
         type: 'vision2030',
         slug: formData.slug || 'vision-2030-home',
@@ -172,9 +208,11 @@ export default function CmsPage() {
         enabled: formData.enabled,
       };
 
+    const createUrl = isContentTab(activeTab) ? `/api/content/${activeTab}` : '/api/cms';
+    const editUrl = isContentTab(activeTab) ? `/api/content/${activeTab}/${editItem?._id}` : `/api/cms/${editItem?._id}`;
     try {
       if (editItem) {
-        const res = await fetch(`/api/cms/${editItem._id}`, {
+        const res = await fetch(editUrl, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -189,7 +227,7 @@ export default function CmsPage() {
           alert(data.error || 'Failed to update');
         }
       } else {
-        const res = await fetch('/api/cms', {
+        const res = await fetch(createUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),

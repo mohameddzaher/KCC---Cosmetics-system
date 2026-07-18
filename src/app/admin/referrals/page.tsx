@@ -2,29 +2,34 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import {
-  Share2, Users, DollarSign, Loader2, Search,
-  CheckCircle, Clock, TrendingUp
+  Share2, DollarSign, Loader2, Search,
+  CheckCircle, Clock, Plus, Edit2, Trash2, X,
 } from 'lucide-react';
+import { useLivePoll } from '@/lib/useLivePoll';
 
 export default function ReferralsPage() {
   const [referrals, setReferrals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ referralCode: '', referredEmail: '', creditAmount: 0, status: 'pending' });
 
-  const loadReferrals = useCallback(async () => {
-    setLoading(true);
+  const loadReferrals = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
-      const res = await fetch('/api/referrals');
+      const res = await fetch('/api/referrals', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setReferrals(Array.isArray(data) ? data : []);
       } else {
         console.error('Failed to fetch referrals:', res.statusText);
-        setReferrals([]);
+        if (!silent) setReferrals([]);
       }
     } catch (error) {
       console.error('Failed to fetch referrals:', error);
-      setReferrals([]);
+      if (!silent) setReferrals([]);
     } finally {
       setLoading(false);
     }
@@ -33,6 +38,61 @@ export default function ReferralsPage() {
   useEffect(() => {
     loadReferrals();
   }, [loadReferrals]);
+
+  useLivePoll(useCallback(() => loadReferrals(true), [loadReferrals]), 20000);
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({ referralCode: '', referredEmail: '', creditAmount: 0, status: 'pending' });
+    setShowForm(true);
+  };
+
+  const openEdit = (ref: any) => {
+    setEditing(ref);
+    setForm({
+      referralCode: ref.referralCode || ref.referrerId?.referralCode || '',
+      referredEmail: ref.referredId?.email || '',
+      creditAmount: ref.creditAmount || 0,
+      status: ref.status || 'pending',
+    });
+    setShowForm(true);
+  };
+
+  const submit = async () => {
+    setSaving(true);
+    try {
+      if (editing) {
+        const res = await fetch(`/api/referrals/${editing._id}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: form.status, creditAmount: Number(form.creditAmount) }),
+        });
+        if (!res.ok) { const e = await res.json(); alert(e.error || 'Failed to update'); return; }
+      } else {
+        const res = await fetch('/api/referrals', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            manual: true,
+            referralCode: form.referralCode,
+            referredEmail: form.referredEmail,
+            creditAmount: Number(form.creditAmount),
+            status: form.status,
+          }),
+        });
+        if (!res.ok) { const e = await res.json(); alert(e.error || 'Failed to create referral'); return; }
+      }
+      setShowForm(false); setEditing(null);
+      loadReferrals();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async (ref: any) => {
+    if (!confirm('Delete this referral? Any credited amount will be reversed from the referrer balance.')) return;
+    const res = await fetch(`/api/referrals/${ref._id}`, { method: 'DELETE' });
+    if (res.ok) loadReferrals();
+    else { const e = await res.json(); alert(e.error || 'Failed to delete'); }
+  };
 
   const filteredReferrals = referrals.filter(r => {
     if (!searchQuery) return true;
@@ -115,17 +175,71 @@ export default function ReferralsPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-dark-500" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search by name, email, referral code, or order number..."
-          className="w-full ps-9 pe-3 py-2.5 text-sm bg-dark-900 border border-dark-800 rounded-xl text-dark-100 placeholder:text-dark-500 focus:border-kcc-green focus:outline-none"
-        />
+      {/* Search + Add */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[220px]">
+          <Search size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-dark-500" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, email, referral code, or order number..."
+            className="w-full ps-9 pe-3 py-2.5 text-sm bg-dark-900 border border-dark-800 rounded-xl text-dark-100 placeholder:text-dark-500 focus:border-kcc-green focus:outline-none"
+          />
+        </div>
+        <button type="button" onClick={openCreate}
+          className="flex items-center gap-2 px-3.5 py-2.5 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors">
+          <Plus size={16} /> Add Referral
+        </button>
       </div>
+
+      {/* Create / Edit form */}
+      {showForm && (
+        <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-dark-100">{editing ? 'Edit Referral' : 'Add Referral'}</h3>
+            <button type="button" onClick={() => { setShowForm(false); setEditing(null); }} className="text-dark-400 hover:text-dark-50" aria-label="Close"><X size={18} /></button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-dark-400 mb-1.5">Referrer Code</label>
+              <input type="text" value={form.referralCode} disabled={!!editing}
+                onChange={(e) => setForm(f => ({ ...f, referralCode: e.target.value.toUpperCase() }))}
+                placeholder="ABCD1234"
+                className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none disabled:opacity-50" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-dark-400 mb-1.5">Referred Email</label>
+              <input type="email" value={form.referredEmail} disabled={!!editing}
+                onChange={(e) => setForm(f => ({ ...f, referredEmail: e.target.value }))}
+                placeholder="customer@email.com"
+                className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none disabled:opacity-50" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-dark-400 mb-1.5">Credit Amount ($)</label>
+              <input type="number" aria-label="Credit amount" placeholder="0" value={form.creditAmount}
+                onChange={(e) => setForm(f => ({ ...f, creditAmount: Number(e.target.value) }))}
+                className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-dark-400 mb-1.5">Status</label>
+              <select value={form.status} onChange={(e) => setForm(f => ({ ...f, status: e.target.value }))}
+                title="Status" className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none">
+                <option value="pending">Pending</option>
+                <option value="credited">Credited</option>
+              </select>
+            </div>
+          </div>
+          {editing && <p className="mt-3 text-xs text-dark-500">Changing the status or credit will adjust the referrer&apos;s balance automatically.</p>}
+          <div className="flex justify-end gap-3 mt-5">
+            <button type="button" onClick={() => { setShowForm(false); setEditing(null); }} className="px-4 py-2 text-sm text-dark-400 border border-dark-700 rounded-lg hover:text-dark-50">Cancel</button>
+            <button type="button" onClick={submit} disabled={saving}
+              className="px-4 py-2 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors disabled:opacity-50">
+              {saving ? <Loader2 size={14} className="animate-spin inline mr-1" /> : null}{editing ? 'Update' : 'Create'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Referrals Table */}
       <div className="bg-dark-900 border border-dark-800 rounded-xl overflow-hidden">
@@ -150,6 +264,7 @@ export default function ReferralsPage() {
                   <th className="text-end text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Credit</th>
                   <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Order</th>
                   <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Date</th>
+                  <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-dark-800">
@@ -207,6 +322,14 @@ export default function ReferralsPage() {
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-sm text-dark-400">{formatDate(ref.createdAt)}</td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center justify-center gap-2">
+                          <button type="button" onClick={() => openEdit(ref)} title="Edit"
+                            className="p-1.5 text-dark-400 hover:text-kcc-green hover:bg-dark-800 rounded-lg transition-colors"><Edit2 size={15} /></button>
+                          <button type="button" onClick={() => remove(ref)} title="Delete"
+                            className="p-1.5 text-dark-400 hover:text-red-400 hover:bg-dark-800 rounded-lg transition-colors"><Trash2 size={15} /></button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}

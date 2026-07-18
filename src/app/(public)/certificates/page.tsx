@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Award, X, Calendar, Building2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -77,6 +77,33 @@ const certificates: Certificate[] = [
 export default function CertificatesPage() {
   const { t, locale } = useLanguage();
   const [selected, setSelected] = useState<Certificate | null>(null);
+  const [list, setList] = useState<Certificate[]>(certificates);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/content/certificates', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (cancelled || !Array.isArray(data) || data.length === 0) return;
+        setList(
+          data.map((c: any, i: number) => ({
+            id: c._id || String(i),
+            title: c.title?.en || '',
+            titleAr: c.title?.ar || '',
+            issuer: c.issuer?.en || '',
+            issuerAr: c.issuer?.ar || '',
+            date: c.issuedDate || '',
+            description: c.description?.en || '',
+            descriptionAr: c.description?.ar || '',
+            category: 'Certification',
+            categoryAr: 'شهادة',
+            image: c.imageUrl || certificates[i % certificates.length].image,
+          }))
+        );
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const getTitle = (cert: Certificate) => locale === 'ar' ? cert.titleAr : cert.title;
   const getIssuer = (cert: Certificate) => locale === 'ar' ? cert.issuerAr : cert.issuer;
@@ -102,7 +129,7 @@ export default function CertificatesPage() {
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="grid sm:grid-cols-2 gap-6">
-            {certificates.map((cert, i) => (
+            {list.map((cert, i) => (
               <motion.button
                 key={cert.id}
                 type="button"

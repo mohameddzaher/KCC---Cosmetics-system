@@ -87,7 +87,11 @@ const BriefQuestionSchema = new Schema<IBriefQuestion>(
     active: { type: Boolean, default: true },
     allowNote: { type: Boolean, default: true },
     conditions: { type: [ConditionSchema], default: [] },
-    category: { type: String, enum: ['hair', 'skin', 'general'], default: 'general' },
+    category: {
+      type: String,
+      enum: ['hair', 'skin', 'body', 'sun', 'baby', 'makeup', 'fragrance', 'hygiene', 'massage', 'oral', 'general'],
+      default: 'general',
+    },
   },
   { timestamps: true }
 );

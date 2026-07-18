@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, type ReactNode } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, Loader2, User, Mail, Building2, Phone,
-  MapPin, Globe, Calendar, Hash, DollarSign, Package,
-  Share2, CheckCircle, Clock, AlertCircle, Eye
+  MapPin, Globe, Calendar, DollarSign, Package,
+  Share2, CheckCircle, Clock, AlertCircle, Eye,
+  MessageCircle, Pencil, Save, X, UserCheck
 } from 'lucide-react';
+import ContactActions from '@/components/admin/ContactActions';
+import CrmPanel, { stageMeta } from '@/components/admin/CrmPanel';
 
 const statusColors: Record<string, string> = {
   'Submitted': 'bg-blue-500/10 text-blue-400',
@@ -28,19 +31,25 @@ export default function CustomerDetailPage() {
   const [customer, setCustomer] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [referrals, setReferrals] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [managers, setManagers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [form, setForm] = useState<any>({});
 
   const loadCustomer = useCallback(async () => {
-    setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/customers/${customerId}`);
+      const res = await fetch(`/api/customers/${customerId}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setCustomer(data.customer);
         setOrders(Array.isArray(data.orders) ? data.orders : []);
         setReferrals(Array.isArray(data.referrals) ? data.referrals : []);
+        setActivities(Array.isArray(data.activities) ? data.activities : []);
+        setManagers(Array.isArray(data.managers) ? data.managers : []);
       } else if (res.status === 404) {
         setError('Customer not found');
       } else {
@@ -60,6 +69,35 @@ export default function CustomerDetailPage() {
       loadCustomer();
     }
   }, [customerId, loadCustomer]);
+
+  const startEdit = () => {
+    setForm({
+      name: customer.name || '', email: customer.email || '',
+      company: customer.company || '', phone: customer.phone || '',
+      whatsapp: customer.whatsapp || '', website: customer.website || '',
+      country: customer.country || '', city: customer.city || '', address: customer.address || '',
+    });
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/customers/${customerId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const e = await res.json();
+        alert(e.error || 'Failed to save');
+        return;
+      }
+      setEditing(false);
+      loadCustomer();
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
@@ -102,19 +140,32 @@ export default function CustomerDetailPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link href="/admin/customers" className="p-2 text-dark-400 hover:text-kcc-green hover:bg-dark-800 rounded-lg transition-colors">
-          <ArrowLeft size={18} />
-        </Link>
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
+          <Link href="/admin/customers" className="p-2 text-dark-400 hover:text-kcc-green hover:bg-dark-800 rounded-lg transition-colors">
+            <ArrowLeft size={18} />
+          </Link>
           <div className="w-10 h-10 rounded-full bg-kcc-green/20 flex items-center justify-center text-kcc-green text-lg font-bold">
             {customer.name?.charAt(0) || '?'}
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-dark-50">{customer.name}</h1>
-            <p className="text-sm text-dark-400">{customer.email}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-lg font-semibold text-dark-50">{customer.name}</h1>
+              <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${stageMeta(customer.stage).color}`}>
+                {stageMeta(customer.stage).label}
+              </span>
+            </div>
+            <p className="text-sm text-dark-400">{customer.company || customer.email}</p>
           </div>
         </div>
+        {/* Quick contact actions */}
+        <ContactActions
+          phone={customer.phone}
+          whatsapp={customer.whatsapp}
+          email={customer.email}
+          website={customer.website}
+          size={17}
+        />
       </div>
 
       {/* Summary Cards */}
@@ -301,58 +352,69 @@ export default function CustomerDetailPage() {
         <div className="space-y-6">
           {/* Profile Info */}
           <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-dark-100 mb-4 flex items-center gap-2">
-              <User size={16} className="text-kcc-green" />
-              Profile
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-start gap-2.5">
-                <Mail size={14} className="text-dark-500 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-xs text-dark-400">Email</p>
-                  <p className="text-sm text-dark-100">{customer.email}</p>
-                </div>
-              </div>
-              {customer.company && (
-                <div className="flex items-start gap-2.5">
-                  <Building2 size={14} className="text-dark-500 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-xs text-dark-400">Company</p>
-                    <p className="text-sm text-dark-100">{customer.company}</p>
-                  </div>
-                </div>
-              )}
-              {customer.phone && (
-                <div className="flex items-start gap-2.5">
-                  <Phone size={14} className="text-dark-500 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-xs text-dark-400">Phone</p>
-                    <p className="text-sm text-dark-100">{customer.phone}</p>
-                  </div>
-                </div>
-              )}
-              {customer.country && (
-                <div className="flex items-start gap-2.5">
-                  <Globe size={14} className="text-dark-500 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-xs text-dark-400">Country</p>
-                    <p className="text-sm text-dark-100">
-                      {[customer.country, customer.city].filter(Boolean).join(', ')}
-                    </p>
-                  </div>
-                </div>
-              )}
-              {customer.address && (
-                <div className="flex items-start gap-2.5">
-                  <MapPin size={14} className="text-dark-500 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-xs text-dark-400">Address</p>
-                    <p className="text-sm text-dark-100">{customer.address}</p>
-                  </div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-dark-100 flex items-center gap-2">
+                <User size={16} className="text-kcc-green" />
+                Contact Details
+              </h2>
+              {!editing ? (
+                <button type="button" onClick={startEdit} className="inline-flex items-center gap-1 text-xs text-dark-400 hover:text-kcc-green">
+                  <Pencil size={13} /> Edit
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => setEditing(false)} className="inline-flex items-center gap-1 text-xs text-dark-400 hover:text-dark-100">
+                    <X size={13} /> Cancel
+                  </button>
+                  <button type="button" onClick={saveEdit} disabled={savingEdit} className="inline-flex items-center gap-1 text-xs text-kcc-green hover:text-kcc-green-light disabled:opacity-50">
+                    {savingEdit ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />} Save
+                  </button>
                 </div>
               )}
             </div>
+
+            {editing ? (
+              <div className="space-y-3">
+                {([
+                  ['name', 'Name'], ['email', 'Email'], ['company', 'Company'],
+                  ['phone', 'Phone'], ['whatsapp', 'WhatsApp'], ['website', 'Website'],
+                  ['country', 'Country'], ['city', 'City'], ['address', 'Address'],
+                ] as [string, string][]).map(([key, lbl]) => (
+                  <div key={key}>
+                    <label className="block text-xs text-dark-400 mb-1">{lbl}</label>
+                    <input
+                      type="text"
+                      aria-label={lbl}
+                      placeholder={lbl}
+                      value={form[key] ?? ''}
+                      onChange={(e) => setForm((f: any) => ({ ...f, [key]: e.target.value }))}
+                      className="w-full px-3 py-1.5 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <>
+                <ContactActions
+                  phone={customer.phone} whatsapp={customer.whatsapp}
+                  email={customer.email} website={customer.website}
+                  className="mb-4"
+                />
+                <div className="space-y-4">
+                  <Row icon={<Mail size={14} />} label="Email" value={customer.email} href={`mailto:${customer.email}`} />
+                  {customer.company && <Row icon={<Building2 size={14} />} label="Company" value={customer.company} />}
+                  {customer.phone && <Row icon={<Phone size={14} />} label="Phone" value={customer.phone} href={`tel:${customer.phone.replace(/\s+/g, '')}`} />}
+                  {customer.whatsapp && <Row icon={<MessageCircle size={14} />} label="WhatsApp" value={customer.whatsapp} href={`https://wa.me/${customer.whatsapp.replace(/[^\d]/g, '')}`} />}
+                  {customer.website && <Row icon={<Globe size={14} />} label="Website" value={customer.website} href={/^https?:\/\//i.test(customer.website) ? customer.website : `https://${customer.website}`} />}
+                  {(customer.country || customer.city) && <Row icon={<MapPin size={14} />} label="Location" value={[customer.city, customer.country].filter(Boolean).join(', ')} />}
+                  {customer.address && <Row icon={<MapPin size={14} />} label="Address" value={customer.address} />}
+                </div>
+              </>
+            )}
           </div>
+
+          {/* CRM: stage, manager, tags, activity timeline */}
+          <CrmPanel customer={customer} managers={managers} activities={activities} onChange={loadCustomer} />
 
           {/* Referral Info */}
           <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
@@ -398,6 +460,19 @@ export default function CustomerDetailPage() {
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
+                <span className="text-dark-400">Account Manager</span>
+                <span className="text-dark-100 inline-flex items-center gap-1.5">
+                  <UserCheck size={13} className="text-kcc-green" />
+                  {customer.accountManagerId?.name || 'Unassigned'}
+                </span>
+              </div>
+              {customer.lastContactedAt && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-dark-400">Last Contacted</span>
+                  <span className="text-dark-200">{formatDate(customer.lastContactedAt)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between text-sm">
                 <span className="text-dark-400">Language</span>
                 <span className="text-dark-100">{customer.languagePref === 'ar' ? 'Arabic' : 'English'}</span>
               </div>
@@ -412,6 +487,23 @@ export default function CustomerDetailPage() {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function Row({ icon, label, value, href }: { icon: ReactNode; label: string; value: string; href?: string }) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <span className="text-dark-500 mt-0.5 shrink-0">{icon}</span>
+      <div className="min-w-0">
+        <p className="text-xs text-dark-400">{label}</p>
+        {href ? (
+          <a href={href} target={href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer"
+            className="text-sm text-dark-100 hover:text-kcc-green break-words">{value}</a>
+        ) : (
+          <p className="text-sm text-dark-100 break-words">{value}</p>
+        )}
       </div>
     </div>
   );

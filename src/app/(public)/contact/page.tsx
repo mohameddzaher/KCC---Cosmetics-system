@@ -16,6 +16,7 @@ export default function ContactPage() {
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const update = (key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -24,20 +25,22 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setSuccess(true);
         setForm({ name: '', email: '', phone: '', company: '', message: '' });
+      } else {
+        setError(data.error || 'Something went wrong. Please try again.');
       }
     } catch {
-      // Demo fallback
-      setSuccess(true);
-      setForm({ name: '', email: '', phone: '', company: '', message: '' });
+      setError('Network error. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -182,6 +185,9 @@ export default function ContactPage() {
                       placeholder={t('contact.messagePlaceholder')}
                     />
                   </div>
+                  {error && (
+                    <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</p>
+                  )}
                   <button
                     type="submit"
                     disabled={loading}

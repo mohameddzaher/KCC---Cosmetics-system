@@ -1,8 +1,14 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Beaker, FlaskConical, ShieldCheck, Package, Truck, FileCheck } from 'lucide-react';
+import { Beaker, FlaskConical, ShieldCheck, Package, Truck, FileCheck, Factory } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+
+const ICONS: Record<string, LucideIcon> = {
+  Beaker, FlaskConical, ShieldCheck, Package, Truck, FileCheck, Factory,
+};
 
 const services = [
   {
@@ -88,6 +94,27 @@ const cardVariants = {
 
 export default function ServicesSection() {
   const { t, locale } = useLanguage();
+  const [items, setItems] = useState(services);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/content/services', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (cancelled || !Array.isArray(data) || data.length === 0) return;
+        setItems(
+          data.map((s: any, i: number) => ({
+            icon: ICONS[s.icon] || Beaker,
+            title: s.title || { en: '', ar: '' },
+            description: s.description || { en: '', ar: '' },
+            image: s.image || services[i % services.length].image,
+            accent: (i % 2 === 0 ? 'rose' : 'champagne') as 'rose' | 'champagne',
+          }))
+        );
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <section className="relative py-16 lg:py-24 bg-cream-radial overflow-hidden">
@@ -124,7 +151,7 @@ export default function ServicesSection() {
           viewport={{ once: true }}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
         >
-          {services.map((service, index) => {
+          {items.map((service, index) => {
             const Icon = service.icon;
             const cardClass = service.accent === 'rose' ? 'glass-card-blush' : 'glass-card-champagne';
             const iconBg = service.accent === 'rose'

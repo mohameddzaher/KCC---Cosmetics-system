@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -28,12 +28,35 @@ const demoItems: PortfolioItem[] = [
 ];
 
 export default function PortfolioPage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [activeCategory, setActiveCategory] = useState('All');
+  const [list, setList] = useState<PortfolioItem[]>(demoItems);
+
+  useEffect(() => {
+    let cancelled = false;
+    const pick = (v: any) => (typeof v === 'object' && v ? (v[locale] || v.en || '') : (v || ''));
+    fetch('/api/content/portfolio', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (cancelled || !Array.isArray(data) || data.length === 0) return;
+        setList(
+          data.map((p: any, i: number) => ({
+            id: p._id || String(i),
+            title: pick(p.title),
+            category: pick(p.category) || 'Skincare',
+            client: p.client || '',
+            description: pick(p.description),
+            image: p.imageUrl || demoItems[i % demoItems.length].image,
+          }))
+        );
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [locale]);
 
   const filtered = activeCategory === 'All'
-    ? demoItems
-    : demoItems.filter((item) => item.category === activeCategory);
+    ? list
+    : list.filter((item) => item.category === activeCategory);
 
   return (
     <div className="min-h-screen bg-cream-100">

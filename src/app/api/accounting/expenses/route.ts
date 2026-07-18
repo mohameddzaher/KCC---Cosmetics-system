@@ -43,8 +43,15 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     const body = await req.json();
+    // Explicit allowlist — never spread raw request body into create().
     const expense = await Expense.create({
-      ...body,
+      category: body.category,
+      description: body.description,
+      amount: Number(body.amount) || 0,
+      date: body.date ? new Date(body.date) : new Date(),
+      vendor: body.vendor,
+      reference: body.reference,
+      notes: body.notes,
       createdBy: user.id,
     });
 

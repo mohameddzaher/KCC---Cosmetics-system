@@ -6,6 +6,7 @@ import {
   Search, Filter, Download, Eye, ChevronLeft, ChevronRight,
   ShoppingCart, Package, Calendar, Loader2
 } from 'lucide-react';
+import { useLivePoll } from '@/lib/useLivePoll';
 
 const statusBadgeClasses: Record<string, string> = {
   'Submitted': 'bg-blue-500/10 text-blue-400',
@@ -36,8 +37,8 @@ export default function OrdersPage() {
   const [totalOrders, setTotalOrders] = useState(0);
   const itemsPerPage = 20;
 
-  const loadOrders = useCallback(async () => {
-    setLoading(true);
+  const loadOrders = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const params = new URLSearchParams();
       params.set('page', String(currentPage));
@@ -45,18 +46,18 @@ export default function OrdersPage() {
       if (typeFilter !== 'all') params.set('type', typeFilter);
       if (statusFilter !== 'All') params.set('status', statusFilter);
 
-      const res = await fetch(`/api/orders?${params.toString()}`);
+      const res = await fetch(`/api/orders?${params.toString()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setOrders(data.orders || []);
         setTotalOrders(data.pagination?.total || 0);
       } else {
         console.error('Failed to fetch orders:', res.statusText);
-        setOrders([]);
+        if (!silent) setOrders([]);
       }
     } catch (error) {
       console.error('Failed to fetch orders:', error);
-      setOrders([]);
+      if (!silent) setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -65,6 +66,8 @@ export default function OrdersPage() {
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+
+  useLivePoll(useCallback(() => loadOrders(true), [loadOrders]), 20000);
 
   // Client-side filtering for search and date range (server already filtered type/status)
   const filteredOrders = orders.filter(order => {

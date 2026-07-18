@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Factory as FactoryIcon, Gauge, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -70,7 +71,32 @@ const demoFactories: FactoryData[] = [
 ];
 
 export default function FactoriesPage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const [list, setList] = useState<FactoryData[]>(demoFactories);
+
+  useEffect(() => {
+    let cancelled = false;
+    const pick = (v: any) => (typeof v === 'object' && v ? (v[locale] || v.en || '') : (v || ''));
+    fetch('/api/content/factories', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (cancelled || !Array.isArray(data) || data.length === 0) return;
+        setList(
+          data.map((f: any, i: number) => ({
+            id: f._id || String(i),
+            name: pick(f.name),
+            location: pick(f.location),
+            capacity: pick(f.capacity),
+            area: f.area || demoFactories[i % demoFactories.length].area,
+            features: Array.isArray(f.features) ? f.features.map((x: any) => pick(x)) : [],
+            description: pick(f.description),
+            image: f.imageUrl || demoFactories[i % demoFactories.length].image,
+          }))
+        );
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [locale]);
 
   return (
     <div className="min-h-screen bg-cream-100">
@@ -90,7 +116,7 @@ export default function FactoriesPage() {
       {/* Factories */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto space-y-8">
-          {demoFactories.map((factory, i) => (
+          {list.map((factory, i) => (
             <motion.div
               key={factory.id}
               initial={{ opacity: 0, y: 20 }}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import KnowledgeArticle from '@/models/KnowledgeArticle';
 import { getSession } from '@/lib/auth';
+import { escapeRegex } from '@/lib/api-helpers';
 
 export async function GET(req: NextRequest) {
   try {
@@ -29,14 +30,15 @@ export async function GET(req: NextRequest) {
 
     if (q) {
       const searchTerms = q.toLowerCase().split(/\s+/).filter(Boolean);
+      const safe = escapeRegex(q);
 
-      // Search across keywords, question, and answer fields
+      // Search across keywords, question, and answer fields (regex escaped → no ReDoS)
       filter.$or = [
         { keywords: { $in: searchTerms } },
-        { 'question.en': { $regex: q, $options: 'i' } },
-        { 'question.ar': { $regex: q, $options: 'i' } },
-        { 'answer.en': { $regex: q, $options: 'i' } },
-        { 'answer.ar': { $regex: q, $options: 'i' } },
+        { 'question.en': { $regex: safe, $options: 'i' } },
+        { 'question.ar': { $regex: safe, $options: 'i' } },
+        { 'answer.en': { $regex: safe, $options: 'i' } },
+        { 'answer.ar': { $regex: safe, $options: 'i' } },
       ];
     }
 

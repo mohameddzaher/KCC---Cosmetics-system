@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   ArrowLeft, Loader2, Save, Package, User, CreditCard,
   FileText, Calendar, Clock, MapPin, Phone, Mail, Building2,
-  Hash, DollarSign, Truck, CheckCircle, AlertCircle
+  Hash, DollarSign, Truck, CheckCircle, AlertCircle, Trash2
 } from 'lucide-react';
 
 const ORDER_STATUSES = [
@@ -81,6 +81,22 @@ export default function OrderDetailPage() {
       loadOrder();
     }
   }, [orderId, loadOrder]);
+
+  const handleDelete = async () => {
+    if (!confirm('Permanently delete this order? This cannot be undone.')) return;
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
+      if (res.ok) {
+        router.push('/admin/orders');
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to delete order');
+      }
+    } catch (err) {
+      console.error('Failed to delete order:', err);
+      alert('Failed to delete order');
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -175,15 +191,25 @@ export default function OrderDetailPage() {
             </div>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors disabled:opacity-50"
-        >
-          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-          Save Changes
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 rounded-lg transition-colors"
+          >
+            <Trash2 size={14} />
+            Delete
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            Save Changes
+          </button>
+        </div>
       </div>
 
       {/* Success message */}

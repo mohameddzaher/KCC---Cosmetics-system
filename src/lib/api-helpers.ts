@@ -42,6 +42,11 @@ export async function withDB(
   };
 }
 
+/** Escape a user-supplied string so it is safe to use inside a Mongo $regex (prevents ReDoS/injection). */
+export function escapeRegex(input: string): string {
+  return String(input).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function generateOrderNumber(type: 'sample' | 'bulk'): string {
   const prefix = type === 'sample' ? 'SMP' : 'BLK';
   const timestamp = Date.now().toString(36).toUpperCase();

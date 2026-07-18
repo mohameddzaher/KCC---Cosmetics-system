@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useLivePoll } from '@/lib/useLivePoll';
 import {
   ShoppingCart, Package, DollarSign, AlertTriangle,
   TrendingUp, ArrowRight, Eye, Loader2, Users,
@@ -111,10 +112,15 @@ export default function AdminDashboard() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
   useEffect(() => {
     setMounted(true);
     fetchDashboardData();
   }, []);
+
+  // Live: silently refresh every 15s and on focus
+  useLivePoll(useCallback(() => { fetchDashboardData(true); }, []), 15000);
 
   const fetchDashboardData = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
@@ -147,6 +153,7 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLastUpdated(new Date());
     }
   };
 
@@ -478,15 +485,29 @@ export default function AdminDashboard() {
           <h2 className="text-xl font-bold text-dark-50">{t('admin.dashboardOverview')}</h2>
           <p className="text-sm text-dark-400 mt-0.5">{t('admin.dashboardSubtitle')}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => fetchDashboardData(true)}
-          disabled={refreshing}
-          className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-dark-300 bg-dark-900 border border-dark-800 rounded-lg hover:border-dark-700 hover:text-dark-50 transition-all disabled:opacity-50"
-        >
-          <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-          {refreshing ? t('common.refreshing') : t('common.refresh')}
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-xs text-dark-400" title="Auto-updates every 15s">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-kcc-green opacity-75 animate-ping"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-kcc-green"></span>
+            </span>
+            Live
+            {lastUpdated && (
+              <span className="hidden sm:inline text-dark-500">
+                · {lastUpdated.toLocaleTimeString(locale === 'ar' ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => fetchDashboardData(true)}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-dark-300 bg-dark-900 border border-dark-800 rounded-lg hover:border-dark-700 hover:text-dark-50 transition-all disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+            {refreshing ? t('common.refreshing') : t('common.refresh')}
+          </button>
+        </div>
       </div>
 
       {/* ═══════  STAT CARDS (2 rows of 4)  ═══════ */}

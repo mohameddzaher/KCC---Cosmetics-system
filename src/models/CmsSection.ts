@@ -21,7 +21,7 @@ const CmsSectionSchema = new Schema<ICmsSection>(
     type: {
       type: String,
       required: true,
-      enum: ['hero', 'services', 'stats', 'process', 'clients', 'testimonials', 'about', 'technology', 'cta', 'footer', 'vision2030'],
+      enum: ['hero', 'services', 'stats', 'process', 'clients', 'testimonials', 'about', 'technology', 'cta', 'footer', 'vision2030', 'news'],
     },
     slug: { type: String, required: true, unique: true, trim: true },
     order: { type: Number, default: 0 },

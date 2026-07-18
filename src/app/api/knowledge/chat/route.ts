@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/rateLimit';
 import connectDB from '@/lib/db';
 import KnowledgeArticle from '@/models/KnowledgeArticle';
 
@@ -291,10 +292,17 @@ async function generateOpenAIResponse(
 
 export async function POST(req: NextRequest) {
   try {
+    // Throttle to protect the OpenAI billing budget from abuse.
+    const limited = rateLimit(req, 'chat', 20, 60 * 1000);
+    if (limited) return limited;
+
     const body: ChatRequest = await req.json();
 
     if (!body.message || typeof body.message !== 'string') {
       return NextResponse.json({ error: 'message is required' }, { status: 400 });
+    }
+    if (body.message.length > 2000) {
+      return NextResponse.json({ error: 'message is too long' }, { status: 400 });
     }
 
     const locale = body.locale === 'ar' ? 'ar' : 'en';
