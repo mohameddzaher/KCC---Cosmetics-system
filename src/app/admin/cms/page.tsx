@@ -26,6 +26,14 @@ const contentTabs = [
 const CONTENT_MODEL_TABS = ['services', 'testimonials', 'certificates', 'factories', 'portfolio', 'news', 'faqs'];
 const isContentTab = (tab: string) => CONTENT_MODEL_TABS.includes(tab);
 
+// Safely resolve a value that may be a plain string or a { en, ar } object.
+function pickField(v: any, locale: string): string {
+  if (v == null) return '';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'object') return v[locale] || v.en || '';
+  return String(v);
+}
+
 // Map the generic CMS form fields to each dedicated model's shape.
 function buildContentPayload(tab: string, f: any) {
   const en = f.titleEn, ar = f.titleAr;
@@ -259,10 +267,11 @@ export default function CmsPage() {
     if (item.fields?.[locale]?.title || item.fields?.en?.title) {
       return item.fields?.[locale]?.title || item.fields?.en?.title;
     }
-    if (item.title) return item.title[locale] || item.title.en;
-    if (item.name) return item.name[locale] || item.name.en;
-    if (item.question) return item.question[locale] || item.question.en;
+    if (item.title) return pickField(item.title, locale);
+    if (item.name) return pickField(item.name, locale);
+    if (item.question) return pickField(item.question, locale);
     if (item.clientName) return item.clientName;
+    if (item.client) return item.client;
     if (item.key) return item.key;
     return 'Untitled';
   };
@@ -271,13 +280,14 @@ export default function CmsPage() {
     if (item.fields?.[locale]?.description || item.fields?.en?.description) {
       return item.fields?.[locale]?.description || item.fields?.en?.description;
     }
-    if (item.description) return item.description[locale] || item.description.en;
-    if (item.text) return item.text[locale] || item.text.en;
-    if (item.answer) return (item.answer[locale] || item.answer.en)?.substring(0, 80) + '...';
-    if (item.location) return item.location[locale] || item.location.en;
-    if (item.company) return item.company;
-    if (item.issuer) return item.issuer;
-    if (item.category) return item.category;
+    if (item.description) return pickField(item.description, locale);
+    if (item.content) return pickField(item.content, locale).substring(0, 80) + '…';
+    if (item.text) return pickField(item.text, locale);
+    if (item.answer) return pickField(item.answer, locale).substring(0, 80) + '…';
+    if (item.location) return pickField(item.location, locale);
+    if (item.company) return pickField(item.company, locale);
+    if (item.issuer) return pickField(item.issuer, locale);
+    if (item.category) return pickField(item.category, locale);
     if (item.slug) return `/${item.slug}`;
     return '';
   };

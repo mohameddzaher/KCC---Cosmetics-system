@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import ReviewForm from './ReviewForm';
 
 interface Testimonial {
   quote: { en: string; ar: string };
@@ -201,6 +202,9 @@ export default function TestimonialsSection() {
             </button>
           </div>
         </motion.div>
+
+        {/* Let visitors submit their own review */}
+        <ReviewForm />
       </div>
     </section>
   );
