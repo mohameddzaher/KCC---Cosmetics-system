@@ -35,14 +35,16 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-3">
               {[
-                { Icon: Facebook, label: 'Facebook' },
-                { Icon: Twitter, label: 'Twitter' },
-                { Icon: Linkedin, label: 'LinkedIn' },
-                { Icon: Instagram, label: 'Instagram' },
-              ].map(({ Icon, label }) => (
+                { Icon: Facebook, label: 'Facebook', href: 'https://www.facebook.com/' },
+                { Icon: Instagram, label: 'Instagram', href: 'https://www.instagram.com/' },
+                { Icon: Linkedin, label: 'LinkedIn', href: 'https://www.linkedin.com/' },
+                { Icon: Twitter, label: 'Twitter', href: 'https://twitter.com/' },
+              ].map(({ Icon, label, href }) => (
                 <a
                   key={label}
-                  href="#"
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label={label}
                   title={label}
                   className="p-2 rounded-xl bg-espresso-700/60 border border-cream-300/10 text-cream-200 hover:text-kcc-rose hover:border-kcc-rose/40 hover:bg-espresso-600/60 transition-all"
