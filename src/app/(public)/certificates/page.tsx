@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Award, X, Calendar, Building2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import PageHero from '@/components/public/PageHero';
+import { onImgError } from '@/lib/imageFallback';
 
 interface Certificate {
   id: string;
@@ -138,6 +139,7 @@ export default function CertificatesPage() {
                 {/* Certificate image */}
                 <div className="aspect-[3/2] rounded-xl overflow-hidden border border-cream-400 mb-5 relative">
                   <img
+                    onError={onImgError}
                     src={cert.image}
                     alt={getTitle(cert)}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -195,6 +197,7 @@ export default function CertificatesPage() {
               {/* Header image */}
               <div className="aspect-[2/1] relative overflow-hidden">
                 <img
+                  onError={onImgError}
                   src={selected.image}
                   alt={getTitle(selected)}
                   className="w-full h-full object-cover"

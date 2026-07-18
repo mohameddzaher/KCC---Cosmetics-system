@@ -16,7 +16,7 @@ interface PageHeroProps {
  */
 export default function PageHero({ title, subtitle, image, eyebrow }: PageHeroProps) {
   return (
-    <section className="relative -mt-16 flex items-center justify-center overflow-hidden bg-espresso-950 min-h-[48vh] sm:min-h-[54vh] pt-28 pb-16 px-4">
+    <section className="relative -mt-16 flex items-center justify-center overflow-hidden bg-espresso-950 min-h-[300px] sm:min-h-[340px] pt-28 pb-12 px-4">
       {/* Background image */}
       {image && (
         <div className="absolute inset-0">

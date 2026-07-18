@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Calendar, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import PageHero from '@/components/public/PageHero';
+import { onImgError } from '@/lib/imageFallback';
 
 interface NewsItem {
   slug: string;
@@ -125,7 +126,8 @@ export default function NewsPage() {
                   {/* News image */}
                   <div className="aspect-video overflow-hidden relative">
                     <img
-                      src={newsImages[item.slug] || 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=800&q=80'}
+                      onError={onImgError}
+                      src={item.imageUrl || newsImages[item.slug] || 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=800&q=80'}
                       alt={item.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />

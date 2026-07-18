@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, Calendar } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { onImgError } from '@/lib/imageFallback';
 
 interface NewsItem {
   id: string;
@@ -131,6 +132,7 @@ export default function NewsSection() {
                 {/* Image */}
                 <div className="relative h-48 overflow-hidden">
                   <img
+                    onError={onImgError}
                     src={item.image}
                     alt={locale === 'ar' ? item.title.ar : item.title.en}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"

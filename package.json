@@ -13,7 +13,8 @@
     "lint": "eslint",
     "seed": "npx tsx scripts/seed.ts",
     "sync:questions": "npx tsx scripts/sync-brief-questions.ts",
-    "sync:categories": "npx tsx scripts/sync-categories.ts"
+    "sync:categories": "npx tsx scripts/sync-categories.ts",
+    "enrich:content": "npx tsx scripts/enrich-content.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

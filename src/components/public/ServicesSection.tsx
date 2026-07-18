@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Beaker, FlaskConical, ShieldCheck, Package, Truck, FileCheck, Factory } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { onImgError } from '@/lib/imageFallback';
 
 const ICONS: Record<string, LucideIcon> = {
   Beaker, FlaskConical, ShieldCheck, Package, Truck, FileCheck, Factory,
@@ -149,7 +150,9 @@ export default function ServicesSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+          className={`grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8 ${
+            items.length % 3 === 0 ? 'lg:grid-cols-3' : items.length % 2 === 0 ? 'lg:grid-cols-2 max-w-4xl mx-auto' : 'lg:grid-cols-3'
+          }`}
         >
           {items.map((service, index) => {
             const Icon = service.icon;
@@ -170,6 +173,7 @@ export default function ServicesSection() {
                 <div className="relative h-44 sm:h-48 overflow-hidden">
                   <img
                     src={service.image}
+                    onError={onImgError}
                     alt={locale === 'ar' ? service.title.ar : service.title.en}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />

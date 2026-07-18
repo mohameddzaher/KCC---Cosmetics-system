@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import PageHero from '@/components/public/PageHero';
+import { onImgError } from '@/lib/imageFallback';
 
 interface PortfolioItem {
   id: string;
@@ -32,6 +35,7 @@ export default function PortfolioPage() {
   const { t, locale } = useLanguage();
   const [activeCategory, setActiveCategory] = useState('All');
   const [list, setList] = useState<PortfolioItem[]>(demoItems);
+  const [selected, setSelected] = useState<PortfolioItem | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,11 +104,13 @@ export default function PortfolioPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
-                  className="group bg-white border border-cream-300 shadow-soft rounded-2xl overflow-hidden hover:border-cream-400 transition-all"
+                  onClick={() => setSelected(item)}
+                  className="group bg-white border border-cream-300 shadow-soft rounded-2xl overflow-hidden hover:border-kcc-rose/40 hover:shadow-soft-lg cursor-pointer transition-all"
                 >
                   {/* Product image */}
                   <div className="aspect-square overflow-hidden relative">
                     <img
+                      onError={onImgError}
                       src={item.image}
                       alt={item.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -134,6 +140,40 @@ export default function PortfolioPage() {
           )}
         </div>
       </section>
+
+      {/* Detail modal */}
+      <AnimatePresence>
+        {selected && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setSelected(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-espresso-950/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl overflow-hidden max-w-lg w-full shadow-soft-lg max-h-[90vh] overflow-y-auto"
+            >
+              <div className="relative aspect-video overflow-hidden">
+                <img onError={onImgError} src={selected.image} alt={selected.title} className="w-full h-full object-cover" />
+                <button type="button" onClick={() => setSelected(null)} aria-label="Close"
+                  className="absolute top-3 end-3 w-9 h-9 rounded-full bg-white/90 text-ink-700 flex items-center justify-center hover:bg-white">
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="p-6">
+                <span className="inline-block text-xs font-medium text-kcc-beige-dark bg-kcc-beige/10 px-2.5 py-1 rounded-full mb-3">{selected.category}</span>
+                <h3 className="text-xl font-bold text-ink-700 mb-1">{selected.title}</h3>
+                {selected.client && <p className="text-sm text-cream-800 mb-3">Client: {selected.client}</p>}
+                <p className="text-sm text-cream-700 leading-relaxed mb-5">{selected.description}</p>
+                <Link href="/order/sample" className="inline-flex items-center gap-2 px-5 py-2.5 bg-kcc-green hover:bg-kcc-green-light text-white text-sm font-semibold rounded-xl transition-colors">
+                  {t('order.sampleTitle') || 'Request a similar product'}
+                </Link>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

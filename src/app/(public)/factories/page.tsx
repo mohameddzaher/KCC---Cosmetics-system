@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { MapPin, Factory as FactoryIcon, Gauge, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import PageHero from '@/components/public/PageHero';
+import { onImgError } from '@/lib/imageFallback';
 
 interface FactoryData {
   id: string;
@@ -124,6 +125,7 @@ export default function FactoriesPage() {
                 {/* Factory image */}
                 <div className="lg:col-span-2 aspect-video lg:aspect-auto overflow-hidden min-h-[250px] relative">
                   <img
+                    onError={onImgError}
                     src={factory.image}
                     alt={factory.name}
                     className="w-full h-full object-cover"
