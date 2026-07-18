@@ -68,47 +68,45 @@ This achievement positions KCC as one of the few cosmetics manufacturers in Saud
 };
 
 export default function NewsArticlePage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const params = useParams();
   const slug = params.slug as string;
   const [article, setArticle] = useState<NewsPost | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchArticle = async () => {
+    let cancelled = false;
+    const pick = (v: any) => (typeof v === 'object' && v ? (v[locale] || v.en || '') : (v || ''));
+    (async () => {
       try {
-        const res = await fetch(`/api/cms?type=news&slug=${slug}`);
+        const res = await fetch('/api/content/news', { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
-          if (data.item) {
-            setArticle(data.item);
+          const found = Array.isArray(data) ? data.find((n: any) => n.slug === slug) : null;
+          if (found && !cancelled) {
+            setArticle({
+              slug: found.slug,
+              title: pick(found.title),
+              content: pick(found.content),
+              excerpt: pick(found.excerpt),
+              date: found.publishedAt || found.createdAt || '',
+              author: found.author || 'KCC Team',
+              category: (Array.isArray(found.tags) && found.tags[0]) || 'News',
+            });
             setLoading(false);
             return;
           }
         }
       } catch {
-        // Fall back to demo data
+        // fall through to demo/not-found
       }
-
-      // Demo fallback
-      const demo = demoArticles[slug];
-      if (demo) {
-        setArticle(demo);
-      } else {
-        setArticle({
-          slug,
-          title: slug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-          content: 'This article content is coming soon. Check back later for the full story.',
-          excerpt: '',
-          date: new Date().toISOString().split('T')[0],
-          author: 'KCC Team',
-          category: 'News',
-        });
-      }
+      if (cancelled) return;
+      // Demo fallback (for the seeded demo slugs), otherwise mark as not found.
+      setArticle(demoArticles[slug] || null);
       setLoading(false);
-    };
-    fetchArticle();
-  }, [slug]);
+    })();
+    return () => { cancelled = true; };
+  }, [slug, locale]);
 
   if (loading) {
     return (
@@ -118,7 +116,19 @@ export default function NewsArticlePage() {
     );
   }
 
-  if (!article) return null;
+  if (!article) {
+    return (
+      <div className="min-h-screen bg-cream-100 flex items-center justify-center px-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-ink-700 mb-3">{locale === 'ar' ? 'المقال غير موجود' : 'Article not found'}</h1>
+          <p className="text-cream-700 mb-6">{locale === 'ar' ? 'المقال اللي بتدور عليه مش موجود أو اتشال.' : "The article you're looking for doesn't exist or was removed."}</p>
+          <Link href="/news" className="inline-flex items-center gap-2 px-5 py-2.5 bg-kcc-green hover:bg-kcc-green-light text-white rounded-xl transition-colors">
+            <ArrowLeft size={16} /> {t('news.title')}
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-cream-100">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import ImageUpload from '@/components/admin/ImageUpload';
 import {
   Plus, Edit2, Trash2, Eye, ChevronDown, Loader2,
   FileText, Briefcase, MessageSquare, Award, Factory,
@@ -32,21 +33,22 @@ function buildContentPayload(tab: string, f: any) {
   const title = { en, ar };
   const description = { en: dEn, ar: dAr };
   const base: any = { enabled: f.enabled };
+  const img = f.imageUrl || '';
   switch (tab) {
     case 'services':
-      return { ...base, title, description, icon: 'Beaker', image: '' };
+      return { ...base, title, description, icon: 'Beaker', image: img };
     case 'certificates':
-      return { ...base, title, description, issuer: { en: '', ar: '' }, imageUrl: '', issuedDate: new Date() };
+      return { ...base, title, description, issuer: { en: '', ar: '' }, imageUrl: img, issuedDate: new Date() };
     case 'factories':
-      return { ...base, name: title, description, location: { en: f.subtitleEn, ar: f.subtitleAr }, capacity: { en: '', ar: '' }, imageUrl: '', features: [] };
+      return { ...base, name: title, description, location: { en: f.subtitleEn, ar: f.subtitleAr }, capacity: { en: '', ar: '' }, imageUrl: img, features: [] };
     case 'portfolio':
-      return { ...base, title, description, category: { en: f.subtitleEn, ar: f.subtitleAr }, client: '', imageUrl: '', slug: f.slug || en.toLowerCase().replace(/\s+/g, '-') };
+      return { ...base, title, description, category: { en: f.subtitleEn, ar: f.subtitleAr }, client: '', imageUrl: img, slug: f.slug || en.toLowerCase().replace(/\s+/g, '-') };
     case 'faqs':
       return { ...base, question: title, answer: description, category: 'general' };
     case 'testimonials':
-      return { ...base, name: title, company: { en: f.subtitleEn, ar: f.subtitleAr }, content: description, rating: 5 };
+      return { ...base, name: title, company: { en: f.subtitleEn, ar: f.subtitleAr }, content: description, rating: 5, avatar: img };
     case 'news':
-      return { title, excerpt: { en: f.subtitleEn, ar: f.subtitleAr }, content: description, slug: f.slug || en.toLowerCase().replace(/\s+/g, '-'), status: f.enabled ? 'published' : 'draft', author: 'KCC' };
+      return { title, excerpt: { en: f.subtitleEn, ar: f.subtitleAr }, content: description, slug: f.slug || en.toLowerCase().replace(/\s+/g, '-'), status: f.enabled ? 'published' : 'draft', author: 'KCC', imageUrl: img };
     default:
       return { ...base, title, description };
   }
@@ -72,6 +74,7 @@ export default function CmsPage() {
     descriptionEn: '',
     descriptionAr: '',
     slug: '',
+    imageUrl: '',
     type: '',
     enabled: true,
   });
@@ -150,6 +153,7 @@ export default function CmsPage() {
       descriptionEn: fieldsEn.description || item.description?.en || item.text?.en || item.answer?.en || item.location?.en || '',
       descriptionAr: fieldsAr.description || item.description?.ar || item.text?.ar || item.answer?.ar || item.location?.ar || '',
       slug: item.slug || '',
+      imageUrl: item.imageUrl || item.image || item.avatar || '',
       type: item.type || (activeTab === 'vision2030' ? 'vision2030' : activeTab),
       enabled: item.enabled !== false,
     });
@@ -168,6 +172,7 @@ export default function CmsPage() {
       descriptionEn: '',
       descriptionAr: '',
       slug: '',
+      imageUrl: '',
       type: activeTab === 'vision2030' ? 'vision2030' : activeTab,
       enabled: true,
     });
@@ -500,6 +505,15 @@ export default function CmsPage() {
                     />
                   </div>
                 </>
+              )}
+              {isContentTab(activeTab) && activeTab !== 'faqs' && (
+                <div className="md:col-span-2">
+                  <ImageUpload
+                    value={formData.imageUrl}
+                    onChange={(url) => setFormData(prev => ({ ...prev, imageUrl: url }))}
+                    label={activeTab === 'testimonials' ? 'Avatar' : 'Image'}
+                  />
+                </div>
               )}
               <div>
                 <label className="block text-xs font-medium text-dark-400 mb-1.5">Slug</label>

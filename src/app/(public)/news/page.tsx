@@ -70,26 +70,31 @@ const demoNews: NewsItem[] = [
 ];
 
 export default function NewsPage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [news, setNews] = useState<NewsItem[]>(demoNews);
 
-  // Attempt to fetch real data, fall back to demo
+  // Fetch real published posts, fall back to demo when empty
   useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const res = await fetch('/api/cms?type=news');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.items && data.items.length > 0) {
-            setNews(data.items);
-          }
-        }
-      } catch {
-        // Use demo data
-      }
-    };
-    fetchNews();
-  }, []);
+    let cancelled = false;
+    const pick = (v: any) => (typeof v === 'object' && v ? (v[locale] || v.en || '') : (v || ''));
+    fetch('/api/content/news', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (cancelled || !Array.isArray(data) || data.length === 0) return;
+        setNews(
+          data.map((n: any) => ({
+            slug: n.slug,
+            title: pick(n.title),
+            excerpt: pick(n.excerpt) || pick(n.content).slice(0, 160),
+            date: n.publishedAt || n.createdAt || '',
+            category: (Array.isArray(n.tags) && n.tags[0]) || 'News',
+            imageUrl: n.imageUrl,
+          }))
+        );
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [locale]);
 
   return (
     <div className="min-h-screen bg-cream-100">
