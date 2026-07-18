@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useLivePoll } from '@/lib/useLivePoll';
 import {
@@ -69,6 +69,21 @@ export default function CustomersPage() {
 
   useLivePoll(useCallback(() => loadCustomers(true), [loadCustomers]), 20000);
 
+  const stats = useMemo(() => {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
+    const byStage: Record<string, number> = {};
+    let activeVip = 0, leads = 0, newThisMonth = 0;
+    for (const c of customers) {
+      const st = c.stage || 'lead';
+      byStage[st] = (byStage[st] || 0) + 1;
+      if (st === 'active' || st === 'vip') activeVip++;
+      if (st === 'lead') leads++;
+      if (c.createdAt && new Date(c.createdAt) >= startOfMonth) newThisMonth++;
+    }
+    return { total: customers.length, byStage, activeVip, leads, newThisMonth };
+  }, [customers]);
+
   const filteredCustomers = customers.filter(c => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
@@ -92,6 +107,21 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-6">
+      {/* Section analytics */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Total Contacts" value={stats.total} tone="text-kcc-green" />
+        <StatCard label="Active + VIP" value={stats.activeVip} tone="text-blue-400" />
+        <StatCard label="Leads" value={stats.leads} tone="text-yellow-400" />
+        <StatCard label="New This Month" value={stats.newThisMonth} tone="text-purple-400" />
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {STAGES.map((s) => (
+          <span key={s.key} className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${s.color}`}>
+            {s.label}: {stats.byStage[s.key] || 0}
+          </span>
+        ))}
+      </div>
+
       {/* Search Bar */}
       <div className="flex items-center gap-3 p-4 bg-dark-900 border border-dark-800 rounded-xl">
         <div className="relative flex-1">
@@ -282,6 +312,15 @@ export default function CustomersPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function StatCard({ label, value, tone }: { label: string; value: number; tone: string }) {
+  return (
+    <div className="p-4 bg-dark-900 border border-dark-800 rounded-xl">
+      <span className="text-xs text-dark-400">{label}</span>
+      <p className={`text-2xl font-bold mt-1.5 ${tone}`}>{value}</p>
     </div>
   );
 }

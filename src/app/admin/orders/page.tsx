@@ -7,6 +7,7 @@ import {
   ShoppingCart, Package, Calendar, Loader2
 } from 'lucide-react';
 import { useLivePoll } from '@/lib/useLivePoll';
+import OrdersStats from '@/components/admin/OrdersStats';
 
 const statusBadgeClasses: Record<string, string> = {
   'Submitted': 'bg-blue-500/10 text-blue-400',
@@ -116,6 +117,9 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
+      {/* Section analytics */}
+      <OrdersStats />
+
       {/* Filters Row */}
       <div className="flex flex-wrap items-center gap-3 p-4 bg-dark-900 border border-dark-800 rounded-xl">
         {/* Search */}
