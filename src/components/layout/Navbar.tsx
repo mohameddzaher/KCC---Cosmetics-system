@@ -289,9 +289,6 @@ export default function Navbar() {
                     <Link href="/login" className="block px-4 py-2.5 text-sm text-ink-600 hover:text-kcc-green hover:bg-blush-50 rounded-lg transition-colors">
                       {t('nav.login')}
                     </Link>
-                    <Link href="/register" className="block px-4 py-2.5 text-sm text-ink-600 hover:text-kcc-green hover:bg-blush-50 rounded-lg transition-colors">
-                      {t('nav.register')}
-                    </Link>
                   </>
                 )}
               </div>

@@ -70,8 +70,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    // Auth is optional for orders - guests can submit too
+    // Ordering is restricted to accounts we created — no guests, no self-signup.
     const user = await getSession();
+    if (!user) {
+      return NextResponse.json(
+        { error: 'You must be signed in with an account provided by KCC to place a request.' },
+        { status: 401 }
+      );
+    }
 
     await connectDB();
     const body = await req.json();
@@ -80,14 +86,6 @@ export async function POST(req: NextRequest) {
     if (!body.type || !['sample', 'bulk'].includes(body.type)) {
       return NextResponse.json(
         { error: 'type is required and must be "sample" or "bulk"' },
-        { status: 400 }
-      );
-    }
-
-    // Require customer info for guest orders
-    if (!user && !body.customerInfo?.email) {
-      return NextResponse.json(
-        { error: 'Customer information with email is required' },
         { status: 400 }
       );
     }

@@ -5,8 +5,17 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Beaker, Truck, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import RequireAuth from '@/components/auth/RequireAuth';
 
 export default function OrderPage() {
+  return (
+    <RequireAuth>
+      <OrderPageContent />
+    </RequireAuth>
+  );
+}
+
+function OrderPageContent() {
   const { t } = useLanguage();
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 

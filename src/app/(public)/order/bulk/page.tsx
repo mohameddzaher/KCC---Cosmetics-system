@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import RequireAuth from '@/components/auth/RequireAuth';
 
 type BulkMode = 'undecided' | 'reuse' | 'new';
 
@@ -96,9 +97,11 @@ const statusBadge: Record<string, string> = {
 
 export default function BulkOrderPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-cream-100 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-kcc-green" /></div>}>
-      <BulkOrderContent />
-    </Suspense>
+    <RequireAuth>
+      <Suspense fallback={<div className="min-h-screen bg-cream-100 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-kcc-green" /></div>}>
+        <BulkOrderContent />
+      </Suspense>
+    </RequireAuth>
   );
 }
 

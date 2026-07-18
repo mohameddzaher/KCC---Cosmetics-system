@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import ContactActions from '@/components/admin/ContactActions';
 import CrmPanel, { stageMeta } from '@/components/admin/CrmPanel';
+import CustomerCredentials from '@/components/admin/CustomerCredentials';
+import { useAuth } from '@/contexts/AuthContext';
 
 const statusColors: Record<string, string> = {
   'Submitted': 'bg-blue-500/10 text-blue-400',
@@ -27,6 +29,7 @@ const statusColors: Record<string, string> = {
 export default function CustomerDetailPage() {
   const params = useParams();
   const customerId = params.id as string;
+  const { user: me } = useAuth();
 
   const [customer, setCustomer] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
@@ -412,6 +415,16 @@ export default function CustomerDetailPage() {
               </>
             )}
           </div>
+
+          {/* Login access — admin/super-admin only */}
+          {['SUPER_ADMIN', 'ADMIN'].includes(me?.role || '') && (
+            <CustomerCredentials
+              customerId={customer._id}
+              email={customer.email}
+              isActive={customer.isActive !== false}
+              onChange={loadCustomer}
+            />
+          )}
 
           {/* CRM: stage, manager, tags, activity timeline */}
           <CrmPanel customer={customer} managers={managers} activities={activities} onChange={loadCustomer} />

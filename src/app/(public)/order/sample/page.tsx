@@ -2,6 +2,7 @@
 
 import { QuizProvider } from '@/lib/sample-quiz/QuizContext';
 import QuizOrchestrator from '@/components/order/sample-quiz/QuizOrchestrator';
+import RequireAuth from '@/components/auth/RequireAuth';
 
 /**
  * Sample Order — Function-of-Beauty-style single-page quiz.
@@ -14,8 +15,10 @@ import QuizOrchestrator from '@/components/order/sample-quiz/QuizOrchestrator';
  */
 export default function SamplePage() {
   return (
-    <QuizProvider>
-      <QuizOrchestrator />
-    </QuizProvider>
+    <RequireAuth>
+      <QuizProvider>
+        <QuizOrchestrator />
+      </QuizProvider>
+    </RequireAuth>
   );
 }

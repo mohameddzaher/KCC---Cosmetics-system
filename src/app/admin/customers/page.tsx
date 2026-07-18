@@ -18,7 +18,7 @@ export default function CustomersPage() {
   const itemsPerPage = 10;
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', company: '', phone: '', whatsapp: '', stage: 'lead' });
+  const [form, setForm] = useState({ name: '', email: '', company: '', phone: '', whatsapp: '', stage: 'lead', password: '' });
 
   const createContact = async () => {
     if (!form.name || !form.email) { alert('Name and email are required.'); return; }
@@ -30,7 +30,7 @@ export default function CustomersPage() {
       });
       if (!res.ok) { const e = await res.json(); alert(e.error || 'Failed to create'); return; }
       setShowForm(false);
-      setForm({ name: '', email: '', company: '', phone: '', whatsapp: '', stage: 'lead' });
+      setForm({ name: '', email: '', company: '', phone: '', whatsapp: '', stage: 'lead', password: '' });
       loadCustomers();
     } finally {
       setSaving(false);
@@ -166,7 +166,15 @@ export default function CustomersPage() {
                 {STAGES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
               </select>
             </div>
+            <div>
+              <label className="block text-xs font-medium text-dark-400 mb-1.5">Login Password (optional)</label>
+              <input type="text" aria-label="Login password" value={form.password}
+                onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                placeholder="Give them a password to sign in"
+                className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none" />
+            </div>
           </div>
+          <p className="mt-3 text-xs text-dark-500">Username is the email. Set a password now (or later from the profile) so the customer can sign in and place requests.</p>
           <div className="flex justify-end gap-3 mt-5">
             <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm text-dark-400 border border-dark-700 rounded-lg hover:text-dark-50">Cancel</button>
             <button type="button" onClick={createContact} disabled={saving}

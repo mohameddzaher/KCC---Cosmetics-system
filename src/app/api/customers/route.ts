@@ -46,13 +46,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'A user with this email already exists' }, { status: 409 });
     }
 
-    // Leads are created without a login; give them a random password they can reset later.
-    const randomPwd = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    // Use the admin-provided password if given, else a random one they can reset later.
+    const rawPwd = (body.password && String(body.password).length >= 6)
+      ? String(body.password)
+      : Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
 
     const customer = await User.create({
       name: body.name,
       email,
-      password: await hashPassword(randomPwd),
+      password: await hashPassword(rawPwd),
       role: 'CUSTOMER',
       company: body.company,
       phone: body.phone,

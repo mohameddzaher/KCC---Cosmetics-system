@@ -7,8 +7,18 @@ import { rateLimit } from '@/lib/rateLimit';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Public self-registration is disabled — accounts are provisioned by KCC only.
+const SELF_REGISTRATION_ENABLED = false;
+
 export async function POST(req: NextRequest) {
   try {
+    if (!SELF_REGISTRATION_ENABLED) {
+      return NextResponse.json(
+        { error: 'Registration is by invitation only. Please contact KCC to get an account.' },
+        { status: 403 }
+      );
+    }
+
     const limited = rateLimit(req, 'register', 5, 10 * 60 * 1000);
     if (limited) return limited;
 

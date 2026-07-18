@@ -125,11 +125,11 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Register link */}
+          {/* Accounts are provisioned by KCC */}
           <div className="mt-6 text-center text-sm text-cream-700">
             {t('auth.noAccount')}{' '}
-            <Link href="/register" className="text-kcc-green hover:text-kcc-green-light transition-colors font-medium">
-              {t('auth.signUp')}
+            <Link href="/contact" className="text-kcc-green hover:text-kcc-green-light transition-colors font-medium">
+              {t('nav.contact')}
             </Link>
           </div>
         </div>
