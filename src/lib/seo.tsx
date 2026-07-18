@@ -6,11 +6,17 @@ import type { Metadata } from 'next';
  * the host — every canonical URL, OG tag, sitemap entry and JSON-LD node
  * derives from it, so switching domains is a one-variable change.
  */
-export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  process.env.NEXT_PUBLIC_APP_URL ||
-  'http://localhost:3000'
-).replace(/\/$/, '');
+function normalizeSiteUrl(raw?: string): string {
+  let u = (raw || 'http://localhost:3000').trim().replace(/\/+$/, '');
+  // Tolerate a value entered without a protocol (e.g. "kcc-bv.com") so that
+  // `new URL(SITE_URL)` in metadataBase never throws and breaks the build.
+  if (!/^https?:\/\//i.test(u)) u = `https://${u}`;
+  return u;
+}
+
+export const SITE_URL = normalizeSiteUrl(
+  process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL
+);
 
 export const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'KCC';
 
