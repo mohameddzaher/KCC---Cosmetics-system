@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import mongoose from 'mongoose';
+import { rateLimit } from '@/lib/rateLimit';
 
 // Simple newsletter subscriber schema
 const subscriberSchema = new mongoose.Schema(
@@ -17,6 +18,9 @@ const Subscriber =
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = rateLimit(req, 'newsletter', 5, 10 * 60 * 1000);
+    if (limited) return limited;
+
     const body = await req.json();
     const email = body.email?.trim()?.toLowerCase();
 
@@ -24,19 +28,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Valid email is required' }, { status: 400 });
     }
 
-    try {
-      await connectDB();
-      await Subscriber.findOneAndUpdate(
-        { email },
-        { email, active: true },
-        { upsert: true, new: true }
-      );
-    } catch {
-      // If DB is unavailable, still return success (email noted)
-    }
+    // Persist for real — only report success if the write actually succeeds.
+    await connectDB();
+    await Subscriber.findOneAndUpdate(
+      { email },
+      { email, active: true },
+      { upsert: true, new: true }
+    );
 
     return NextResponse.json({ message: 'Subscribed successfully' });
   } catch {
-    return NextResponse.json({ error: 'Failed to subscribe' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to subscribe. Please try again.' }, { status: 500 });
   }
 }

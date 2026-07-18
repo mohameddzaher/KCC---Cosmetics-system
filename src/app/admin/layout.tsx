@@ -5,10 +5,11 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import NotificationBell from '@/components/admin/NotificationBell';
 import {
   LayoutDashboard, FileText, ShoppingCart, Users, Package,
   DollarSign, Search as SearchIcon, Tag, Share2, Brain, Settings,
-  Menu, X, ChevronLeft, Globe, LogOut, Bell, Sparkles, ShieldCheck, Contact, Layers
+  Menu, X, ChevronLeft, Globe, LogOut, Sparkles, ShieldCheck, Contact, Layers
 } from 'lucide-react';
 
 type NavItem = { key: string; href: string; icon: any; roles?: string[] };
@@ -209,15 +210,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              aria-label="Notifications"
-              title="Notifications"
-              className="relative p-2 text-dark-400 hover:text-dark-50"
-            >
-              <Bell size={18} />
-              <span className="absolute top-1 end-1 w-2 h-2 bg-red-500 rounded-full" aria-hidden="true"></span>
-            </button>
+            <NotificationBell locale={locale} />
             <button
               type="button"
               onClick={() => setLocale(locale === 'en' ? 'ar' : 'en')}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import InventoryItem from '@/models/InventoryItem';
 import { getSession } from '@/lib/auth';
+import { escapeRegex } from '@/lib/api-helpers';
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,10 +18,11 @@ export async function GET(req: NextRequest) {
 
     let filter: any = {};
     if (search) {
+      const safe = escapeRegex(search);
       filter.$or = [
-        { 'name.en': { $regex: search, $options: 'i' } },
-        { 'name.ar': { $regex: search, $options: 'i' } },
-        { sku: { $regex: search, $options: 'i' } },
+        { 'name.en': { $regex: safe, $options: 'i' } },
+        { 'name.ar': { $regex: safe, $options: 'i' } },
+        { sku: { $regex: safe, $options: 'i' } },
       ];
     }
     if (lowStock === 'true') {

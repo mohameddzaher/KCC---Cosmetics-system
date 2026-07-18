@@ -13,9 +13,9 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     const body = await req.json();
-    const { code, userId } = body;
+    const { code } = body;
 
-    if (!code) {
+    if (!code || typeof code !== 'string') {
       return NextResponse.json({ valid: false, error: 'Promo code is required' }, { status: 400 });
     }
 
@@ -37,10 +37,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ valid: false, error: 'Promo code usage limit reached' });
     }
 
-    if (userId && promo.perUserLimit > 0) {
+    // Always scope the per-user check to the authenticated session — never a client-supplied id.
+    if (promo.perUserLimit > 0) {
       const userUsageCount = await PromoUsage.countDocuments({
         promoCodeId: promo._id,
-        userId,
+        userId: user.id,
       });
       if (userUsageCount >= promo.perUserLimit) {
         return NextResponse.json({ valid: false, error: 'You have already used this promo code the maximum number of times' });

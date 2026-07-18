@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import { hashPassword } from '@/lib/auth';
+import { hashPassword, getSession } from '@/lib/auth';
 import User from '@/models/User';
 import CmsSection from '@/models/CmsSection';
 import Service from '@/models/Service';
@@ -21,13 +21,46 @@ import Order from '@/models/Order';
 import Invoice from '@/models/Invoice';
 import TeamMember from '@/models/TeamMember';
 
-const SEED_KEY = 'kcc-seed-2024';
-
-export async function GET(req: NextRequest) {
-  const key = req.headers.get('x-seed-key');
-  if (key !== SEED_KEY) {
-    return NextResponse.json({ error: 'Forbidden: invalid seed key' }, { status: 403 });
+/**
+ * DESTRUCTIVE ENDPOINT — drops and reseeds the entire database.
+ *
+ * Hard-gated because a public HTTP route that can wipe production is a
+ * critical risk. To run it, ALL of the following must be true:
+ *   1. NODE_ENV !== 'production'            (never runs on the live site)
+ *   2. ALLOW_DB_SEED === 'true'             (explicit opt-in env flag)
+ *   3. x-seed-key header === process.env.SEED_KEY   (secret from env, never hardcoded)
+ *   4. Caller is an authenticated SUPER_ADMIN
+ * It is also POST-only, so it can never be triggered by a plain URL visit,
+ * link prefetch, or crawler.
+ *
+ * For normal seeding use `npm run seed` locally instead.
+ */
+async function guard(req: NextRequest): Promise<NextResponse | null> {
+  if (process.env.NODE_ENV === 'production' || process.env.ALLOW_DB_SEED !== 'true') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+  const configuredKey = process.env.SEED_KEY;
+  if (!configuredKey || configuredKey.length < 16) {
+    return NextResponse.json({ error: 'Seeding is not configured' }, { status: 404 });
+  }
+  if (req.headers.get('x-seed-key') !== configuredKey) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  const session = await getSession();
+  if (!session || session.role !== 'SUPER_ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  return null;
+}
+
+// Explicitly reject the old GET entry point.
+export async function GET() {
+  return NextResponse.json({ error: 'Not found' }, { status: 404 });
+}
+
+export async function POST(req: NextRequest) {
+  const blocked = await guard(req);
+  if (blocked) return blocked;
 
   try {
     await connectDB();

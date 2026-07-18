@@ -31,6 +31,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
     if (!customer) {
       return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
     }
+    // This endpoint only exposes CUSTOMER records — never staff/admin PII.
+    if (customer.role !== 'CUSTOMER') {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
 
     const orders = await Order.find({ userId: id })
       .sort({ createdAt: -1 })
@@ -70,6 +74,10 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     const before = await User.findById(id);
     if (!before) return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+    // Never allow editing staff/admin accounts through the CRM endpoint.
+    if (before.role !== 'CUSTOMER') {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
 
     const body = await req.json();
     const update: Record<string, unknown> = {};

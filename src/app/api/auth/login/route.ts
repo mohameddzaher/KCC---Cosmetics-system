@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import { authenticateUser, createToken, AccountDisabledError, AUTH_COOKIE_NAME, AUTH_MAX_AGE_SECONDS } from '@/lib/auth';
+import { rateLimit } from '@/lib/rateLimit';
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = rateLimit(req, 'login', 10, 5 * 60 * 1000);
+    if (limited) return limited;
+
     await connectDB();
     const { email, password } = await req.json();
 

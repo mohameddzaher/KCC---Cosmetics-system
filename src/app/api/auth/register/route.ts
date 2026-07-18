@@ -3,14 +3,26 @@ import connectDB from '@/lib/db';
 import User from '@/models/User';
 import { hashPassword, createToken, AUTH_COOKIE_NAME, AUTH_MAX_AGE_SECONDS, SessionUser } from '@/lib/auth';
 import { generateReferralCode } from '@/lib/api-helpers';
+import { rateLimit } from '@/lib/rateLimit';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = rateLimit(req, 'register', 5, 10 * 60 * 1000);
+    if (limited) return limited;
+
     await connectDB();
     const { name, email, password, company, phone, country, city } = await req.json();
 
     if (!name || !email || !password) {
       return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 });
+    }
+    if (!EMAIL_RE.test(String(email))) {
+      return NextResponse.json({ error: 'Please enter a valid email address' }, { status: 400 });
+    }
+    if (String(password).length < 6) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
     }
 
     const existing = await User.findOne({ email: email.toLowerCase() });
