@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import PageHero from '@/components/public/PageHero';
 import {
   FlaskConical, Microscope, Shield, Beaker, Settings, TestTube,
   Layers, Cog, Sparkles, CheckCircle2, Cpu, FileSearch
@@ -38,18 +39,11 @@ export default function ProductionPage() {
   return (
     <div className="min-h-screen bg-cream-100">
       {/* Hero */}
-      <section className="relative pt-8 pb-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-cream-100 to-cream-50" />
-        <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-kcc-rose-light/40 blur-[120px]" />
-        <div className="absolute bottom-0 -right-32 w-80 h-80 rounded-full bg-kcc-beige-light/45 blur-[100px]" />
-
-        <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="text-4xl sm:text-5xl font-bold text-ink-700 mb-4">{t('production.title')}</h1>
-            <p className="text-lg text-cream-800">{t('production.subtitle')}</p>
-          </motion.div>
-        </div>
-      </section>
+      <PageHero
+        title={t('production.title')}
+        subtitle={t('production.subtitle')}
+        image="https://images.unsplash.com/photo-1567113463300-102a7eb3cb26?w=1600&q=80"
+      />
 
       {/* Featured Image Banner */}
       <section className="px-4 -mt-4 mb-8">

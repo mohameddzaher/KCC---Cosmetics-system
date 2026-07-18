@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
+import PageHero from '@/components/public/PageHero';
 
 const tabs = [
   { key: 'privacy', label: 'Privacy Policy' },
@@ -16,15 +17,11 @@ export default function PoliciesPage() {
   return (
     <div className="min-h-screen bg-cream-100">
       {/* Hero */}
-      <section className="relative pt-8 pb-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-cream-100 to-cream-50" />
-        <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="text-4xl sm:text-5xl font-bold text-ink-700 mb-4">Policies</h1>
-            <p className="text-lg text-cream-800">Legal information and policies</p>
-          </motion.div>
-        </div>
-      </section>
+      <PageHero
+        title="Policies"
+        subtitle="Legal information and policies"
+        image="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1600&q=80"
+      />
 
       {/* Content */}
       <section className="py-16 px-4">

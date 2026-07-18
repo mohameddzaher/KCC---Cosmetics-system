@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import PageHero from '@/components/public/PageHero';
 
 export default function ContactPage() {
   const { t } = useLanguage();
@@ -56,21 +57,11 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-cream-100">
       {/* Hero */}
-      <section className="relative pt-8 pb-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-cream-100 to-cream-50" />
-        <div className="absolute top-1/4 -left-32 w-80 h-80 rounded-full bg-kcc-rose-light/40 blur-[120px]" />
-
-        <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h1 className="text-4xl sm:text-5xl font-bold text-ink-700 mb-4">{t('contact.title')}</h1>
-            <p className="text-lg text-cream-800">{t('contact.subtitle')}</p>
-          </motion.div>
-        </div>
-      </section>
+      <PageHero
+        title={t('contact.title')}
+        subtitle={t('contact.subtitle')}
+        image="https://images.unsplash.com/photo-1423666639041-f56000c27a9a?w=1600&q=80"
+      />
 
       {/* Content */}
       <section className="py-12 sm:py-16 px-4">

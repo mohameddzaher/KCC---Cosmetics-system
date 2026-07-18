@@ -139,7 +139,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.4 }}
-          className="text-6xl sm:text-7xl lg:text-8xl font-black tracking-tight mb-5"
+          className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight mb-5"
         >
           <span className="text-kcc-green drop-shadow-[0_4px_24px_rgba(45,106,79,0.45)]">K</span>
           <span className="text-cream-50 drop-shadow-[0_4px_24px_rgba(255,246,241,0.25)]">CC</span>

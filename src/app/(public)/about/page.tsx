@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Target, Eye, Award, Users, Globe2, Sparkles, Shield } from 'lucide-react';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
+import PageHero from '@/components/public/PageHero';
 
 interface TeamMember {
   _id: string;
@@ -51,29 +52,12 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-cream-100">
       {/* Hero Section */}
-      <section className="relative pt-8 pb-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-cream-100 to-cream-50" />
-        <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-kcc-rose-light/40 blur-[120px]" />
-        <div className="absolute bottom-0 -right-32 w-80 h-80 rounded-full bg-kcc-beige-light/45 blur-[100px]" />
-
-        <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="inline-block px-4 py-1.5 text-xs font-medium uppercase tracking-[0.25em] text-kcc-beige-dark border border-kcc-beige/55 rounded-full bg-kcc-beige-light/35 mb-6">
-              {t('about.title')}
-            </span>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-ink-700 mb-6">
-              {t('about.title')}
-            </h1>
-            <p className="text-lg text-cream-800 max-w-2xl mx-auto leading-relaxed">
-              {t('about.subtitle')}
-            </p>
-          </motion.div>
-        </div>
-      </section>
+      <PageHero
+        eyebrow={t('nav.about')}
+        title={t('about.title')}
+        subtitle={t('about.subtitle')}
+        image="https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=1600&q=80"
+      />
 
       {/* Story Section */}
       <section className="py-20 px-4">
