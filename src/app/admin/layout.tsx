@@ -9,7 +9,7 @@ import NotificationBell from '@/components/admin/NotificationBell';
 import {
   LayoutDashboard, FileText, ShoppingCart, Users, Package,
   DollarSign, Search as SearchIcon, Tag, Share2, Brain, Settings,
-  Menu, X, ChevronLeft, Globe, LogOut, Sparkles, ShieldCheck, Contact, Layers
+  Menu, X, ChevronLeft, Globe, LogOut, Sparkles, ShieldCheck, Contact, Layers, Inbox
 } from 'lucide-react';
 
 type NavItem = { key: string; href: string; icon: any; roles?: string[] };
@@ -28,6 +28,7 @@ const sidebarGroups: NavGroup[] = [
       { key: 'crm', href: '/admin/crm', icon: Contact },
       { key: 'customers', href: '/admin/customers', icon: Users },
       { key: 'orders', href: '/admin/orders', icon: ShoppingCart },
+      { key: 'inbox', href: '/admin/inbox', icon: Inbox },
     ],
   },
   {

@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import PageHero from '@/components/public/PageHero';
 
 export default function ContactPage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const [settings, setSettings] = useState<any>(null);
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -18,6 +19,15 @@ export default function ContactPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/settings/public', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled) setSettings(d); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const update = (key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -47,10 +57,17 @@ export default function ContactPage() {
     }
   };
 
+  const g = settings || {};
+  const phones = [g.contactPhone || g.phones?.primary, g.phones?.secondary].filter(Boolean).join('\n')
+    || '+966 53 848 6109\n+966 53 848 7021';
+  const emails = [g.contactEmail || g.emails?.info, g.emails?.sales].filter(Boolean).join('\n')
+    || 'info@kcc-bv.com\nsales@kcc-bv.com';
+  const addressValue = (g.contactAddress?.[locale] || g.contactAddress?.en) || t('contact.addressValue');
+
   const contactInfo = [
-    { icon: MapPin, label: t('contact.addressLabel'), value: t('contact.addressValue') },
-    { icon: Phone, label: t('contact.phoneLabel'), value: '+966 53 848 6109\n+966 53 848 7021' },
-    { icon: Mail, label: t('contact.emailLabel'), value: 'info@kcc.sa\nsales@kcc.sa' },
+    { icon: MapPin, label: t('contact.addressLabel'), value: addressValue },
+    { icon: Phone, label: t('contact.phoneLabel'), value: phones },
+    { icon: Mail, label: t('contact.emailLabel'), value: emails },
     { icon: Clock, label: t('contact.officeHoursLabel'), value: t('contact.officeHoursValue') },
   ];
 

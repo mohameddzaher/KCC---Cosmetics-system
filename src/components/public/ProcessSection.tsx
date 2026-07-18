@@ -59,7 +59,7 @@ export default function ProcessSection() {
   const { t, locale } = useLanguage();
 
   return (
-    <section className="relative py-16 lg:py-24 bg-blush-radial overflow-hidden">
+    <section className="relative py-12 lg:py-16 bg-cream-100 overflow-hidden">
       {/* Background accent */}
       <div className="absolute top-0 end-0 w-96 h-96 bg-kcc-rose-light/40 rounded-full blur-[200px]" />
       <div className="absolute bottom-0 start-0 w-80 h-80 bg-kcc-beige-light/35 rounded-full blur-[180px]" />
@@ -77,7 +77,7 @@ export default function ProcessSection() {
           <span className="inline-block px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-champagne rounded-full font-medium">
             {locale === 'ar' ? 'رحلة الإبداع' : 'Crafted Journey'}
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
             <span className="gradient-text-rose">{t('sections.process')}</span>
           </h2>
           <p className="text-cream-700 text-base sm:text-lg max-w-2xl mx-auto">

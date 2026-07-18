@@ -11,13 +11,19 @@ const defaultSettings = {
     siteName: { en: '', ar: '' },
     contactEmail: '',
     contactPhone: '',
+    whatsapp: '',
     contactAddress: { en: '', ar: '' },
     companyName: { en: '', ar: '' },
+    emails: { info: '', sales: '', support: '', hr: '', careers: '' },
+    phones: { primary: '', secondary: '' },
     socialMedia: {
       instagram: '',
       twitter: '',
       linkedin: '',
       facebook: '',
+      youtube: '',
+      tiktok: '',
+      snapchat: '',
     },
   },
   referral: {
@@ -53,10 +59,21 @@ export default function SettingsPage() {
       const res = await fetch('/api/settings');
       if (res.ok) {
         const data = await res.json();
+        const g = data.general || {};
         setSettings({
-          general: data.general || defaultSettings.general,
-          referral: data.referral || defaultSettings.referral,
-          notifications: data.notifications || defaultSettings.notifications,
+          // Deep-merge so newly added nested fields (emails/phones/social) are never undefined.
+          general: {
+            ...defaultSettings.general,
+            ...g,
+            siteName: { ...defaultSettings.general.siteName, ...(g.siteName || {}) },
+            companyName: { ...defaultSettings.general.companyName, ...(g.companyName || {}) },
+            contactAddress: { ...defaultSettings.general.contactAddress, ...(g.contactAddress || {}) },
+            emails: { ...defaultSettings.general.emails, ...(g.emails || {}) },
+            phones: { ...defaultSettings.general.phones, ...(g.phones || {}) },
+            socialMedia: { ...defaultSettings.general.socialMedia, ...(g.socialMedia || {}) },
+          },
+          referral: { ...defaultSettings.referral, ...(data.referral || {}) },
+          notifications: { ...defaultSettings.notifications, ...(data.notifications || {}) },
         });
       } else {
         console.error('Failed to fetch settings:', res.statusText);
@@ -248,6 +265,50 @@ export default function SettingsPage() {
                   onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, contactPhone: e.target.value } }))}
                   className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
                 />
+              </div>
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-dark-400 mb-1.5">
+                  <Phone size={12} /> WhatsApp
+                </label>
+                <input
+                  type="text"
+                  value={settings.general.whatsapp}
+                  onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, whatsapp: e.target.value } }))}
+                  placeholder="+20 1xx xxx xxxx"
+                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-dark-400 mb-1.5">
+                  <Phone size={12} /> Secondary Phone
+                </label>
+                <input
+                  type="text"
+                  value={settings.general.phones.secondary}
+                  onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, phones: { ...prev.general.phones, secondary: e.target.value } } }))}
+                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Department Emails */}
+            <div>
+              <h3 className="text-sm font-medium text-dark-200 mb-3">Department Emails</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(['info', 'sales', 'support', 'hr', 'careers'] as const).map((dept) => (
+                  <div key={dept}>
+                    <label className="flex items-center gap-1.5 text-xs font-medium text-dark-400 mb-1.5 capitalize">
+                      <Mail size={12} /> {dept}
+                    </label>
+                    <input
+                      type="email"
+                      value={settings.general.emails[dept]}
+                      onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, emails: { ...prev.general.emails, [dept]: e.target.value } } }))}
+                      placeholder={`${dept}@kcc-bv.com`}
+                      className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 

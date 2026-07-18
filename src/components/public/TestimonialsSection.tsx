@@ -84,7 +84,7 @@ export default function TestimonialsSection() {
   const testimonial = list[Math.min(current, list.length - 1)] || list[0];
 
   return (
-    <section className="relative py-16 lg:py-24 bg-cream-50 overflow-hidden">
+    <section className="relative py-12 lg:py-16 bg-cream-100 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 dot-pattern opacity-40" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-kcc-rose-light/40 rounded-full blur-[200px]" />
@@ -102,7 +102,7 @@ export default function TestimonialsSection() {
           <span className="inline-block px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-rose rounded-full font-medium">
             {locale === 'ar' ? 'بصمات نلتزم بها' : 'Voices of Trust'}
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
             <span className="gradient-text-rose">{t('sections.testimonials')}</span>
           </h2>
         </motion.div>

@@ -6,13 +6,28 @@ export interface ISiteSettings extends Document {
     siteName: { en: string; ar: string };
     contactEmail: string;
     contactPhone: string;
+    whatsapp: string;
     contactAddress: { en: string; ar: string };
     companyName: { en: string; ar: string };
+    emails: {
+      info: string;
+      sales: string;
+      support: string;
+      hr: string;
+      careers: string;
+    };
+    phones: {
+      primary: string;
+      secondary: string;
+    };
     socialMedia: {
       instagram: string;
       twitter: string;
       linkedin: string;
       facebook: string;
+      youtube: string;
+      tiktok: string;
+      snapchat: string;
     };
   };
   referral: {
@@ -46,6 +61,7 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
       },
       contactEmail: { type: String, default: '' },
       contactPhone: { type: String, default: '' },
+      whatsapp: { type: String, default: '' },
       contactAddress: {
         en: { type: String, default: '' },
         ar: { type: String, default: '' },
@@ -54,11 +70,25 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         en: { type: String, default: '' },
         ar: { type: String, default: '' },
       },
+      emails: {
+        info: { type: String, default: '' },
+        sales: { type: String, default: '' },
+        support: { type: String, default: '' },
+        hr: { type: String, default: '' },
+        careers: { type: String, default: '' },
+      },
+      phones: {
+        primary: { type: String, default: '' },
+        secondary: { type: String, default: '' },
+      },
       socialMedia: {
         instagram: { type: String, default: '' },
         twitter: { type: String, default: '' },
         linkedin: { type: String, default: '' },
         facebook: { type: String, default: '' },
+        youtube: { type: String, default: '' },
+        tiktok: { type: String, default: '' },
+        snapchat: { type: String, default: '' },
       },
     },
     referral: {

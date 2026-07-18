@@ -117,7 +117,7 @@ export default function ServicesSection() {
   }, []);
 
   return (
-    <section className="relative py-16 lg:py-24 bg-cream-radial overflow-hidden">
+    <section className="relative py-12 lg:py-16 bg-cream-50 overflow-hidden">
       {/* Background subtle glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-kcc-rose-light/40 rounded-full blur-[200px]" />
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-kcc-beige-light/30 rounded-full blur-[180px]" />
@@ -135,7 +135,7 @@ export default function ServicesSection() {
           <span className="inline-block px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-rose rounded-full font-medium">
             {locale === 'ar' ? 'خدماتنا الفاخرة' : 'Our Luxe Services'}
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
             <span className="gradient-text">{t('sections.services')}</span>
           </h2>
           <p className="text-cream-700 text-base sm:text-lg max-w-2xl mx-auto">

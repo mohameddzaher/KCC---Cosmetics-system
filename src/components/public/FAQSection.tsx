@@ -125,7 +125,7 @@ export default function FAQSection() {
   };
 
   return (
-    <section className="relative py-16 lg:py-24 bg-cream-100 overflow-hidden">
+    <section className="relative py-12 lg:py-16 bg-cream-50 overflow-hidden">
       {/* Background accents */}
       <div className="absolute top-0 start-0 w-96 h-96 bg-kcc-rose-light/40 rounded-full blur-[200px]" />
       <div className="absolute bottom-0 end-0 w-80 h-80 bg-kcc-beige-light/35 rounded-full blur-[180px]" />
@@ -144,7 +144,7 @@ export default function FAQSection() {
             <HelpCircle size={12} />
             {locale === 'ar' ? 'مركز المساعدة' : 'Help Center'}
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
             <span className="gradient-text">
               {locale === 'ar' ? sectionTitle.ar : sectionTitle.en}
             </span>

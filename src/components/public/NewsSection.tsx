@@ -85,7 +85,7 @@ export default function NewsSection() {
   const { t, locale } = useLanguage();
 
   return (
-    <section className="relative py-16 lg:py-24 bg-cream-50 overflow-hidden">
+    <section className="relative py-12 lg:py-16 bg-cream-100 overflow-hidden">
       {/* Background */}
       <div className="absolute bottom-0 start-0 w-96 h-96 bg-kcc-rose-light/40 rounded-full blur-[200px]" />
       <div className="absolute top-0 end-0 w-72 h-72 bg-kcc-beige-light/30 rounded-full blur-[150px]" />
@@ -103,7 +103,7 @@ export default function NewsSection() {
           <span className="inline-block px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-rose rounded-full font-medium">
             {locale === 'ar' ? 'آخر التحديثات' : 'Latest Updates'}
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
             <span className="gradient-text">{t('sections.news')}</span>
           </h2>
           <p className="text-cream-700 text-base sm:text-lg max-w-2xl mx-auto">

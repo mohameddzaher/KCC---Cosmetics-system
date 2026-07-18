@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import mongoose from 'mongoose';
 import { rateLimit } from '@/lib/rateLimit';
+import { getSession } from '@/lib/auth';
 
 // Simple newsletter subscriber schema
 const subscriberSchema = new mongoose.Schema(
@@ -39,5 +40,39 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Subscribed successfully' });
   } catch {
     return NextResponse.json({ error: 'Failed to subscribe. Please try again.' }, { status: 500 });
+  }
+}
+
+// GET -> admin list of subscribers
+export async function GET() {
+  try {
+    const user = await getSession();
+    if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    await connectDB();
+    const subscribers = await Subscriber.find().sort({ createdAt: -1 });
+    return NextResponse.json(subscribers);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Failed to fetch subscribers' }, { status: 500 });
+  }
+}
+
+// DELETE /api/newsletter?id=... -> admin remove a subscriber
+export async function DELETE(req: NextRequest) {
+  try {
+    const user = await getSession();
+    if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    await connectDB();
+    const id = new URL(req.url).searchParams.get('id');
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: 'Valid id is required' }, { status: 400 });
+    }
+    await Subscriber.findByIdAndDelete(id);
+    return NextResponse.json({ message: 'Deleted' });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Failed to delete' }, { status: 500 });
   }
 }

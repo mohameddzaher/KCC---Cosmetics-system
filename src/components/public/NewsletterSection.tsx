@@ -74,7 +74,7 @@ export default function NewsletterSection() {
   };
 
   return (
-    <section className="relative py-16 lg:py-20 bg-blush-radial overflow-hidden">
+    <section className="relative py-12 lg:py-16 bg-cream-50 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 dot-pattern opacity-50" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-kcc-rose-light/40 rounded-full blur-[180px]" />
@@ -96,7 +96,7 @@ export default function NewsletterSection() {
           </div>
 
           {/* Heading */}
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
             <span className="gradient-text-rose">
               {locale === 'ar' ? content.title.ar : content.title.en}
             </span>

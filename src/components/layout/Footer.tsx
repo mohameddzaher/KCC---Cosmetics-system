@@ -1,11 +1,31 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram, Sparkles } from 'lucide-react';
+import { Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram, Youtube, Sparkles } from 'lucide-react';
+
+const digits = (v?: string) => (v ? v.replace(/[^\d]/g, '') : '');
 
 export default function Footer() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const [s, setS] = useState<any>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/settings/public', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled) setS(d); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  const g = s || {};
+  const email = g.contactEmail || g.emails?.info || 'info@kcc-bv.com';
+  const phone1 = g.contactPhone || g.phones?.primary || '+966 53 848 6109';
+  const phone2 = g.phones?.secondary || '';
+  const address = (g.contactAddress?.[locale] || g.contactAddress?.en) || t('footer.address');
+  const social = g.socialMedia || {};
 
   return (
     <footer className="relative bg-espresso-radial border-t border-espresso-700/50 overflow-hidden">
@@ -35,23 +55,26 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-3">
               {[
-                { Icon: Facebook, label: 'Facebook', href: 'https://www.facebook.com/' },
-                { Icon: Instagram, label: 'Instagram', href: 'https://www.instagram.com/' },
-                { Icon: Linkedin, label: 'LinkedIn', href: 'https://www.linkedin.com/' },
-                { Icon: Twitter, label: 'Twitter', href: 'https://twitter.com/' },
-              ].map(({ Icon, label, href }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
-                  title={label}
-                  className="p-2 rounded-xl bg-espresso-700/60 border border-cream-300/10 text-cream-200 hover:text-kcc-rose hover:border-kcc-rose/40 hover:bg-espresso-600/60 transition-all"
-                >
-                  <Icon size={16} />
-                </a>
-              ))}
+                { Icon: Facebook, label: 'Facebook', href: social.facebook },
+                { Icon: Instagram, label: 'Instagram', href: social.instagram },
+                { Icon: Linkedin, label: 'LinkedIn', href: social.linkedin },
+                { Icon: Twitter, label: 'Twitter', href: social.twitter },
+                { Icon: Youtube, label: 'YouTube', href: social.youtube },
+              ]
+                .filter((x) => x.href)
+                .map(({ Icon, label, href }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    title={label}
+                    className="p-2 rounded-xl bg-espresso-700/60 border border-cream-300/10 text-cream-200 hover:text-kcc-rose hover:border-kcc-rose/40 hover:bg-espresso-600/60 transition-all"
+                  >
+                    <Icon size={16} />
+                  </a>
+                ))}
             </div>
           </div>
 
@@ -116,19 +139,21 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <MapPin size={16} className="text-kcc-rose mt-0.5 shrink-0" />
-                <span className="text-sm text-cream-100">{t('footer.address')}</span>
+                <span className="text-sm text-cream-100">{address}</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={16} className="text-kcc-rose shrink-0" />
-                <span className="text-sm text-cream-100">+966 53 848 6109</span>
+                <a href={`tel:${phone1.replace(/\s+/g, '')}`} className="text-sm text-cream-100 hover:text-kcc-rose-light transition-colors">{phone1}</a>
               </li>
-              <li className="flex items-center gap-3">
-                <Phone size={16} className="text-kcc-rose shrink-0" />
-                <span className="text-sm text-cream-100">+966 53 848 7021</span>
-              </li>
+              {phone2 && (
+                <li className="flex items-center gap-3">
+                  <Phone size={16} className="text-kcc-rose shrink-0" />
+                  <a href={`tel:${phone2.replace(/\s+/g, '')}`} className="text-sm text-cream-100 hover:text-kcc-rose-light transition-colors">{phone2}</a>
+                </li>
+              )}
               <li className="flex items-center gap-3">
                 <Mail size={16} className="text-kcc-rose shrink-0" />
-                <span className="text-sm text-cream-100">info@kcc.sa</span>
+                <a href={`mailto:${email}`} className="text-sm text-cream-100 hover:text-kcc-rose-light transition-colors">{email}</a>
               </li>
             </ul>
           </div>

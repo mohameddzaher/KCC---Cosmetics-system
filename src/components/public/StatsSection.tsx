@@ -54,7 +54,7 @@ export default function StatsSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative py-16 lg:py-24 overflow-hidden bg-cream-50"
+      className="relative py-12 lg:py-16 overflow-hidden bg-cream-100"
     >
       {/* Light background to match the surrounding sections */}
       <div className="absolute inset-0 bg-gradient-to-b from-cream-100 to-cream-50" />

@@ -162,7 +162,7 @@ export default function Vision2030Section() {
   }, [cmsItem, locale]);
 
   return (
-    <section className="relative py-14 lg:py-20 bg-cream-100 overflow-hidden">
+    <section className="relative py-12 lg:py-16 bg-cream-50 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-0 w-[420px] h-[420px] -translate-y-1/2 rounded-full bg-kcc-rose-light/40 blur-[140px]" />
         <div className="absolute top-10 right-10 w-[300px] h-[300px] rounded-full bg-kcc-beige-light/35 blur-[120px]" />
@@ -182,7 +182,7 @@ export default function Vision2030Section() {
             <Sparkles size={12} />
             {content.badge}
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-ink-700 max-w-4xl leading-tight mb-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 max-w-4xl leading-tight mb-4">
             {content.title}
           </h2>
           <p className="text-cream-800 text-base sm:text-lg max-w-3xl mb-4">{content.subtitle}</p>
