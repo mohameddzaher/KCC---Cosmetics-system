@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -96,6 +96,19 @@ const faqItems: FAQItem[] = [
 export default function FAQSection() {
   const { locale } = useLanguage();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [list, setList] = useState<FAQItem[]>(faqItems);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/content/faqs', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (cancelled || !Array.isArray(data) || data.length === 0) return;
+        setList(data.map((f: any) => ({ question: f.question || { en: '', ar: '' }, answer: f.answer || { en: '', ar: '' } })));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const sectionTitle = {
     en: 'Frequently Asked Questions',
@@ -149,7 +162,7 @@ export default function FAQSection() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="space-y-4"
         >
-          {faqItems.map((item, index) => {
+          {list.map((item, index) => {
             const isOpen = openIndex === index;
             return (
               <motion.div
