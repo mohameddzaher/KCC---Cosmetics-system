@@ -218,7 +218,7 @@ export default function CertificatesPage() {
                 <span className="inline-block text-xs font-medium text-kcc-beige-dark bg-kcc-beige/10 px-2.5 py-1 rounded-full mb-3">
                   {getCategory(selected)}
                 </span>
-                <h2 className="text-xl font-bold text-ink-700 mb-2">{getTitle(selected)}</h2>
+                <h2 className="font-serif text-xl sm:text-2xl text-ink-800 mb-2">{getTitle(selected)}</h2>
                 <div className="flex items-center gap-4 text-sm text-cream-700 mb-4">
                   <span className="flex items-center gap-1.5">
                     <Building2 size={14} />

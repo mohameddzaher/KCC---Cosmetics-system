@@ -445,7 +445,7 @@ function BulkOrderContent() {
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-kcc-green/15 ring-4 ring-kcc-green/20 mb-6">
             <CheckCircle size={40} className="text-kcc-green" />
           </div>
-          <h1 className="text-3xl font-bold text-ink-700 mb-4">{t('order.orderSuccess')}</h1>
+          <h1 className="mb-4 font-serif text-3xl sm:text-4xl text-ink-800">{t('order.orderSuccess')}</h1>
           <p className="text-cream-700 mb-2">{t('order.orderNumber')}:</p>
           <p className="text-2xl font-mono font-bold text-kcc-green mb-8">{orderNumber}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -474,7 +474,7 @@ function BulkOrderContent() {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-kcc-beige-light/55 text-kcc-beige-dark mb-4">
             <Truck size={28} />
           </div>
-          <h1 className="text-3xl font-bold text-ink-700 mb-2">{t('order.bulkTitle')}</h1>
+          <h1 className="mb-2 font-serif text-3xl sm:text-4xl text-ink-800">{t('order.bulkTitle')}</h1>
           <p className="text-cream-700">{t('order.bulkDesc')}</p>
         </div>
 

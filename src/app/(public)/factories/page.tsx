@@ -135,7 +135,7 @@ export default function FactoriesPage() {
 
                 {/* Content */}
                 <div className="lg:col-span-3 p-6 lg:p-8">
-                  <h3 className="text-xl font-bold text-ink-700 mb-2">{factory.name}</h3>
+                  <h3 className="font-serif text-xl text-ink-800 mb-2">{factory.name}</h3>
 
                   <div className="flex flex-wrap items-center gap-4 text-sm text-cream-700 mb-4">
                     <span className="flex items-center gap-1.5">

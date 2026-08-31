@@ -19,7 +19,7 @@ export default function RegisterPage() {
         <div className="w-14 h-14 rounded-2xl bg-kcc-green/10 text-kcc-green flex items-center justify-center mx-auto mb-4">
           <Lock size={26} />
         </div>
-        <h1 className="text-2xl font-bold text-ink-700 mb-2">
+        <h1 className="mb-2 font-serif text-3xl text-ink-800">
           {ar ? 'الحسابات بدعوة فقط' : 'Accounts are by invitation'}
         </h1>
         <p className="text-sm text-cream-700 mb-6 leading-relaxed">

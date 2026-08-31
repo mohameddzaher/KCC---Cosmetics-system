@@ -70,7 +70,7 @@ export default function PoliciesPage() {
             transition={{ duration: 0.3 }}
             className="rounded-2xl border border-cream-300 bg-surface p-5 shadow-soft sm:p-8"
           >
-            <h2 className="text-2xl font-bold text-ink-700">{doc.title}</h2>
+            <h2 className="font-serif text-2xl text-ink-800">{doc.title}</h2>
             <p className="mt-1 text-sm text-cream-700">
               {t('policies.lastUpdated')}: {t('policies.lastUpdatedDate')}
             </p>

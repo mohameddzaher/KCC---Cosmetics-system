@@ -6,6 +6,7 @@ import { Target, Eye, Award, Users, Globe2, Sparkles, Shield } from 'lucide-reac
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
 import PageHero from '@/components/public/PageHero';
+import { useCmsSection } from '@/lib/useCmsSection';
 
 interface TeamMember {
   _id: string;
@@ -42,12 +43,43 @@ export default function AboutPage() {
     { icon: Globe2, title: t('about.sustainability'), description: t('about.sustainabilityDesc') },
   ];
 
-  const stats = [
-    { number: '15+', label: t('about.yearsExp') },
-    { number: '500+', label: t('about.productsLaunched') },
-    { number: '200+', label: t('about.happyClients') },
-    { number: '12', label: t('about.countriesServed') },
-  ];
+  /*
+   * The story, the mission, the vision and the figures come from the CMS, with
+   * the dictionary as the shipped default. They were code-only, which is how
+   * the homepage hero ended up saying one thing while the CMS said another —
+   * an editor changed the CMS and the page carried on ignoring it.
+   *
+   * Editable under Admin -> CMS Manager -> "about".
+   */
+  const { content } = useCmsSection('about', {
+    en: {
+      story: [t('about.storyP1'), t('about.storyP2'), t('about.storyP3')],
+      mission: t('about.missionDesc'),
+      vision: t('about.visionDesc'),
+      items: [
+        { value: '15+', label: t('about.yearsExp') },
+        { value: '500+', label: t('about.productsLaunched') },
+        { value: '200+', label: t('about.happyClients') },
+        { value: '12', label: t('about.countriesServed') },
+      ],
+    },
+    ar: {
+      story: [t('about.storyP1'), t('about.storyP2'), t('about.storyP3')],
+      mission: t('about.missionDesc'),
+      vision: t('about.visionDesc'),
+      items: [
+        { value: '15+', label: t('about.yearsExp') },
+        { value: '500+', label: t('about.productsLaunched') },
+        { value: '200+', label: t('about.happyClients') },
+        { value: '12', label: t('about.countriesServed') },
+      ],
+    },
+  });
+
+  const stats = content.items.map((s: { value: string; label: string }) => ({
+    number: s.value,
+    label: s.label,
+  }));
 
   return (
     <div className="min-h-screen bg-cream-100">
@@ -69,11 +101,11 @@ export default function AboutPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-6">{t('about.ourStory')}</h2>
+              <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2rem] text-ink-800 mb-6">{t('about.ourStory')}</h2>
               <div className="space-y-4 text-cream-800 leading-relaxed">
-                <p>{t('about.storyP1')}</p>
-                <p>{t('about.storyP2')}</p>
-                <p>{t('about.storyP3')}</p>
+                {content.story.map((paragraph: string, i: number) => (
+                  <p key={i}>{paragraph}</p>
+                ))}
               </div>
             </motion.div>
 
@@ -99,7 +131,7 @@ export default function AboutPage() {
       {/* Stats */}
       <section className="py-12 px-4 border-y border-cream-300">
         <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {stats.map((stat, i) => (
+          {stats.map((stat: { number: string; label: string }, i: number) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
@@ -128,10 +160,8 @@ export default function AboutPage() {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-kcc-green/15 text-kcc-green mb-5">
                 <Target size={24} />
               </div>
-              <h3 className="text-xl font-bold text-ink-700 mb-3">{t('about.ourMission')}</h3>
-              <p className="text-cream-800 leading-relaxed">
-                {t('about.missionDesc')}
-              </p>
+              <h3 className="font-serif text-xl text-ink-800 mb-3">{t('about.ourMission')}</h3>
+              <p className="text-cream-800 leading-relaxed">{content.mission}</p>
             </motion.div>
 
             <motion.div
@@ -144,16 +174,16 @@ export default function AboutPage() {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-kcc-beige-light/55 text-kcc-beige-dark mb-5">
                 <Eye size={24} />
               </div>
-              <h3 className="text-xl font-bold text-ink-700 mb-3">{t('about.ourVision')}</h3>
+              <h3 className="font-serif text-xl text-ink-800 mb-3">{t('about.ourVision')}</h3>
               <p className="text-cream-800 leading-relaxed">
-                {t('about.visionDesc')}
+                {content.vision}
               </p>
             </motion.div>
           </div>
 
           {/* Values */}
           <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">{t('about.ourValues')}</h2>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2rem] text-ink-800 mb-3">{t('about.ourValues')}</h2>
             <p className="text-cream-700">{t('about.valuesSubtitle')}</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -184,7 +214,7 @@ export default function AboutPage() {
       <section className="py-14 px-4 border-t border-cream-300">
         <div className="page-shell">
           <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">{t('about.leadershipTeam')}</h2>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2rem] text-ink-800 mb-3">{t('about.leadershipTeam')}</h2>
             <p className="text-cream-700">{t('about.leadershipSubtitle')}</p>
           </div>
           <div className="max-w-xs mx-auto">
@@ -246,7 +276,7 @@ export default function AboutPage() {
       <section className="py-14 px-4 border-t border-cream-300">
         <div className="page-shell">
           <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">{t('about.ourTeam')}</h2>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2rem] text-ink-800 mb-3">{t('about.ourTeam')}</h2>
             <p className="text-cream-700">{t('about.ourTeamSubtitle')}</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">

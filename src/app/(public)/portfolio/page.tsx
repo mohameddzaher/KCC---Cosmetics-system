@@ -163,7 +163,7 @@ export default function PortfolioPage() {
               </div>
               <div className="p-6">
                 <span className="inline-block text-xs font-medium text-kcc-beige-dark bg-kcc-beige/10 px-2.5 py-1 rounded-full mb-3">{selected.category}</span>
-                <h3 className="text-xl font-bold text-ink-700 mb-1">{selected.title}</h3>
+                <h3 className="font-serif text-xl text-ink-800 mb-1">{selected.title}</h3>
                 {selected.client && <p className="text-sm text-cream-800 mb-3">Client: {selected.client}</p>}
                 <p className="text-sm text-cream-700 leading-relaxed mb-5">{selected.description}</p>
                 <Link href="/order/sample" className="inline-flex items-center gap-2 px-5 py-2.5 bg-kcc-green hover:bg-kcc-green-light text-white text-sm font-semibold rounded-xl transition-colors">

@@ -88,7 +88,7 @@ export default function ProductionPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">{t('policies.labCapabilities')}</h2>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2rem] text-ink-800 mb-3">{t('policies.labCapabilities')}</h2>
             <p className="text-cream-700 max-w-xl mx-auto">
               Our facilities are equipped with cutting-edge technology for every stage of cosmetics production.
             </p>
@@ -127,7 +127,7 @@ export default function ProductionPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">{t('policies.qualityAssurance')}</h2>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2rem] text-ink-800 mb-3">{t('policies.qualityAssurance')}</h2>
             <p className="text-cream-700 max-w-xl mx-auto">
               Rigorous quality control at every step ensures consistency, safety, and regulatory compliance.
             </p>
@@ -168,7 +168,7 @@ export default function ProductionPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">{t('policies.researchDevelopment')}</h2>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2rem] text-ink-800 mb-3">{t('policies.researchDevelopment')}</h2>
             <p className="text-cream-700 max-w-xl mx-auto">
               Our R&D team drives innovation with cutting-edge formulation science and market trend analysis.
             </p>
