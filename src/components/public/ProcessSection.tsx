@@ -66,7 +66,7 @@ const DEFAULTS = {
 
 export default function ProcessSection() {
   const { t, locale } = useLanguage();
-  const content = useCmsSection('process', DEFAULTS);
+  const { content, ready } = useCmsSection('process', DEFAULTS);
   // An admin who adds a step gets an icon; one who removes a step loses one.
   const items = content.steps.map((step: { title: string; description: string }, i: number) => ({
     ...step,
@@ -100,13 +100,30 @@ export default function ProcessSection() {
           </p>
         </motion.div>
 
+        {/*
+          The steps wait for the CMS.
+
+          They are animated in on scroll, and the number of them comes from the
+          CMS — so rendering the built-in six and then swapping to the CMS's
+          four made two of them appear and disappear again mid-animation. The
+          reserved height keeps the page from jumping while it resolves.
+        */}
+        {!ready ? (
+          <div className="min-h-[16rem]" aria-hidden />
+        ) : (
+        <>
         {/* Desktop: Horizontal Timeline */}
         <div className="hidden lg:block">
           {/* Connecting line */}
           <div className="relative">
             <div className="absolute top-7 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-kcc-rose/40 to-transparent" />
 
-            <div className="grid grid-cols-6 gap-4">
+            {/* Columns follow the number of steps the CMS actually holds —
+                it was pinned at six while the CMS had four. */}
+            <div
+              className="grid gap-4"
+              style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+            >
               {items.map((step, index) => {
                 const Icon = step.icon;
                 return (
@@ -187,6 +204,8 @@ export default function ProcessSection() {
             </div>
           </div>
         </div>
+        </>
+        )}
       </div>
     </section>
   );

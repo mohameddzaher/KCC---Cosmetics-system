@@ -90,7 +90,7 @@ function AnimatedCounter({ target, suffix, inView }: { target: number; suffix: s
 export default function StatsSection() {
   const { locale } = useLanguage();
   // Editable under Admin → CMS Manager → "stats".
-  const content = useCmsSection('stats', DEFAULTS);
+  const { content } = useCmsSection('stats', DEFAULTS);
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-80px' });
   const reduce = useReducedMotion();

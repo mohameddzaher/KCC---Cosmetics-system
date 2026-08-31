@@ -19,9 +19,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 export function useCmsSection<T extends Record<string, unknown>>(
   type: string,
   defaults: Record<'en' | 'ar', T>
-): T {
+): { content: T; ready: boolean } {
   const { locale } = useLanguage();
-  const [fields, setFields] = useState<{ en?: Partial<T>; ar?: Partial<T> } | null>(null);
+  const [state, setState] = useState<{
+    fields: { en?: Partial<T>; ar?: Partial<T> } | null;
+    ready: boolean;
+  }>({ fields: null, ready: false });
 
   useEffect(() => {
     let alive = true;
@@ -31,17 +34,27 @@ export function useCmsSection<T extends Record<string, unknown>>(
         if (!alive) return;
         const list = Array.isArray(data) ? data : data?.sections || data?.items || [];
         const first = list[0];
-        if (first?.fields) setFields(first.fields);
+        setState({ fields: first?.fields || null, ready: true });
       })
       .catch(() => {
         /* The page keeps its built-in copy — never blank because a fetch failed. */
+        if (alive) setState({ fields: null, ready: true });
       });
     return () => {
       alive = false;
     };
   }, [type]);
 
-  return useMemo(() => {
+  const fields = state.fields;
+
+  /*
+   * `ready` matters for any section whose SHAPE can change, not just its
+   * wording. The process strip ships with six steps and the CMS holds four,
+   * so rendering the defaults first and swapping made two steps appear and
+   * vanish again mid-animation. A section like that waits; one that only
+   * swaps text does not have to.
+   */
+  const content = useMemo(() => {
     const lang: 'en' | 'ar' = locale === 'ar' ? 'ar' : 'en';
     const base = defaults[lang];
     const custom = (fields?.[lang] || {}) as Partial<T>;
@@ -57,4 +70,6 @@ export function useCmsSection<T extends Record<string, unknown>>(
     // `defaults` is a module constant at every call site.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fields, locale]);
+
+  return { content, ready: state.ready };
 }

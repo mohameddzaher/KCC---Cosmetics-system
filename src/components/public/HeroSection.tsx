@@ -14,7 +14,7 @@ export default function HeroSection() {
    * Editable under Admin → CMS Manager → "hero". The dictionary supplies the
    * shipped wording, so an empty CMS section changes nothing.
    */
-  const content = useCmsSection('hero', {
+  const { content } = useCmsSection('hero', {
     en: { subtitle: t('hero.subtitle'), description: t('hero.description') },
     ar: { subtitle: t('hero.subtitle'), description: t('hero.description') },
   });

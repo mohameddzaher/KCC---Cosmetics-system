@@ -150,9 +150,16 @@ export default function ServicesSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className={`grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8 ${
-            items.length % 3 === 0 ? 'lg:grid-cols-3' : items.length % 2 === 0 ? 'lg:grid-cols-2 max-w-4xl mx-auto' : 'lg:grid-cols-3'
-          }`}
+          /*
+            Landscape cards, two across, at the section's full width.
+
+            The old rule capped an even number of services at max-w-4xl and
+            stacked the image above the text, which made each card a tall
+            square in the middle of a wide page. Turning the card on its side —
+            image beside the copy — uses the width the section already has and
+            gives the description room to breathe.
+          */
+          className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-7"
         >
           {items.map((service, index) => {
             const Icon = service.icon;
@@ -167,24 +174,27 @@ export default function ServicesSection() {
               <motion.div
                 key={index}
                 variants={cardVariants}
-                className={`${cardClass} ${hoverBorder} overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-soft-lg`}
+                className={`${cardClass} ${hoverBorder} group flex flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-soft-lg sm:flex-row`}
               >
-                {/* Service Image */}
-                <div className="relative h-44 sm:h-48 overflow-hidden">
+                {/* Service image — a side panel from sm up, a banner below it. */}
+                <div className="relative h-44 shrink-0 overflow-hidden sm:h-auto sm:w-[42%]">
                   <img
                     src={service.image}
                     onError={onImgError}
                     alt={locale === 'ar' ? service.title.ar : service.title.en}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-cream-50/95 via-cream-50/30 to-transparent" />
+                  {/* The fade runs upward when the image is a banner and
+                      sideways when it is a side panel, so the join with the
+                      card body is soft either way. */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-cream-50/95 via-cream-50/30 to-transparent sm:bg-gradient-to-r sm:from-transparent sm:via-transparent sm:to-cream-50/90" />
                   {/* Icon overlay */}
                   <div className={`absolute bottom-3 start-3 w-12 h-12 rounded-2xl ${iconBg} backdrop-blur-sm flex items-center justify-center shadow-soft-lg`}>
                     <Icon size={20} className="text-white" />
                   </div>
                 </div>
 
-                <div className="p-6 lg:p-7">
+                <div className="flex min-w-0 flex-1 flex-col justify-center p-6 lg:p-7">
                   {/* Title */}
                   <h3 className="text-lg font-semibold text-ink-700 mb-3 group-hover:text-kcc-green transition-colors">
                     {locale === 'ar' ? service.title.ar : service.title.en}
