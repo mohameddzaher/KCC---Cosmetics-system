@@ -16,7 +16,8 @@
     "sync:categories": "npx tsx scripts/sync-categories.ts",
     "enrich:content": "npx tsx scripts/enrich-content.ts",
     "create:users": "npx tsx scripts/create-users.ts",
-    "i18n:check": "npx tsx scripts/i18n-check.ts"
+    "i18n:check": "npx tsx scripts/i18n-check.ts",
+    "verify:data": "npx tsx scripts/verify-data.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

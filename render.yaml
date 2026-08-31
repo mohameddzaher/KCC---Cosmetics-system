@@ -42,3 +42,6 @@ services:
         sync: false
       - key: SMTP_FROM
         value: noreply@kcc.sa
+      # true for port 465, false for 587 (STARTTLS). Read by src/lib/mailer.ts.
+      - key: SMTP_SECURE
+        value: "false"
