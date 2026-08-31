@@ -153,7 +153,15 @@ export default function NewsSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+          /*
+            Flex-wrap rather than a grid, so a partial row centres.
+
+            A three-column grid keeps its tracks whatever you put in
+            it, so two published posts sat against the leading edge
+            with a hole beside them. Wrapping centres whatever is
+            there: two sit in the middle of the row, three fill it.
+          */
+          className="mx-auto flex w-full flex-wrap justify-center gap-6 lg:gap-8"
         >
           {items.map((item, idx) => {
             const cardClass = idx % 2 === 0 ? 'glass-card-blush' : 'glass-card-champagne';
@@ -162,7 +170,7 @@ export default function NewsSection() {
               <motion.div
                 key={item.id}
                 variants={cardVariants}
-                className={`group ${cardClass} ${hoverBorder} overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-soft-lg`}
+                className={`group ${cardClass} ${hoverBorder} w-full max-w-[26rem] flex-1 basis-[20rem] overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-soft-lg`}
               >
                 {/* Image */}
                 <div className="relative h-48 overflow-hidden">
