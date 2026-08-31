@@ -14,10 +14,22 @@ export default function HeroSection() {
    * Editable under Admin → CMS Manager → "hero". The dictionary supplies the
    * shipped wording, so an empty CMS section changes nothing.
    */
-  const { content } = useCmsSection('hero', {
+  const { content, ready } = useCmsSection('hero', {
     en: { subtitle: t('hero.subtitle'), description: t('hero.description') },
     ar: { subtitle: t('hero.subtitle'), description: t('hero.description') },
   });
+
+  /*
+   * The hero copy waits for the CMS before it fades in.
+   *
+   * It was rendering the dictionary wording and then swapping to the CMS's on
+   * every reload — one line of text visibly replaced by another a moment
+   * later. The block was always going to fade in over ~0.7s, so holding it
+   * until the content is settled costs nothing visible and removes the swap
+   * entirely. If the fetch fails, `ready` still flips and the shipped copy
+   * fades in as before.
+   */
+  const reveal = ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 25 };
   const sectionRef = useRef<HTMLElement>(null);
 
   return (
@@ -34,7 +46,7 @@ export default function HeroSection() {
         />
       </div>
       {/* Warm romantic overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-espresso-950/85 via-espresso-900/80 to-espresso-950/95" />
+      <div className="absolute inset-0 bg-gradient-to-b from-espresso-950/88 via-espresso-900/84 to-espresso-950/96" />
       <div className="absolute inset-0 bg-gradient-to-tr from-kcc-rose-dark/15 via-transparent to-kcc-beige/10" />
 
       {/* Animated rose & champagne orbs */}
@@ -134,7 +146,7 @@ export default function HeroSection() {
         {/* Overline */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={reveal}
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mb-6"
         >
@@ -147,7 +159,7 @@ export default function HeroSection() {
         {/* Main Title */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={reveal}
           transition={{ duration: 0.7, delay: 0.4 }}
           className="text-3xl sm:text-4xl lg:text-6xl font-black tracking-tight mb-5"
         >
@@ -170,7 +182,7 @@ export default function HeroSection() {
         {/* Subtitle */}
         <motion.p
           initial={{ opacity: 0, y: 25 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={reveal}
           transition={{ duration: 0.7, delay: 0.65 }}
           className="text-base sm:text-lg lg:text-xl font-light text-on-dark mb-3 font-serif italic"
         >
@@ -180,7 +192,7 @@ export default function HeroSection() {
         {/* Description */}
         <motion.p
           initial={{ opacity: 0, y: 25 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={reveal}
           transition={{ duration: 0.7, delay: 0.8 }}
           className="max-w-xl mx-auto text-sm text-on-dark-soft/85 leading-relaxed mb-8"
         >
@@ -190,7 +202,7 @@ export default function HeroSection() {
         {/* CTA Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 25 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={reveal}
           transition={{ duration: 0.7, delay: 1.0 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4"
         >
@@ -231,7 +243,16 @@ export default function HeroSection() {
       </motion.div>
 
       {/* Soft transition to next section */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-cream-100 pointer-events-none" />
+      {/*
+        The blend into the next section.
+
+        It was a 8rem band starting from fully transparent, which lightened the
+        lower part of the hero long before its edge — the dark treatment looked
+        like it stopped around 60% down. Shorter, and held transparent for most
+        of its own height, so the hero stays dark to nearly the bottom and only
+        hands over in the last stretch.
+      */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent via-transparent to-cream-100" />
     </section>
   );
 }
