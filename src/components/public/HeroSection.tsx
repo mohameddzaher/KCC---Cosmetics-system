@@ -130,7 +130,7 @@ export default function HeroSection() {
       />
 
       {/* Content */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="relative z-10 page-shell text-center">
         {/* Overline */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

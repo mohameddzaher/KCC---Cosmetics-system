@@ -123,7 +123,7 @@ export default function CertificatesPage() {
 
       {/* Certificates Grid */}
       <section className="py-12 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="page-shell">
           <div className="grid sm:grid-cols-2 gap-6">
             {list.map((cert, i) => (
               <motion.button

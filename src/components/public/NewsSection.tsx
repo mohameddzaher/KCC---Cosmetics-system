@@ -9,6 +9,8 @@ import { useEffect, useState } from 'react';
 
 interface NewsItem {
   id: string;
+  /** Where the card links to. Empty on a shipped placeholder with no post. */
+  slug: string;
   date: string;
   title: { en: string; ar: string };
   excerpt: { en: string; ar: string };
@@ -26,6 +28,7 @@ interface NewsItem {
 const fallbackNews: NewsItem[] = [
   {
     id: '1',
+    slug: '',
     date: '2025-12-15',
     title: {
       en: 'KCC Expands Production Capacity with New Facility',
@@ -39,6 +42,7 @@ const fallbackNews: NewsItem[] = [
   },
   {
     id: '2',
+    slug: '',
     date: '2025-11-28',
     title: {
       en: 'International Quality Certification Renewed',
@@ -52,6 +56,7 @@ const fallbackNews: NewsItem[] = [
   },
   {
     id: '3',
+    slug: '',
     date: '2025-10-10',
     title: {
       en: 'KCC Partners with Leading Skincare Innovators',
@@ -105,6 +110,7 @@ export default function NewsSection() {
         setItems(
           list.slice(0, 3).map((post: Record<string, any>) => ({
             id: String(post._id || post.slug),
+            slug: String(post.slug || ''),
             date: post.publishedAt || post.createdAt || '',
             title: post.title,
             excerpt: post.excerpt,
@@ -127,7 +133,7 @@ export default function NewsSection() {
       <div className="absolute top-0 end-0 w-72 h-72 bg-kcc-beige-light/30 rounded-full blur-[150px]" />
       <div className="absolute inset-0 dot-pattern opacity-40 pointer-events-none" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 page-shell">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -167,11 +173,19 @@ export default function NewsSection() {
             const cardClass = idx % 2 === 0 ? 'glass-card-blush' : 'glass-card-champagne';
             const hoverBorder = idx % 2 === 0 ? 'hover:border-kcc-rose/45' : 'hover:border-kcc-beige/55';
             return (
-              <motion.div
+              /*
+                The whole card is the link.
+
+                It was a plain div with a "Read More" span inside it, so
+                neither the card nor the words did anything when clicked — the
+                only way through to an article was the View All button.
+              */
+              <motion.article
                 key={item.id}
                 variants={cardVariants}
                 className={`group ${cardClass} ${hoverBorder} w-full max-w-[26rem] flex-1 basis-[20rem] overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-soft-lg`}
               >
+                <Link href={item.slug ? `/news/${item.slug}` : '/news'} className="block h-full">
                 {/* Image */}
                 <div className="relative h-48 overflow-hidden">
                   <img
@@ -202,7 +216,8 @@ export default function NewsSection() {
                     <ArrowRight size={14} className="rtl:rotate-180" />
                   </span>
                 </div>
-              </motion.div>
+                </Link>
+              </motion.article>
             );
           })}
         </motion.div>

@@ -47,7 +47,7 @@ export default function ProductionPage() {
 
       {/* Featured Image Banner */}
       <section className="px-4 -mt-4 mb-8">
-        <div className="max-w-6xl mx-auto">
+        <div className="page-shell">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -81,7 +81,7 @@ export default function ProductionPage() {
 
       {/* Lab Capabilities */}
       <section className="py-14 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="page-shell">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -120,7 +120,7 @@ export default function ProductionPage() {
 
       {/* QA Process */}
       <section className="py-14 px-4 border-y border-cream-300">
-        <div className="max-w-6xl mx-auto">
+        <div className="page-shell">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -161,7 +161,7 @@ export default function ProductionPage() {
 
       {/* R&D Section */}
       <section className="py-14 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="page-shell">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

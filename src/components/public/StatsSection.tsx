@@ -99,7 +99,7 @@ export default function StatsSection() {
     <section ref={sectionRef} className="relative overflow-hidden bg-cream-100 py-14 lg:py-20">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-cream-100 to-cream-50" />
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 page-shell">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}

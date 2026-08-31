@@ -61,7 +61,7 @@ export default function AboutPage() {
 
       {/* Story Section */}
       <section className="py-14 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="page-shell">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
@@ -117,7 +117,7 @@ export default function AboutPage() {
 
       {/* Mission, Vision, Values */}
       <section className="py-14 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="page-shell">
           <div className="grid md:grid-cols-2 gap-6 mb-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -182,7 +182,7 @@ export default function AboutPage() {
 
       {/* Leadership Section — CEO Only */}
       <section className="py-14 px-4 border-t border-cream-300">
-        <div className="max-w-6xl mx-auto">
+        <div className="page-shell">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">{t('about.leadershipTeam')}</h2>
             <p className="text-cream-700">{t('about.leadershipSubtitle')}</p>
@@ -244,7 +244,7 @@ export default function AboutPage() {
 
       {/* Our Team Section */}
       <section className="py-14 px-4 border-t border-cream-300">
-        <div className="max-w-6xl mx-auto">
+        <div className="page-shell">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">{t('about.ourTeam')}</h2>
             <p className="text-cream-700">{t('about.ourTeamSubtitle')}</p>

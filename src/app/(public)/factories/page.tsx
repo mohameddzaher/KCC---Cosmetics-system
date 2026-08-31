@@ -111,7 +111,7 @@ export default function FactoriesPage() {
 
       {/* Factories */}
       <section className="py-12 px-4">
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="page-shell space-y-8">
           {list.map((factory, i) => (
             <motion.div
               key={factory.id}

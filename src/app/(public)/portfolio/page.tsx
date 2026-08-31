@@ -74,7 +74,7 @@ export default function PortfolioPage() {
 
       {/* Filter & Grid */}
       <section className="py-12 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="page-shell">
           {/* Category Filters */}
           <div className="flex flex-wrap gap-2 mb-10 justify-center">
             {categories.map((cat) => (

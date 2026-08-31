@@ -562,6 +562,36 @@ select:focus-visible:not([data-focus-self]) {
 }
 
 /*
+ * The one page container.
+ *
+ * The public site had grown five different widths — 7xl on the navbar and
+ * some sections, 6xl on most inner pages, 5xl on the hero, 4xl and 3xl
+ * elsewhere — so content shifted sideways as you moved between pages and
+ * none of it used much of a wide screen. This is the single shell every
+ * page and full-bleed section sits in.
+ *
+ * 90rem, not the full viewport: a section is allowed to be wide, but a line
+ * of body copy is not, so narrow `max-w-*` caps INSIDE a shell (a paragraph,
+ * a form column) are deliberate and stay.
+ */
+.page-shell {
+  width: 100%;
+  max-width: 90rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+@media (min-width: 640px) {
+  .page-shell {
+    padding-inline: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .page-shell {
+    padding-inline: 2rem;
+  }
+}
+
+/*
  * A row of section tabs — Settings' General / Referral / Notifications, the
  * account area's three sections, the accounting views.
  *

@@ -82,7 +82,7 @@ export default function ContactPage() {
 
       {/* Content */}
       <section className="py-12 sm:py-12 px-4">
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="page-shell space-y-8">
           {/* Contact quick info */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}

@@ -109,7 +109,7 @@ export default function NewsPage() {
 
       {/* News Grid */}
       <section className="py-12 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="page-shell">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {news.map((item, i) => (
               <motion.div

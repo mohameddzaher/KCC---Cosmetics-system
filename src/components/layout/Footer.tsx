@@ -88,7 +88,7 @@ export default function Footer() {
       {/* A single, very soft warm glow. No competing colour fields. */}
       <div className="pointer-events-none absolute -top-24 start-1/4 h-[380px] w-[380px] rounded-full bg-kcc-rose-dark/10 blur-[150px]" />
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
+      <div className="page-shell relative z-10 py-14 lg:py-16">
         <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr] lg:gap-12">
           {/* ---------------- Brand ---------------- */}
           <div className="max-w-sm">
@@ -194,7 +194,7 @@ export default function Footer() {
 
       {/* ---------------- Base bar ---------------- */}
       <div className="relative z-10 border-t border-white/10">
-        <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-4 px-4 py-6 sm:flex-row sm:px-6 lg:px-8">
+        <div className="page-shell flex flex-col items-center justify-between gap-4 py-6 sm:flex-row">
           <p className="text-xs text-on-dark-faint">{t('footer.rights')}</p>
 
           <div className="flex items-center gap-5">

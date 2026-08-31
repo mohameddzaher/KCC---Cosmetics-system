@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, Calendar, User, Share2, Facebook, Twitter, Linkedin } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { onImgError } from '@/lib/imageFallback';
 
 interface NewsPost {
+  /** The post's own cover image. */
+  image?: string;
   slug: string;
   title: string;
   content: string;
@@ -68,11 +71,36 @@ This achievement positions KCC as one of the few cosmetics manufacturers in Saud
 };
 
 export default function NewsArticlePage() {
-  const { t, locale } = useLanguage();
+  const { tx, locale } = useLanguage();
   const params = useParams();
   const slug = params.slug as string;
   const [article, setArticle] = useState<NewsPost | null>(null);
   const [loading, setLoading] = useState(true);
+  const reduce = useReducedMotion();
+
+  /* Real share targets. These were three buttons with no handler. */
+  const shareUrl = typeof window === 'undefined' ? '' : window.location.href;
+  const shareText = article?.title || '';
+  const shareLinks = [
+    {
+      key: 'x',
+      Icon: Twitter,
+      label: 'X / Twitter',
+      href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+    },
+    {
+      key: 'linkedin',
+      Icon: Linkedin,
+      label: 'LinkedIn',
+      href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
+    },
+    {
+      key: 'facebook',
+      Icon: Facebook,
+      label: 'Facebook',
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+    },
+  ];
 
   useEffect(() => {
     let cancelled = false;
@@ -91,7 +119,8 @@ export default function NewsArticlePage() {
               excerpt: pick(found.excerpt),
               date: found.publishedAt || found.createdAt || '',
               author: found.author || 'KCC Team',
-              category: (Array.isArray(found.tags) && found.tags[0]) || 'News',
+              category: (Array.isArray(found.tags) && found.tags[0]) || '',
+              image: found.imageUrl || '',
             });
             setLoading(false);
             return;
@@ -120,10 +149,11 @@ export default function NewsArticlePage() {
     return (
       <div className="min-h-screen bg-cream-100 flex items-center justify-center px-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-ink-700 mb-3">{locale === 'ar' ? 'المقال غير موجود' : 'Article not found'}</h1>
-          <p className="text-cream-700 mb-6">{locale === 'ar' ? 'المقال اللي بتدور عليه مش موجود أو اتشال.' : "The article you're looking for doesn't exist or was removed."}</p>
-          <Link href="/news" className="inline-flex items-center gap-2 px-5 py-2.5 bg-kcc-green hover:bg-kcc-green-light text-white rounded-xl transition-colors">
-            <ArrowLeft size={16} /> {t('news.title')}
+          <h1 className="mb-3 font-serif text-3xl text-ink-800">{tx('Article not found')}</h1>
+          <p className="mb-7 text-cream-800">{tx('That article does not exist, or it has been taken down.')}</p>
+          <Link href="/news" className="btn btn-primary btn-sm">
+            <ArrowLeft size={14} className="rtl-flip" />
+            {tx('Back to all news')}
           </Link>
         </div>
       </div>
@@ -131,42 +161,57 @@ export default function NewsArticlePage() {
   }
 
   return (
-    <div className="min-h-screen bg-cream-100">
-      {/* Hero */}
-      <section className="relative pt-8 pb-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-cream-100 to-cream-50" />
-        <div className="absolute top-1/4 -left-32 w-80 h-80 rounded-full bg-kcc-rose-light/40 blur-[120px]" />
+    <article className="min-h-screen bg-cream-100">
+      {/* Header */}
+      <header className="relative overflow-hidden pb-10 pt-10 lg:pb-14 lg:pt-16">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-cream-100 to-cream-50" />
+        <div className="pointer-events-none absolute -top-24 start-1/4 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-kcc-rose-light/35 blur-[140px]" />
 
-        <div className="relative z-10 max-w-3xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            {/* Back button */}
+        <div className="page-shell relative z-10">
+          <motion.div
+            initial={reduce ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mx-auto max-w-3xl text-center"
+          >
+            {/* One translated phrase, not "back" glued to a page name — that
+                came out as "رجوع to الأخبار" in Arabic. */}
             <Link
               href="/news"
-              className="inline-flex items-center gap-2 text-sm text-cream-700 hover:text-ink-700 transition-colors mb-8"
+              className="mb-8 inline-flex items-center gap-2 text-sm text-cream-700 transition-colors hover:text-ink-700"
             >
-              <ArrowLeft size={16} />
-              {t('common.back')} to {t('news.title')}
+              <ArrowLeft size={16} className="rtl-flip" />
+              {tx('Back to all news')}
             </Link>
 
-            {/* Category */}
-            <span className="inline-block text-xs font-medium text-kcc-green bg-kcc-green/10 px-3 py-1 rounded-full mb-4">
-              {article.category}
-            </span>
+            {article.category && (
+              <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.3em] text-kcc-rose-dark">
+                {article.category}
+              </p>
+            )}
 
-            {/* Title */}
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-ink-700 mb-6 leading-tight">
+            <h1 className="font-serif text-3xl leading-[1.12] text-ink-800 sm:text-4xl lg:text-[2.75rem]">
               {article.title}
             </h1>
 
-            {/* Meta */}
-            <div className="flex items-center gap-6 text-sm text-cream-700">
+            <div className="mx-auto mt-6 h-px w-14 bg-gradient-to-r from-transparent via-kcc-rose-dark/50 to-transparent" />
+
+            {article.excerpt && (
+              <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-cream-800">
+                {article.excerpt}
+              </p>
+            )}
+
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-cream-700">
               <span className="flex items-center gap-2">
                 <Calendar size={14} />
-                {new Date(article.date).toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
+                {article.date
+                  ? new Date(article.date).toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })
+                  : ''}
               </span>
               <span className="flex items-center gap-2">
                 <User size={14} />
@@ -175,80 +220,86 @@ export default function NewsArticlePage() {
             </div>
           </motion.div>
         </div>
-      </section>
+      </header>
 
-      {/* Content */}
-      <section className="py-12 px-4">
-        <div className="max-w-3xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            {/* Article featured image */}
-            <div className="aspect-video rounded-2xl overflow-hidden border border-cream-400 mb-10 relative">
+      <div className="page-shell pb-20">
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.12 }}
+          className="mx-auto max-w-3xl"
+        >
+          {/* The post's own cover. It used to be picked by a hardcoded switch
+              on the slug, so every post added since fell through to a stock
+              default that had nothing to do with it. */}
+          {article.image && (
+            <figure className="relative mb-12 aspect-[16/9] overflow-hidden rounded-3xl border border-cream-300 shadow-soft-lg">
               <img
-                src={
-                  slug === 'kcc-expands-production-capacity'
-                    ? 'https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=1600'
-                    : slug === 'kcc-partners-with-leading-skincare-innovators'
-                    ? 'https://images.pexels.com/photos/7755654/pexels-photo-7755654.jpeg?auto=compress&cs=tinysrgb&w=1600'
-                    : slug === 'iso-22716-certification'
-                    ? 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200&q=80'
-                    : 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=1200&q=80'
-                }
+                src={article.image}
+                onError={onImgError}
                 alt={article.title}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-cream-50/30 to-transparent" />
-            </div>
+            </figure>
+          )}
 
-            {/* Article body */}
-            <div className="prose prose-invert prose-lg max-w-none">
-              {article.content.split('\n\n').map((paragraph, i) => {
-                if (paragraph.startsWith('- ')) {
-                  const items = paragraph.split('\n');
-                  return (
-                    <ul key={i} className="space-y-2 my-6">
-                      {items.map((item, j) => (
-                        <li key={j} className="text-cream-800 leading-relaxed flex items-start gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-kcc-green mt-2.5 shrink-0" />
-                          <span>{item.replace(/^- /, '')}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  );
-                }
+          {/* Body. The measure stays narrow on purpose — a 90rem-wide line of
+              body copy is unreadable however much screen there is. */}
+          <div className="text-[17px] leading-[1.85] text-cream-800">
+            {article.content.split('\n\n').map((paragraph, i) => {
+              if (paragraph.startsWith('- ')) {
                 return (
-                  <p key={i} className="text-cream-800 leading-relaxed mb-6">
-                    {paragraph}
-                  </p>
+                  <ul key={i} className="my-7 space-y-2.5">
+                    {paragraph.split('\n').map((item, j) => (
+                      <li key={j} className="flex items-start gap-3">
+                        <span className="mt-[0.7em] h-1.5 w-1.5 shrink-0 rounded-full bg-kcc-rose-dark" />
+                        <span>{item.replace(/^- /, '')}</span>
+                      </li>
+                    ))}
+                  </ul>
                 );
-              })}
-            </div>
+              }
+              return (
+                <p key={i} className="mb-6">
+                  {paragraph}
+                </p>
+              );
+            })}
+          </div>
 
-            {/* Share buttons placeholder */}
-            <div className="mt-12 pt-8 border-t border-cream-300">
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-cream-700 flex items-center gap-2">
-                  <Share2 size={16} />
-                  Share this article
-                </span>
-                <div className="flex items-center gap-2">
-                  {[Facebook, Twitter, Linkedin].map((Icon, i) => (
-                    <button
-                      key={i}
-                      className="p-2 rounded-lg bg-cream-200 text-cream-700 hover:text-kcc-green hover:bg-cream-300 transition-colors"
-                    >
-                      <Icon size={16} />
-                    </button>
-                  ))}
-                </div>
+          {/* Share — real links, not decorative buttons. */}
+          <div className="mt-14 border-t border-cream-300 pt-8">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <span className="flex items-center gap-2 text-sm text-cream-700">
+                <Share2 size={16} />
+                {tx('Share this article')}
+              </span>
+              <div className="flex items-center gap-2">
+                {shareLinks.map(({ key, Icon, href, label }) => (
+                  <a
+                    key={key}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={label}
+                    title={label}
+                    className="rounded-lg border border-cream-300 bg-surface p-2.5 text-cream-700 transition-colors hover:border-kcc-rose-dark/40 hover:text-kcc-rose-dark"
+                  >
+                    <Icon size={16} />
+                  </a>
+                ))}
               </div>
             </div>
-          </motion.div>
-        </div>
-      </section>
-    </div>
+          </div>
+
+          <div className="mt-12 text-center">
+            <Link href="/news" className="btn btn-outline btn-sm">
+              <ArrowLeft size={14} className="rtl-flip" />
+              {tx('Back to all news')}
+            </Link>
+          </div>
+        </motion.div>
+      </div>
+    </article>
   );
 }
