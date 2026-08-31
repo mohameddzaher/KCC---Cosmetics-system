@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import StepIndicator, { type StepIndicatorPhase } from './StepIndicator';
 
 interface ProgressBarProps {
@@ -14,30 +15,32 @@ interface ProgressBarProps {
 }
 
 const milestones = [25, 50, 75];
-const milestoneCopy = ['Looking good ✨', 'Halfway there', 'Almost done'];
 
 export default function ProgressBar({ percent, onBack, rightLabel, phases, currentPhaseIndex = 0 }: ProgressBarProps) {
+  const { t } = useLanguage();
   const clamped = Math.max(0, Math.min(100, percent));
   const [milestoneText, setMilestoneText] = useState<string | null>(null);
+  const milestoneCopy = [t('quiz.milestone25'), t('quiz.milestone50'), t('quiz.milestone75')];
 
   useEffect(() => {
-    const idx = milestones.findIndex((m) => Math.abs(clamped - m) < 1.5);
+    const idx = milestones.findIndex((m) => Math.abs(clamped - m) < 3);
     if (idx >= 0) {
       setMilestoneText(milestoneCopy[idx]);
-      const t = setTimeout(() => setMilestoneText(null), 1400);
-      return () => clearTimeout(t);
+      const timer = setTimeout(() => setMilestoneText(null), 1400);
+      return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clamped]);
 
   return (
-    <div className="fixed top-16 inset-x-0 z-30 bg-cream-50/92 backdrop-blur-xl border-b border-cream-300">
+    <div className="fixed inset-x-0 top-16 z-30 border-b border-cream-300 bg-cream-50/92 backdrop-blur-xl">
       {/* Top row: back + milestone + percentage */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 h-14 flex items-center justify-between">
+      <div className="relative mx-auto flex h-14 max-w-[100rem] items-center justify-between px-4 sm:px-6 lg:px-10">
         <button
           type="button"
           onClick={onBack}
           disabled={!onBack}
-          aria-label="Go back"
+          aria-label={t('quiz.back')}
           className={`flex items-center gap-1.5 text-xs font-medium tracking-wider uppercase transition-all ${
             onBack
               ? 'text-ink-800 hover:text-kcc-rose-dark cursor-pointer'
@@ -45,7 +48,7 @@ export default function ProgressBar({ percent, onBack, rightLabel, phases, curre
           }`}
         >
           <ChevronLeft size={16} className="rtl-flip" />
-          <span>Back</span>
+          <span>{t('quiz.back')}</span>
         </button>
 
         <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none">

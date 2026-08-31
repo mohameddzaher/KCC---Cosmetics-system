@@ -22,7 +22,7 @@ const CTAButton = forwardRef<HTMLButtonElement, CTAButtonProps>(function CTAButt
 
   const styles =
     variant === 'primary'
-      ? 'bg-espresso-900 text-cream-50 hover:bg-espresso-700 shadow-soft-lg hover:shadow-rose hover:-translate-y-0.5'
+      ? 'bg-surface-inverse text-fg-inverse hover:opacity-90 shadow-soft-lg hover:shadow-rose hover:-translate-y-0.5'
       : 'bg-transparent text-ink-700 hover:bg-cream-200/70 border border-cream-400 hover:border-ink-700';
 
   return (

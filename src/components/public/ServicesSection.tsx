@@ -136,8 +136,8 @@ export default function ServicesSection() {
           <span className="inline-block px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-rose rounded-full font-medium">
             {locale === 'ar' ? 'خدماتنا الفاخرة' : 'Our Luxe Services'}
           </span>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
-            <span className="gradient-text">{t('sections.services')}</span>
+          <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] leading-tight text-ink-800 mb-3">
+            {t('sections.services')}
           </h2>
           <p className="text-cream-700 text-base sm:text-lg max-w-2xl mx-auto">
             {t('sections.servicesSubtitle')}

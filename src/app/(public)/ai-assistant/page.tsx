@@ -20,46 +20,66 @@ interface ChatResponse {
   related?: string[];
 }
 
+/*
+ * These mirror the topics the assistant can actually answer well. When a topic
+ * is added to the knowledge base, add the question people would ask for it
+ * here — a suggested question with no matching topic gives a vague answer and
+ * makes the assistant look worse than it is.
+ */
 const suggestedQuestions = {
   en: [
     'How does the Sample Quiz work?',
+    'How do I design the packaging?',
+    'How do I track my order after I submit it?',
+    'Can I reorder a sample and change one thing?',
     'What product categories can I order?',
+    'What ingredients can I choose from?',
     'How long does sample development take?',
-    'Can I customize the formula and packaging?',
     'What certifications does KCC hold?',
-    'Which countries do you ship to?',
-    'What are your minimum order quantities?',
-    'Tell me about KCC and your story.',
   ],
   ar: [
     'إزاي بيشتغل كويز السامبل؟',
+    'إزاي أصمم التغليف؟',
+    'إزاي أتابع طلبي بعد ما أبعته؟',
+    'أقدر أعيد طلب عينة وأعدّل حاجة فيها؟',
     'إيه الكاتيجوريز اللي أقدر أطلبها؟',
+    'إيه المكونات المتاحة؟',
     'تطوير العينة بياخد قد إيه؟',
-    'أقدر أخصّص التركيبة والتغليف؟',
     'إيه شهادات KCC؟',
-    'بتشحنوا لأي دول؟',
-    'الحد الأدنى للطلب كام؟',
-    'احكيلي عن KCC وقصة الشركة.',
   ],
 };
 
 const pinnedQuickQuestions = {
-  en: ['Start sample quiz', 'Hair care products', 'Skin care products', 'Custom fragrance', 'Packaging options'],
-  ar: ['ابدأ كويز السامبل', 'منتجات العناية بالشعر', 'منتجات العناية بالبشرة', 'عطر مخصص', 'خيارات التغليف'],
+  en: ['Start sample quiz', 'Packaging studio', 'Track my order', 'Order again', 'Custom fragrance'],
+  ar: ['ابدأ كويز السامبل', 'استوديو التغليف', 'تتبع طلبي', 'اطلب تاني', 'عطر مخصص'],
 };
+
+/** Fixed so the greeting's timestamp does not tick with every render. */
+const WELCOME_AT = new Date();
 
 export default function AIAssistantPage() {
   const { locale, t } = useLanguage();
-  const [messages, setMessages] = useState<Message[]>([
+
+  /*
+   * The greeting is derived, not stored. Baking it into the initial state meant
+   * it was written before the saved language had been read back, so an Arabic
+   * visitor was greeted in English and stayed greeted in English for the rest
+   * of the conversation.
+   */
+  const [conversation, setConversation] = useState<Message[]>([]);
+  const messages: Message[] = [
     {
       id: 'welcome',
       role: 'assistant',
-      content: locale === 'ar'
-        ? 'مرحباً! أنا المساعد الذكي لـ KCC. كيف يمكنني مساعدتك اليوم؟'
-        : 'Hello! I\'m KCC\'s AI Assistant. How can I help you today?',
-      timestamp: new Date(),
+      content:
+        locale === 'ar'
+          ? 'مرحباً! أنا المساعد الذكي لـ KCC. كيف يمكنني مساعدتك اليوم؟'
+          : 'Hello! I\'m KCC\'s AI Assistant. How can I help you today?',
+      timestamp: WELCOME_AT,
     },
-  ]);
+    ...conversation,
+  ];
+  const setMessages = setConversation;
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
@@ -127,7 +147,7 @@ export default function AIAssistantPage() {
 
   return (
     <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 4rem)' }}>
-      <div className="border-b border-cream-300 bg-white/85">
+      <div className="border-b border-cream-300 bg-surface/85">
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-kcc-green/15 text-kcc-green flex items-center justify-center">
@@ -169,7 +189,7 @@ export default function AIAssistantPage() {
                 <div className="max-w-[84%]">
                   <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-line ${
                     msg.role === 'user'
-                      ? 'bg-kcc-green text-white rounded-br-md'
+                      ? 'bg-brand text-brand-fg rounded-br-md'
                       : 'bg-cream-200 text-ink-700 border border-cream-400 rounded-bl-md'
                   }`}>
                     {msg.content}
@@ -207,7 +227,7 @@ export default function AIAssistantPage() {
                             key={`${q}-${i}`}
                             onClick={() => sendMessage(q)}
                             disabled={isTyping}
-                            className="group inline-flex items-center justify-between gap-2 text-start text-xs px-3 py-2 bg-white border border-cream-300 rounded-xl hover:border-kcc-rose-dark/50 hover:bg-blush-50 transition-all disabled:opacity-50"
+                            className="group inline-flex items-center justify-between gap-2 text-start text-xs px-3 py-2 bg-surface border border-cream-300 rounded-xl hover:border-kcc-rose-dark/50 hover:bg-blush-50 transition-all disabled:opacity-50"
                           >
                             <span className="text-ink-700 group-hover:text-kcc-rose-dark transition-colors leading-snug">{q}</span>
                             <span className="text-cream-700 group-hover:text-kcc-rose-dark transition-colors">→</span>
@@ -262,7 +282,7 @@ export default function AIAssistantPage() {
               <div className="shrink-0 w-8 h-8 rounded-lg bg-kcc-green/15 text-kcc-green flex items-center justify-center mt-1">
                 <Bot size={16} />
               </div>
-              <div className="px-4 py-3 bg-white border border-cream-300 rounded-2xl rounded-bl-md">
+              <div className="px-4 py-3 bg-surface border border-cream-300 rounded-2xl rounded-bl-md">
                 <div className="flex items-center gap-2 text-sm text-cream-700">
                   <Loader2 size={14} className="animate-spin" />
                   {t('ai.thinking')}
@@ -273,7 +293,7 @@ export default function AIAssistantPage() {
         </div>
       </div>
 
-      <div className="border-t border-cream-300 bg-white/95">
+      <div className="border-t border-cream-300 bg-surface/95">
         <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="flex flex-wrap gap-1.5 mb-3">
             {currentPinned.map((q, i) => (
@@ -282,7 +302,7 @@ export default function AIAssistantPage() {
                 key={i}
                 onClick={() => sendMessage(q)}
                 disabled={isTyping}
-                className="px-3 py-1.5 text-xs text-cream-700 bg-white border border-cream-300 rounded-full hover:border-kcc-green/40 hover:text-kcc-green transition-all disabled:opacity-50"
+                className="px-3 py-1.5 text-xs text-cream-700 bg-surface border border-cream-300 rounded-full hover:border-kcc-green/40 hover:text-kcc-green transition-all disabled:opacity-50"
               >
                 {q}
               </button>
@@ -297,14 +317,14 @@ export default function AIAssistantPage() {
               onKeyDown={handleKeyDown}
               placeholder={t('ai.placeholder')}
               disabled={isTyping}
-              className="flex-1 px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors disabled:opacity-50"
             />
             <button
               type="button"
               onClick={() => sendMessage()}
               disabled={!input.trim() || isTyping}
               className="px-4 py-3 bg-kcc-green hover:bg-kcc-green-light text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              aria-label="Send message"
+              aria-label={t('a11y.sendMessage')}
             >
               <Send size={18} />
             </button>

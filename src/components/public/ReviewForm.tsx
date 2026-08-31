@@ -6,7 +6,7 @@ import { Star, Send, Loader2, CheckCircle, X, MessageSquarePlus } from 'lucide-r
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ReviewForm() {
-  const { locale } = useLanguage();
+  const { locale, t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(5);
   const [hover, setHover] = useState(0);
@@ -69,12 +69,12 @@ export default function ReviewForm() {
             <motion.div
               initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl w-full max-w-md shadow-soft-lg p-6"
+              className="bg-surface rounded-2xl w-full max-w-md shadow-soft-lg p-6"
               dir={ar ? 'rtl' : 'ltr'}
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-ink-700">{ar ? 'اكتب تقييمك' : 'Write a review'}</h3>
-                <button type="button" onClick={close} aria-label="Close" className="text-cream-700 hover:text-ink-700"><X size={20} /></button>
+                <button type="button" onClick={close} aria-label={t('a11y.close')} className="text-cream-700 hover:text-ink-700"><X size={20} /></button>
               </div>
 
               {done ? (

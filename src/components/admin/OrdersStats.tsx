@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { ShoppingCart, Package, DollarSign, Clock, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useLivePoll } from '@/lib/useLivePoll';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const STATUS_COLORS: Record<string, string> = {
   Submitted: '#3b82f6', 'Under Review': '#eab308', Approved: '#22c55e',
@@ -14,6 +15,7 @@ const STATUS_COLORS: Record<string, string> = {
 const money = (n: number) => (n >= 1000 ? `$${(n / 1000).toFixed(1)}K` : `$${n.toLocaleString()}`);
 
 export default function OrdersStats() {
+  const { tx } = useLanguage();
   const [s, setS] = useState<any>(null);
 
   const load = useCallback(async () => {
@@ -43,20 +45,20 @@ export default function OrdersStats() {
         {cards.map((c) => {
           const Icon = c.icon;
           return (
-            <div key={c.label} className="p-4 bg-dark-900 border border-dark-800 rounded-xl">
+            <div key={c.label} className="p-4 bg-surface border border-line rounded-xl">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-dark-400">{c.label}</span>
+                <span className="text-xs text-fg-muted">{c.label}</span>
                 <Icon size={16} className={c.color} />
               </div>
-              <p className="text-2xl font-bold text-dark-50 mt-1.5">{c.value}</p>
+              <p className="text-2xl font-bold text-fg mt-1.5">{c.value}</p>
             </div>
           );
         })}
       </div>
-      <div className="p-4 bg-dark-900 border border-dark-800 rounded-xl">
-        <p className="text-xs text-dark-400 mb-2">By Status</p>
+      <div className="p-4 bg-surface border border-line rounded-xl">
+        <p className="text-xs text-fg-muted mb-2">{tx('By Status')}</p>
         {statusData.length === 0 ? (
-          <div className="h-24 flex items-center justify-center text-xs text-dark-600">No data</div>
+          <div className="h-24 flex items-center justify-center text-xs text-fg-subtle">{tx('No data')}</div>
         ) : (
           <ResponsiveContainer width="100%" height={96}>
             <BarChart data={statusData}>

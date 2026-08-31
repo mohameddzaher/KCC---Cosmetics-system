@@ -154,7 +154,7 @@ export default function NewsArticlePage() {
             </span>
 
             {/* Title */}
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-ink-700 mb-6 leading-tight">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-ink-700 mb-6 leading-tight">
               {article.title}
             </h1>
 

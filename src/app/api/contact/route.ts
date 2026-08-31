@@ -3,6 +3,7 @@ import connectDB from '@/lib/db';
 import ContactMessage from '@/models/ContactMessage';
 import { getSession } from '@/lib/auth';
 import { rateLimit } from '@/lib/rateLimit';
+import { can } from '@/lib/roles';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+    if (!user || !can(user.role, 'inbox.act')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+    if (!user || !can(user.role, 'inbox.act')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

@@ -1,75 +1,474 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  /* Logo brand */
-  --color-kcc-green: #2D6A4F;
-  --color-kcc-green-light: #40916C;
+/* =============================================================================
+   KCC Design System — single source of truth.
+
+   Tailwind v4 does NOT read tailwind.config.ts. Every token the app uses must
+   be declared here in `@theme` or it silently compiles to nothing.
+
+   Two layers:
+     1. RAW PALETTE  — fixed brand colors (kcc-*, cream-*, blush-*, …).
+     2. SEMANTIC     — surface/foreground/line/brand tokens that flip between
+                       light and dark via [data-theme] on <html>.
+
+   Rule for new UI: use SEMANTIC tokens (bg-surface, text-fg, border-line …).
+   Raw palette is for brand accents only.
+   ========================================================================== */
+
+/* `dark:` is driven by <html data-theme="dark">, never by the OS directly.
+   ThemeContext resolves "system" to an explicit data-theme value. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Direction-aware variants — `ltr:` / `rtl:` are not built in to Tailwind v4. */
+@custom-variant ltr (&:where([dir="ltr"], [dir="ltr"] *));
+@custom-variant rtl (&:where([dir="rtl"], [dir="rtl"] *));
+
+@theme {
+  /* ---------- Fonts ---------- */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Inter', system-ui, sans-serif;
+  --font-arabic: 'Noto Sans Arabic', 'Tahoma', sans-serif;
+  --font-serif: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+
+  /* ---------- Brand (logo) ----------
+     The logo green stays exactly #2D6A4F on light. On a dark panel it would
+     read at 2.4:1, so the token lightens — same hue, legible. */
+  --color-kcc-green: var(--brand-green);
+  --color-kcc-green-light: var(--brand-green-light);
   --color-kcc-green-dark: #1B4332;
-  /* Champagne */
-  --color-kcc-beige: #D4A574;
+
+  /* ---------- Champagne / beige ----------
+     `beige` and `rose` are used both as fills and as TEXT. The pale brand
+     values fail contrast as text on a light page, so the shades that carry
+     copy resolve through variables and deepen in light mode / lighten in dark.
+     The pure brand fills (kcc-rose, kcc-beige-light …) are untouched. */
+  --color-kcc-beige: var(--brand-beige);
   --color-kcc-beige-light: #E8C9A0;
-  --color-kcc-beige-dark: #B8864A;
-  --color-kcc-gold: #C9A84C;
+  --color-kcc-beige-dark: var(--brand-beige-dark);
+  --color-kcc-gold: var(--brand-gold);
   --color-kcc-gold-light: #E0C778;
-  /* Rose / blush (cosmetics signature) */
+
+  /* ---------- Rose / blush (cosmetics signature) ---------- */
   --color-kcc-rose: #E8B4BC;
   --color-kcc-rose-light: #F4D5D0;
-  --color-kcc-rose-dark: #D89BA3;
+  --color-kcc-rose-dark: var(--brand-rose-dark);
   --color-kcc-blush: #F7E1DC;
   --color-kcc-pearl: #FFF6F1;
-  /* Cream scale */
-  --color-cream-50: #FFFCF8;
-  --color-cream-100: #FFF9F5;
-  --color-cream-200: #FBF3EC;
-  --color-cream-300: #F5EADD;
-  --color-cream-400: #EBDDC9;
-  /* Espresso (warm dark) */
+
+  /* ---------- Cream scale (warm neutrals) ----------
+     Values live in `--warm-*` variables so the whole marketing site and quiz
+     flip with the theme without touching a single className. See the
+     :root / [data-theme="dark"] blocks below. */
+  --color-cream-50: var(--warm-50);
+  --color-cream-100: var(--warm-100);
+  --color-cream-200: var(--warm-200);
+  --color-cream-300: var(--warm-300);
+  --color-cream-400: var(--warm-400);
+  --color-cream-500: var(--warm-500);
+  --color-cream-600: var(--warm-600);
+  --color-cream-700: var(--warm-700);
+  --color-cream-800: var(--warm-800);
+  --color-cream-900: var(--warm-900);
+
+  /* ---------- Blush scale ----------
+     The tint end (50–200) and the text end (700–900) follow the theme so a
+     blush-tinted panel stays a panel and blush text stays readable in dark.
+     The mid-tones stay fixed — they are the brand colour itself. */
+  --color-blush-50: var(--blush-50);
+  --color-blush-100: var(--blush-100);
+  --color-blush-200: var(--blush-200);
+  --color-blush-300: #F2B8B0;
+  --color-blush-400: #E89A92;
+  --color-blush-500: #D89BA3;
+  --color-blush-600: #C57E87;
+  --color-blush-700: var(--blush-700);
+  --color-blush-800: var(--blush-800);
+  --color-blush-900: var(--blush-900);
+
+  /* ---------- Champagne scale ---------- */
+  --color-champagne-50: #FBF6EC;
+  --color-champagne-100: #F5EAD0;
+  --color-champagne-200: #EBD9AB;
+  --color-champagne-300: #DEC383;
+  --color-champagne-400: #CFAA5E;
+  --color-champagne-500: #C9A84C;
+  --color-champagne-600: #A88735;
+  --color-champagne-700: #7E6627;
+  --color-champagne-800: #544420;
+  --color-champagne-900: #332A14;
+
+  /* ---------- Fixed light-on-dark ----------
+     Some sections (hero, page banner, footer, the CTA band) are dark in BOTH
+     themes. Their text must NOT use the flipping cream/ink ramps, or it turns
+     black-on-black in dark mode. These stay put. */
+  --color-on-dark: #F7F3EE;
+  --color-on-dark-soft: #E3DCD3;
+  --color-on-dark-muted: #C0B6AA;
+  --color-on-dark-faint: #9C9086;
+
+  /* ---------- Espresso (warm dark) ---------- */
+  --color-espresso-50: #FBF6F1;
+  --color-espresso-100: #F0E5DA;
+  --color-espresso-200: #DCC8B5;
+  --color-espresso-300: #B89B7E;
+  --color-espresso-400: #8C6E55;
+  --color-espresso-500: #5F4634;
+  --color-espresso-600: #43301F;
   --color-espresso-700: #2F2014;
   --color-espresso-800: #21160C;
   --color-espresso-900: #160E07;
   --color-espresso-950: #0C0805;
-  /* Ink (text on light) */
-  --color-ink-500: #4A3625;
-  --color-ink-600: #332417;
-  --color-ink-700: #23170E;
-  --color-ink-800: #160E08;
-  /* Legacy slate (preserved for any unconverted components) */
-  --color-dark-50: #f8fafc;
-  --color-dark-100: #f1f5f9;
-  --color-dark-200: #e2e8f0;
-  --color-dark-300: #cbd5e1;
-  --color-dark-400: #94a3b8;
-  --color-dark-500: #64748b;
-  --color-dark-600: #475569;
-  --color-dark-700: #334155;
-  --color-dark-800: #1e293b;
-  --color-dark-900: #0f172a;
-  --color-dark-950: #020617;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-arabic: 'Noto Sans Arabic', 'Tahoma', sans-serif;
-  --font-serif: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+
+  /* ---------- Ink (body copy) — inverts in dark ---------- */
+  --color-ink-50: var(--ink-50);
+  --color-ink-100: var(--ink-100);
+  --color-ink-200: var(--ink-200);
+  --color-ink-300: var(--ink-300);
+  --color-ink-400: var(--ink-400);
+  --color-ink-500: var(--ink-500);
+  --color-ink-600: var(--ink-600);
+  --color-ink-700: var(--ink-700);
+  --color-ink-800: var(--ink-800);
+  --color-ink-900: var(--ink-900);
+
+  /* ---------- Slate-ish "dark" scale (legacy admin) ----------
+     Remapped to the warm neutral ramp so any un-migrated component still
+     lands inside the new palette instead of cold blue-grey. */
+  --color-dark-50: #F7F5F3;
+  --color-dark-100: #EFECE8;
+  --color-dark-200: #DFDAD3;
+  --color-dark-300: #C4BDB4;
+  --color-dark-400: #9A9289;
+  --color-dark-500: #736B63;
+  --color-dark-600: #55504C;
+  --color-dark-700: #3B3841;
+  --color-dark-800: #2F2F3C;
+  --color-dark-900: #272732;
+  --color-dark-950: #1B1B24;
+
+  /* ---------- Shadows (were missing entirely) ---------- */
+  --shadow-soft: 0 10px 30px -12px rgba(89, 70, 52, 0.18);
+  --shadow-soft-lg: 0 24px 60px -20px rgba(89, 70, 52, 0.22);
+  --shadow-rose: 0 14px 40px -16px rgba(216, 155, 163, 0.45);
+  --shadow-champagne: 0 14px 40px -16px rgba(212, 165, 116, 0.45);
+  --shadow-inset-soft: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+
+  /* ---------- Animations (were missing entirely) ---------- */
+  --animate-fade-in: fadeIn 0.6s ease-out;
+  --animate-slide-up: slideUp 0.6s ease-out;
+  --animate-slide-down: slideDown 0.3s ease-out;
+  --animate-scale-in: scaleIn 0.3s ease-out;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-glow: glow 2s ease-in-out infinite alternate;
+  --animate-shimmer: shimmer 8s linear infinite;
+
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes slideUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideDown {
+    0% { opacity: 0; transform: translateY(-10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scaleIn {
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+  @keyframes glow {
+    0% { box-shadow: 0 0 30px rgba(216, 155, 163, 0.25); }
+    100% { box-shadow: 0 0 50px rgba(216, 155, 163, 0.45); }
+  }
+  @keyframes shimmer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  /* ---------- Layout scale ---------- */
+  --spacing-sidebar: 17rem;
+  --spacing-sidebar-collapsed: 4.5rem;
+  --spacing-topbar: 4rem;
 }
 
-:root {
-  /* Light luxury defaults */
-  --background: #FFF9F5;
-  --foreground: #23170E;
-  --card: #FFFFFF;
-  --card-hover: #FBF3EC;
-  --border: #EBDDC9;
-  --muted: #B89A7E;
-  --accent-green: #2D6A4F;
-  --accent-green-light: #40916C;
-  --accent-beige: #D4A574;
-  --accent-beige-light: #E8C9A0;
-  --accent-rose: #D89BA3;
-  --accent-rose-light: #F4D5D0;
-  --accent-champagne: #C9A84C;
-  --accent-espresso: #2F2014;
+/* =============================================================================
+   SEMANTIC TOKENS — light is the default; [data-theme="dark"] overrides.
+   Every value is defined in BOTH themes. Never define a color only inside the
+   dark block, or the light theme inherits a transparent / wrong value.
+   ========================================================================== */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Warm neutral ramp: 50 = lightest surface … 900 = darkest text. */
+  --warm-50: #FFFCF8;   --warm-100: #FFF9F5;  --warm-200: #FBF3EC;
+  --warm-300: #F5EADD;  --warm-400: #EBDDC9;  --warm-500: #D9C4A8;
+  --warm-600: #7F6A50;  --warm-700: #6E5943;  --warm-800: #4C3B2C;
+  --warm-900: #3A2E24;
+
+  /* Ink ramp: 500-900 is body copy on a light page. */
+  --ink-50: #FBF6F1;   --ink-100: #EDDFD2;  --ink-200: #C9B5A2;
+  --ink-300: #9A816C;  --ink-400: #6E5640;  --ink-500: #4A3625;
+  --ink-600: #332417;  --ink-700: #23170E;  --ink-800: #160E08;
+  --ink-900: #0B0704;
+
+  --blush-50: #FFF6F4;  --blush-100: #FCE8E5;  --blush-200: #F8D2CD;
+  --blush-700: #A05E68; --blush-800: #7B3F4A;  --blush-900: #52242C;
+
+  --brand-beige: #8A6222;
+  --brand-beige-dark: #7A5518;
+  --brand-gold: #7E6627;
+  --brand-rose-dark: #A2515F;
+  --brand-green: #2D6A4F;
+  --brand-green-light: #40916C;
+
+  /* Canvas + surfaces */
+  --bg: #F4F1ED;              /* page canvas — warm off-white */
+  --bg-subtle: #EDE8E2;       /* recessed strips, table headers */
+  --surface: #FFFFFF;         /* THE primary element: white cards/panels */
+  --surface-2: #FAF7F3;       /* nested panel / hover */
+  --surface-3: #F3EEE8;       /* deepest nested / active */
+  --surface-inverse: #23232E;
+
+  /* Lines */
+  --line: #E7E0D7;
+  --line-strong: #D6CCBF;
+  --line-focus: #2D6A4F;
+
+  /* Foreground */
+  --fg: #1C1A18;              /* content: near-black */
+  --fg-strong: #0F0E0D;
+  --fg-muted: #58514A;        /* secondary text — AA on --surface and --bg */
+  --fg-subtle: #6E665D;       /* tertiary / placeholders — still AA */
+  --fg-inverse: #FBF9F6;
+
+  /* Brand — buttons are green or rose per brand palette */
+  --brand: #2D6A4F;
+  --brand-hover: #24583F;
+  --brand-soft: #E6EFE9;
+  --brand-soft-fg: #1B4332;
+  --brand-fg: #FFFFFF;
+  --brand-ring: rgba(45, 106, 79, 0.28);
+
+  --accent: #C57E87;          /* rose — secondary action / highlights */
+  --accent-hover: #A05E68;
+  --accent-soft: #FCE8E5;
+  --accent-soft-fg: #7B3F4A;
+  --accent-fg: #FFFFFF;
+
+  /* Status */
+  --ok: #2F7D53;      --ok-soft: #E4F1E9;      --ok-soft-fg: #1B4332;
+  --warn: #A8751B;    --warn-soft: #FBF0DA;    --warn-soft-fg: #6B4A0E;
+  --danger: #B4463F;  --danger-soft: #FBE7E5;  --danger-soft-fg: #7B2A25;
+  --info: #2F6FA8;    --info-soft: #E3EFF9;    --info-soft-fg: #1B4468;
+
+  /* Effects */
+  --shadow-color: 89 70 52;
+  --overlay: rgba(28, 26, 24, 0.42);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.85);
+
+  /* Legacy aliases (kept so older components keep resolving) */
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card: var(--surface);
+  --card-hover: var(--surface-2);
+  --border: var(--line);
+  --muted: var(--fg-muted);
 }
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* The warm ramp inverts: 50 stays "the page", 900 stays "the strongest
+     text", so every existing `bg-cream-50` / `text-cream-800` keeps its
+     meaning and simply lands on the dark side of the palette. */
+  --warm-50: #1B1B24;   --warm-100: #20202A;  --warm-200: #262631;
+  --warm-300: #33333F;  --warm-400: #3E3E4B;  --warm-500: #5A5A6A;
+  --warm-600: #948FA4;  --warm-700: #B0ABBC;  --warm-800: #CFCBD8;
+  --warm-900: #E4E1E9;
+
+  --ink-50: #23232E;   --ink-100: #2B2B36;  --ink-200: #43434F;
+  --ink-300: #6E6A7C;  --ink-400: #9A96A6;  --ink-500: #BEBAC8;
+  --ink-600: #D6D3DD;  --ink-700: #ECEAEF;  --ink-800: #F6F5F8;
+  --ink-900: #FFFFFF;
+
+  --blush-50: #241E24;  --blush-100: #2C2429;  --blush-200: #3A2E34;
+  --blush-700: #EFC3C8; --blush-800: #F6DDE0;  --blush-900: #FCEEF0;
+
+  --brand-beige: #DCB989;
+  --brand-beige-dark: #E0C08F;
+  --brand-gold: #E0C778;
+  --brand-rose-dark: #E8B4BC;
+  --brand-green: #6FC79B;
+  --brand-green-light: #8AD8B1;
+
+  /* Base #272732 as requested, deepened for the canvas so panels lift off it. */
+  --bg: #1B1B24;
+  --bg-subtle: #16161D;
+  --surface: #23232E;
+  --surface-2: #272732;
+  --surface-3: #30303D;
+  --surface-inverse: #FFFFFF;
+
+  --line: #33333F;
+  --line-strong: #43434F;
+  --line-focus: #52B788;
+
+  --fg: #ECEAEF;
+  --fg-strong: #FFFFFF;
+  --fg-muted: #A29EAE;
+  --fg-subtle: #948FA4;
+  --fg-inverse: #1B1B24;
+
+  --brand: #40916C;
+  --brand-hover: #52B788;
+  --brand-soft: rgba(64, 145, 108, 0.16);
+  --brand-soft-fg: #74C69D;
+  --brand-fg: #0B140F;
+  --brand-ring: rgba(82, 183, 136, 0.34);
+
+  --accent: #D89BA3;
+  --accent-hover: #E8B4BC;
+  --accent-soft: rgba(216, 155, 163, 0.16);
+  --accent-soft-fg: #EFC3C8;
+  --accent-fg: #2A171A;
+
+  --ok: #52B788;      --ok-soft: rgba(82, 183, 136, 0.16);   --ok-soft-fg: #8FD9B4;
+  --warn: #D8A94A;    --warn-soft: rgba(216, 169, 74, 0.16); --warn-soft-fg: #EFCB86;
+  --danger: #E2726A;  --danger-soft: rgba(226, 114, 106, 0.16); --danger-soft-fg: #F2A49E;
+  --info: #6BA8DE;    --info-soft: rgba(107, 168, 222, 0.16); --info-soft-fg: #A6CCEC;
+
+  --shadow-color: 0 0 0;
+  --overlay: rgba(8, 8, 12, 0.62);
+  --glass-bg: rgba(39, 39, 50, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.07);
+
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card: var(--surface);
+  --card-hover: var(--surface-2);
+  --border: var(--line);
+  --muted: var(--fg-muted);
+}
+
+/* -----------------------------------------------------------------------------
+   Status-hue overrides.
+
+   The admin UI was authored dark-first and uses Tailwind's `-300/-400` shades
+   as foreground colours (text-red-400, text-green-400 …). Those are legible on
+   a dark panel and far too pale on white. Re-point ONLY the foreground shades
+   at theme-aware variables so the same class stays readable in both themes.
+   The `-500` shades keep Tailwind's values, so `bg-green-500/10` tints work
+   unchanged.
+   -------------------------------------------------------------------------- */
+:root, [data-theme="light"] {
+  --hue-red-300: #C4362B;    --hue-red-400: #B4231B;
+  --hue-green-300: #2A7D52;  --hue-green-400: #1F7A4D;
+  --hue-emerald-400: #17795E;
+  --hue-blue-300: #245F97;   --hue-blue-400: #1D6FB8;
+  --hue-yellow-300: #94690B; --hue-yellow-400: #8A6100;
+  --hue-amber-400: #92600A;
+  --hue-orange-400: #B35309;
+  --hue-purple-300: #8046C7; --hue-purple-400: #7331BE;
+  --hue-cyan-400: #0E7490;
+  --hue-indigo-300: #4A44C9; --hue-indigo-400: #4338CA;
+  --hue-pink-400: #C2185B;
+}
+
+[data-theme="dark"] {
+  --hue-red-300: #fca5a5;    --hue-red-400: #f87171;
+  --hue-green-300: #86efac;  --hue-green-400: #4ade80;
+  --hue-emerald-400: #34d399;
+  --hue-blue-300: #93c5fd;   --hue-blue-400: #60a5fa;
+  --hue-yellow-300: #fde047; --hue-yellow-400: #facc15;
+  --hue-amber-400: #fbbf24;
+  --hue-orange-400: #fb923c;
+  --hue-purple-300: #d8b4fe; --hue-purple-400: #c084fc;
+  --hue-cyan-400: #22d3ee;
+  --hue-indigo-300: #a5b4fc; --hue-indigo-400: #818cf8;
+  --hue-pink-400: #f472b6;
+}
+
+@theme inline {
+  --color-red-300: var(--hue-red-300);
+  --color-red-400: var(--hue-red-400);
+  --color-green-300: var(--hue-green-300);
+  --color-green-400: var(--hue-green-400);
+  --color-emerald-400: var(--hue-emerald-400);
+  --color-blue-300: var(--hue-blue-300);
+  --color-blue-400: var(--hue-blue-400);
+  --color-yellow-300: var(--hue-yellow-300);
+  --color-yellow-400: var(--hue-yellow-400);
+  --color-amber-400: var(--hue-amber-400);
+  --color-orange-400: var(--hue-orange-400);
+  --color-purple-300: var(--hue-purple-300);
+  --color-purple-400: var(--hue-purple-400);
+  --color-cyan-400: var(--hue-cyan-400);
+  --color-indigo-300: var(--hue-indigo-300);
+  --color-indigo-400: var(--hue-indigo-400);
+  --color-pink-400: var(--hue-pink-400);
+}
+
+/* Expose the semantic tokens as Tailwind utilities:
+   bg-surface, text-fg-muted, border-line, ring-brand, … */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-subtle: var(--bg-subtle);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-surface-inverse: var(--surface-inverse);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-fg: var(--fg);
+  --color-fg-strong: var(--fg-strong);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-fg-inverse: var(--fg-inverse);
+
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-soft-fg: var(--brand-soft-fg);
+  --color-brand-fg: var(--brand-fg);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-fg: var(--accent-soft-fg);
+  --color-accent-fg: var(--accent-fg);
+
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-ok-soft-fg: var(--ok-soft-fg);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-warn-soft-fg: var(--warn-soft-fg);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-soft-fg: var(--danger-soft-fg);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-soft-fg: var(--info-soft-fg);
+
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+}
+
+/* =============================================================================
+   Base
+   ========================================================================== */
 
 * {
   box-sizing: border-box;
@@ -79,12 +478,31 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Respect users who ask for reduced motion — also kills the smooth-scroll jump. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--fg);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Nothing may scroll the page sideways. `clip` (not `hidden`) so descendants
+   with `position: sticky` keep working. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 button:not(:disabled),
@@ -96,63 +514,409 @@ button:not(:disabled),
   font-family: 'Noto Sans Arabic', 'Tahoma', sans-serif;
 }
 
+/* Arabic needs a touch more line-height and no italic (fonts lack a true italic). */
+[dir="rtl"] :is(h1, h2, h3, h4, p, li, label, span) {
+  line-height: 1.7;
+}
+[dir="rtl"] .italic {
+  font-style: normal;
+}
+
+/*
+ * The default focus ring. It is deliberately blunt so that nothing focusable
+ * is ever left without an indicator.
+ *
+ * `data-focus-self` opts an element out — but ONLY for elements that paint a
+ * clear focus state of their own. The quiz's underline fields are the case
+ * this exists for: a 2px rectangle drawn around a bare underline reads as a
+ * rendering bug rather than as focus, so those fields darken and thicken
+ * their own rule instead. Never add the attribute without giving the element
+ * a visible focus treatment.
+ */
+:focus-visible:not([data-focus-self]) {
+  outline: 2px solid var(--line-focus);
+  outline-offset: 2px;
+}
+
+/*
+ * Why the harsh box is gone.
+ *
+ * The rule above used to also set `border-radius: 4px`. That does not round
+ * the ring — it rounds THE ELEMENT, so focusing a pill button or a rounded
+ * input squared its corners off and drew a near-rectangular outline around
+ * it. That squared-off box was the ugly thing. Without it, the outline
+ * follows whatever shape the element already has.
+ *
+ * Text fields get a softer treatment again: a brand-coloured border plus a
+ * gentle ring that hugs their own radius, which reads as a designed focus
+ * state rather than a browser default sitting on top of the design. It is
+ * every bit as visible, which is the part that matters — a keyboard user has
+ * nothing else to tell them where they are.
+ */
+input:not([type='checkbox']):not([type='radio']):not([type='range']):focus-visible:not([data-focus-self]),
+textarea:focus-visible:not([data-focus-self]),
+select:focus-visible:not([data-focus-self]) {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-ring);
+}
+
+/*
+ * A row of section tabs — Settings' General / Referral / Notifications, the
+ * account area's three sections, the accounting views.
+ *
+ * Centred on the page rather than pinned to the leading edge: with three or
+ * four short labels, a left-aligned pill row leaves a lopsided gap across the
+ * rest of the width. It scrolls sideways rather than wrapping, so a narrow
+ * phone never stacks the tabs into a block.
+ */
+.tab-bar {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  gap: 0.375rem;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--surface);
+  padding: 0.375rem;
+}
+.tab-bar > * {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Elements that are only focusable programmatically — the quiz moves focus to
+   each step's heading so screen readers land in the right place. They are not
+   interactive, so they must not paint a focus ring. */
+[tabindex='-1']:focus,
+[tabindex='-1']:focus-visible {
+  outline: none;
+}
+
 ::-webkit-scrollbar {
   width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #FBF3EC;
+  background: var(--bg-subtle);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #D89BA3, #D4A574);
+  background: var(--line-strong);
   border-radius: 8px;
-  border: 2px solid #FBF3EC;
+  border: 2px solid var(--bg-subtle);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #C57E87, #B8864A);
+  background: var(--fg-subtle);
+}
+
+/* Thin scrollbar for inner panes (sidebar nav, tables). */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.scroll-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border: none;
+  border-radius: 999px;
 }
 
 ::selection {
   background: rgba(216, 155, 163, 0.35);
-  color: #160E08;
+  color: var(--fg-strong);
 }
 
-/* ---------- Glass utilities ---------- */
+/* =============================================================================
+   Layout primitives
+   ========================================================================== */
+
+/* Full-width page shell that still stays readable on a 5K conference screen.
+   Content stretches edge-to-edge but caps out so lines never get absurd. */
+.page-shell {
+  width: 100%;
+  margin-inline: auto;
+  max-width: 120rem;              /* 1920px */
+  padding-inline: clamp(1rem, 3vw, 2.5rem);
+}
+
+.page-shell-wide {
+  width: 100%;
+  margin-inline: auto;
+  max-width: 160rem;              /* 2560px — dashboards & tables */
+  padding-inline: clamp(1rem, 2.5vw, 3rem);
+}
+
+/* Any horizontally-overflowing block (tables, chip rails) scrolls itself. */
+.scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* -----------------------------------------------------------------------------
+   Quiz option rows.
+
+   Direct children share a flex basis so a row reads like a grid, but each row
+   centres independently — a lone tile on the last row sits on the same axis as
+   the question above it instead of hugging the left edge. `--opt-min` and
+   `--opt-max` are set per instance by the OptionGrid component.
+   -------------------------------------------------------------------------- */
+.option-grid > * {
+  flex: 1 1 var(--opt-min, 11rem);
+  max-width: min(var(--opt-max, 14rem), 100%);
+}
+
+/* Responsive auto-fill grid — fills the width instead of hard column counts. */
+.auto-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(var(--auto-grid-min, 13rem), 1fr));
+}
+
+/* =============================================================================
+   Component primitives (theme-aware — safe in light AND dark)
+   ========================================================================== */
+
+.surface-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  color: var(--fg);
+}
+
+.field {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  color: var(--fg);
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.field::placeholder {
+  color: var(--fg-subtle);
+}
+.field:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-ring);
+}
+.field:disabled {
+  background: var(--surface-3);
+  color: var(--fg-subtle);
+  cursor: not-allowed;
+}
+textarea.field {
+  min-height: 6rem;
+  resize: vertical;
+}
+select.field {
+  appearance: none;
+  padding-inline-end: 2.25rem;
+  /* Chevron drawn as an SVG so it renders identically in LTR and RTL. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' stroke='%23888' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: 12px 8px;
+  background-position: right 0.85rem center;
+}
+[dir="rtl"] select.field {
+  background-position: left 0.85rem center;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--fg-muted);
+  margin-bottom: 0.375rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.625rem 1.125rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+  white-space: nowrap;
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: var(--brand);
+  color: var(--brand-fg);
+}
+.btn-primary:not(:disabled):hover {
+  background: var(--brand-hover);
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.btn-accent:not(:disabled):hover {
+  background: var(--accent-hover);
+}
+
+.btn-outline {
+  background: var(--surface);
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+.btn-outline:not(:disabled):hover {
+  background: var(--surface-2);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--fg-muted);
+}
+.btn-ghost:not(:disabled):hover {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-danger:not(:disabled):hover {
+  filter: brightness(1.07);
+}
+
+.btn-sm { padding: 0.4rem 0.75rem; font-size: 0.75rem; border-radius: 0.625rem; }
+.btn-lg { padding: 0.85rem 1.6rem; font-size: 0.95rem; border-radius: 0.875rem; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.badge-ok     { background: var(--ok-soft);     color: var(--ok-soft-fg); }
+.badge-warn   { background: var(--warn-soft);   color: var(--warn-soft-fg); }
+.badge-danger { background: var(--danger-soft); color: var(--danger-soft-fg); }
+.badge-info   { background: var(--info-soft);   color: var(--info-soft-fg); }
+.badge-brand  { background: var(--brand-soft);  color: var(--brand-soft-fg); }
+.badge-accent { background: var(--accent-soft); color: var(--accent-soft-fg); }
+.badge-neutral{ background: var(--surface-3);   color: var(--fg-muted); }
+
+/* -----------------------------------------------------------------------------
+   Off-canvas drawer.
+
+   A closed drawer must be display:none, not merely translated off-screen. In
+   RTL the drawer sits at `inset-inline-start: 0` (the right edge), so hiding it
+   with a positive translateX pushes it past the right edge — and because RTL
+   anchors the scroll origin to the right, the browser then shows the wrong
+   slice of the page. Removing it from layout avoids that entirely; the slide-in
+   comes from a keyframe instead of a transition.
+   -------------------------------------------------------------------------- */
+.drawer-panel {
+  --drawer-from: -100%;
+  animation: drawerIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+[dir="rtl"] .drawer-panel {
+  --drawer-from: 100%;
+}
+@keyframes drawerIn {
+  from { transform: translateX(var(--drawer-from)); }
+  to { transform: translateX(0); }
+}
+
+/* -----------------------------------------------------------------------------
+   Packaging studio stage — a seamless photographic sweep behind the product.
+   The SVG render reads these variables, so the backdrop follows the theme.
+   -------------------------------------------------------------------------- */
+.pkg-stage {
+  --pkg-bg-top: #F1ECE6;
+  --pkg-bg-mid: #E6DED5;
+  --pkg-bg-bot: #D5CABF;
+  background:
+    radial-gradient(120% 70% at 50% 8%, rgba(255, 255, 255, 0.9), transparent 60%),
+    linear-gradient(180deg, var(--pkg-bg-top), var(--pkg-bg-mid) 62%, var(--pkg-bg-bot));
+}
+[data-theme="dark"] .pkg-stage {
+  --pkg-bg-top: #2A2A36;
+  --pkg-bg-mid: #22222C;
+  --pkg-bg-bot: #17171F;
+  background:
+    radial-gradient(120% 70% at 50% 8%, rgba(255, 255, 255, 0.12), transparent 60%),
+    linear-gradient(180deg, var(--pkg-bg-top), var(--pkg-bg-mid) 62%, var(--pkg-bg-bot));
+}
+
+/* Modal scrim — dims correctly in both themes. */
+.modal-overlay {
+  background: var(--overlay);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+/* =============================================================================
+   Glass utilities — now theme-aware
+   ========================================================================== */
 .glass {
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--glass-bg);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 10px 30px -12px rgba(89, 70, 52, 0.18);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 30px -12px rgb(var(--shadow-color) / 0.18);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.78);
+  background: var(--glass-bg);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
   backdrop-filter: blur(18px) saturate(150%);
-  border: 1px solid rgba(235, 221, 201, 0.7);
+  border: 1px solid var(--glass-border);
   border-radius: 20px;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 14px 40px -18px rgba(89, 70, 52, 0.18);
+  box-shadow: 0 14px 40px -18px rgb(var(--shadow-color) / 0.18);
 }
 
 .glass-card-blush {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(252, 232, 229, 0.55) 100%);
+  background: linear-gradient(135deg, var(--glass-bg) 0%, var(--accent-soft) 100%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
   backdrop-filter: blur(18px) saturate(150%);
-  border: 1px solid rgba(248, 210, 205, 0.55);
+  border: 1px solid var(--glass-border);
   border-radius: 20px;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 14px 40px -18px rgba(216, 155, 163, 0.25);
+  box-shadow: 0 14px 40px -18px rgb(var(--shadow-color) / 0.2);
 }
 
 .glass-card-champagne {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(245, 234, 208, 0.55) 100%);
+  background: linear-gradient(135deg, var(--glass-bg) 0%, var(--warn-soft) 100%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
   backdrop-filter: blur(18px) saturate(150%);
-  border: 1px solid rgba(222, 195, 131, 0.45);
+  border: 1px solid var(--glass-border);
   border-radius: 20px;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 14px 40px -18px rgba(201, 168, 76, 0.25);
+  box-shadow: 0 14px 40px -18px rgb(var(--shadow-color) / 0.2);
 }
 
 .glass-card-dark {
@@ -161,39 +925,51 @@ button:not(:disabled),
   backdrop-filter: blur(18px) saturate(140%);
   border: 1px solid rgba(216, 155, 163, 0.18);
   border-radius: 20px;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 14px 40px -18px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 14px 40px -18px rgba(0, 0, 0, 0.45);
 }
 
-/* ---------- Gradient text utilities ---------- */
+/* =============================================================================
+   Gradient text
+   ========================================================================== */
 .gradient-text {
   background: linear-gradient(135deg, #2D6A4F 0%, #B8864A 45%, #D89BA3 100%);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
+}
+[data-theme="dark"] .gradient-text {
+  background: linear-gradient(135deg, #74C69D 0%, #E0C778 45%, #EFC3C8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .gradient-text-rose {
   background: linear-gradient(135deg, #D89BA3 0%, #C9A84C 60%, #B8864A 100%);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
+}
+[data-theme="dark"] .gradient-text-rose {
+  background: linear-gradient(135deg, #EFC3C8 0%, #E0C778 60%, #D8A94A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .gradient-text-champagne {
   background: linear-gradient(135deg, #B8864A 0%, #C9A84C 50%, #E0C778 100%);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
 }
 
 .gradient-text-light {
   background: linear-gradient(135deg, #FFF6F1 0%, #F4D5D0 60%, #E0C778 100%);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
 }
 
@@ -201,27 +977,23 @@ button:not(:disabled),
   border-image: linear-gradient(135deg, #D89BA3, #D4A574) 1;
 }
 
-/* ---------- Glow utilities ---------- */
-.glow-rose {
-  box-shadow: 0 0 40px rgba(216, 155, 163, 0.35);
-}
+/* =============================================================================
+   Glow
+   ========================================================================== */
+.glow-rose { box-shadow: 0 0 40px rgba(216, 155, 163, 0.35); }
+.glow-champagne { box-shadow: 0 0 40px rgba(212, 165, 116, 0.30); }
+.glow-green { box-shadow: 0 0 30px rgba(45, 106, 79, 0.25); }
+.glow-beige { box-shadow: 0 0 30px rgba(212, 165, 116, 0.25); }
 
-.glow-champagne {
-  box-shadow: 0 0 40px rgba(212, 165, 116, 0.30);
-}
-
-.glow-green {
-  box-shadow: 0 0 30px rgba(45, 106, 79, 0.25);
-}
-
-.glow-beige {
-  box-shadow: 0 0 30px rgba(212, 165, 116, 0.25);
-}
-
-/* ---------- Pattern utilities ---------- */
+/* =============================================================================
+   Patterns
+   ========================================================================== */
 .dot-pattern {
-  background-image: radial-gradient(rgba(89, 70, 52, 0.08) 1px, transparent 1px);
+  background-image: radial-gradient(rgb(var(--shadow-color) / 0.08) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+[data-theme="dark"] .dot-pattern {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
 }
 
 .dot-pattern-dark {
@@ -244,35 +1016,31 @@ button:not(:disabled),
   opacity: 0.04;
 }
 
-/* ---------- Decorative gradient overlays ---------- */
-.gradient-overlay {
-  background: linear-gradient(180deg, transparent 0%, var(--background) 100%);
-}
-
-.gradient-overlay-top {
-  background: linear-gradient(0deg, transparent 0%, var(--background) 100%);
-}
+/* =============================================================================
+   Decorative backgrounds — theme-aware so light text never lands on light bg
+   ========================================================================== */
+.gradient-overlay { background: linear-gradient(180deg, transparent 0%, var(--bg) 100%); }
+.gradient-overlay-top { background: linear-gradient(0deg, transparent 0%, var(--bg) 100%); }
 
 .bg-cream-radial {
   background:
-    radial-gradient(circle at 15% 10%, rgba(248, 210, 205, 0.35), transparent 45%),
-    radial-gradient(circle at 90% 0%, rgba(245, 234, 208, 0.45), transparent 50%),
-    radial-gradient(circle at 50% 100%, rgba(255, 246, 241, 0.6), transparent 55%),
-    #FFF9F5;
+    radial-gradient(circle at 15% 10%, var(--accent-soft), transparent 45%),
+    radial-gradient(circle at 90% 0%, var(--warn-soft), transparent 50%),
+    var(--bg);
 }
 
 .bg-blush-radial {
   background:
-    radial-gradient(circle at 20% 20%, rgba(248, 210, 205, 0.6), transparent 40%),
-    radial-gradient(circle at 80% 80%, rgba(245, 234, 208, 0.55), transparent 45%),
-    #FFF6F4;
+    radial-gradient(circle at 20% 20%, var(--accent-soft), transparent 40%),
+    radial-gradient(circle at 80% 80%, var(--warn-soft), transparent 45%),
+    var(--bg);
 }
 
 .bg-champagne-radial {
   background:
-    radial-gradient(circle at 30% 30%, rgba(245, 234, 208, 0.7), transparent 45%),
-    radial-gradient(circle at 80% 70%, rgba(248, 210, 205, 0.5), transparent 50%),
-    #FBF3EC;
+    radial-gradient(circle at 30% 30%, var(--warn-soft), transparent 45%),
+    radial-gradient(circle at 80% 70%, var(--accent-soft), transparent 50%),
+    var(--bg-subtle);
 }
 
 .bg-espresso-radial {
@@ -282,17 +1050,19 @@ button:not(:disabled),
     #160E07;
 }
 
-/* ---------- Decorative chips ---------- */
+/* =============================================================================
+   Decorative chips
+   ========================================================================== */
 .chip-rose {
-  background: linear-gradient(135deg, rgba(255, 246, 244, 0.95), rgba(252, 232, 229, 0.85));
-  border: 1px solid rgba(216, 155, 163, 0.4);
-  color: #A05E68;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  color: var(--accent-soft-fg);
 }
 
 .chip-champagne {
-  background: linear-gradient(135deg, rgba(251, 246, 236, 0.95), rgba(245, 234, 208, 0.85));
-  border: 1px solid rgba(212, 165, 116, 0.45);
-  color: #7E6627;
+  background: var(--warn-soft);
+  border: 1px solid var(--warn);
+  color: var(--warn-soft-fg);
 }
 
 .chip-on-dark-rose {
@@ -307,14 +1077,17 @@ button:not(:disabled),
   color: #E8C9A0;
 }
 
-/* ---------- Buttons ---------- */
+/* =============================================================================
+   Marketing buttons
+   ========================================================================== */
 .btn-luxe {
-  background: linear-gradient(135deg, #D89BA3 0%, #B8864A 100%);
+  /* Deepened from the original blush→beige pair, which left the white label
+     at ~2.5:1. This keeps the brand gradient while reaching AA. */
+  background: linear-gradient(135deg, #B4626F 0%, #8A6222 100%);
   color: #FFFCF8;
   box-shadow: 0 14px 40px -16px rgba(184, 134, 74, 0.55);
   transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
 }
-
 .btn-luxe:hover {
   transform: translateY(-1px);
   filter: brightness(1.05);
@@ -322,25 +1095,50 @@ button:not(:disabled),
 }
 
 .btn-luxe-outline {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid #D4A574;
-  color: #7E6627;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--fg);
   transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
-
 .btn-luxe-outline:hover {
-  background: #FBF3EC;
-  border-color: #B8864A;
-  color: #43301F;
+  background: var(--surface-2);
+  border-color: var(--accent);
+  color: var(--accent-hover);
 }
 
-/* ---------- Divider ---------- */
+/* -----------------------------------------------------------------------------
+   Recharts — the library inlines the series colour on legend/axis text, which
+   is tuned for a 2px line, not for reading. Override to theme foregrounds.
+   -------------------------------------------------------------------------- */
+.recharts-legend-item-text {
+  color: var(--fg-muted) !important;
+  fill: var(--fg-muted) !important;
+}
+.recharts-cartesian-axis-tick-value,
+.recharts-label,
+.recharts-text {
+  fill: var(--fg-muted);
+}
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 0.75rem;
+  color: var(--fg) !important;
+}
+
+/* =============================================================================
+   Misc
+   ========================================================================== */
 .divider-soft {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(184, 134, 74, 0.55), transparent);
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
 }
 
-/* ---------- RTL helpers ---------- */
 [dir="rtl"] .rtl-flip {
   transform: scaleX(-1);
+}
+
+/* Kill the flash of the wrong theme before ThemeContext hydrates. */
+.theme-booting * {
+  transition: none !important;
 }

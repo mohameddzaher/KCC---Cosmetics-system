@@ -12,16 +12,18 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer
 } from 'recharts';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const invoiceStatusClasses: Record<string, string> = {
-  draft: 'bg-dark-700 text-dark-300',
+  draft: 'bg-surface-3 text-fg-muted',
   sent: 'bg-blue-500/10 text-blue-400',
   paid: 'bg-green-500/10 text-green-400',
   overdue: 'bg-red-500/10 text-red-400',
-  cancelled: 'bg-dark-600 text-dark-400',
+  cancelled: 'bg-surface-3 text-fg-muted',
 };
 
 export default function AccountingPage() {
+  const { tx } = useLanguage();
   const [activeTab, setActiveTab] = useState<'invoices' | 'payments' | 'expenses' | 'reports'>('invoices');
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -154,15 +156,15 @@ export default function AccountingPage() {
         {summaryCards.map((card, i) => {
           const Icon = card.icon;
           return (
-            <div key={i} className="p-5 bg-dark-900 border border-dark-800 rounded-xl">
+            <div key={i} className="p-5 bg-surface border border-line rounded-xl">
               <div className="flex items-start justify-between">
                 <div className={`p-2.5 rounded-lg ${card.bg}`}>
                   <Icon size={20} className={card.color} />
                 </div>
               </div>
               <div className="mt-3">
-                <p className="text-2xl font-bold text-dark-50">${card.value.toLocaleString()}</p>
-                <p className="text-sm text-dark-400 mt-0.5">{card.label}</p>
+                <p className="text-2xl font-bold text-fg">${card.value.toLocaleString()}</p>
+                <p className="text-sm text-fg-muted mt-0.5">{card.label}</p>
               </div>
             </div>
           );
@@ -171,8 +173,8 @@ export default function AccountingPage() {
 
       {/* Revenue Chart */}
       {revenueChartData.length > 0 && (
-        <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-          <h2 className="text-base font-semibold text-dark-50 mb-4">Revenue vs Expenses</h2>
+        <div className="bg-surface border border-line rounded-xl p-5">
+          <h2 className="text-base font-semibold text-fg mb-4">{tx('Revenue vs Expenses')}</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={revenueChartData}>
@@ -198,7 +200,7 @@ export default function AccountingPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex flex-wrap items-center gap-1 p-0.5 bg-dark-900 border border-dark-800 rounded-lg w-fit">
+      <div className="tab-bar">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -207,7 +209,7 @@ export default function AccountingPage() {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                activeTab === tab.key ? 'bg-kcc-green/20 text-kcc-green' : 'text-dark-400 hover:text-dark-200'
+                activeTab === tab.key ? 'bg-kcc-green/20 text-kcc-green' : 'text-fg-muted hover:text-fg'
               }`}
             >
               <Icon size={15} />
@@ -218,172 +220,169 @@ export default function AccountingPage() {
       </div>
 
       {/* Tab Content */}
-      <div className="bg-dark-900 border border-dark-800 rounded-xl overflow-hidden">
+      <div className="bg-surface border border-line rounded-xl overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-48">
             <Loader2 className="animate-spin text-kcc-green" size={24} />
           </div>
         ) : activeTab === 'invoices' ? (
           <>
-            <div className="flex items-center justify-between p-5 border-b border-dark-800">
-              <h3 className="text-sm font-semibold text-dark-100">Invoices ({invoices.length})</h3>
+            <div className="flex items-center justify-between p-5 border-b border-line">
+              <h3 className="text-sm font-semibold text-fg">Invoices ({invoices.length})</h3>
               <button type="button" onClick={() => setShowCreate('invoices')}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors">
-                <Plus size={14} /> New Invoice
-              </button>
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors">
+                <Plus size={14} />{tx('New Invoice')}</button>
             </div>
             {showCreate === 'invoices' && (
-              <div className="p-5 border-b border-dark-800">
+              <div className="p-5 border-b border-line">
                 <AccountingCreateForm kind="invoices" invoices={invoices} onClose={() => setShowCreate(null)} onCreated={fetchAccountingData} />
               </div>
             )}
-            <div className="overflow-x-auto">
+            <div className="scroll-thin w-full min-w-0 overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-dark-800">
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Invoice #</th>
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Customer</th>
-                    <th className="text-end text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Total</th>
-                    <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Status</th>
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Due Date</th>
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Paid</th>
-                    <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Actions</th>
+                  <tr className="border-b border-line">
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Invoice #')}</th>
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Customer')}</th>
+                    <th className="text-end text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Total')}</th>
+                    <th className="text-center text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Status')}</th>
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Due Date')}</th>
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Paid')}</th>
+                    <th className="text-center text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Actions')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dark-800">
+                <tbody className="divide-y divide-line">
                   {invoices.map((inv: any) => (
-                    <tr key={inv._id} className="hover:bg-dark-800/50 transition-colors">
-                      <td className="px-5 py-3.5 text-sm font-medium text-dark-100">{inv.invoiceNumber}</td>
-                      <td className="px-5 py-3.5 text-sm text-dark-300">{inv.userId?.name || inv.userId?.email || '-'}</td>
-                      <td className="px-5 py-3.5 text-end text-sm font-medium text-dark-200">${(inv.total || 0).toLocaleString()}</td>
+                    <tr key={inv._id} className="hover:bg-surface-2/50 transition-colors">
+                      <td className="px-5 py-3.5 text-sm font-medium text-fg">{inv.invoiceNumber}</td>
+                      <td className="px-5 py-3.5 text-sm text-fg-muted">{inv.userId?.name || inv.userId?.email || '-'}</td>
+                      <td className="px-5 py-3.5 text-end text-sm font-medium text-fg">${(inv.total || 0).toLocaleString()}</td>
                       <td className="px-5 py-3.5 text-center">
                         <select
                           value={inv.status}
                           onChange={(e) => updateStatus('invoices', inv._id, e.target.value)}
-                          title="Change invoice status"
-                          className={`text-xs font-medium rounded-full px-2 py-1 capitalize border-0 focus:outline-none cursor-pointer ${invoiceStatusClasses[inv.status] || 'bg-dark-700 text-dark-300'}`}
+                          title={tx('Change invoice status')}
+                          className={`text-xs font-medium rounded-full px-2 py-1 capitalize border-0 focus:outline-none cursor-pointer ${invoiceStatusClasses[inv.status] || 'bg-surface-3 text-fg-muted'}`}
                         >
                           {INVOICE_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                       </td>
-                      <td className="px-5 py-3.5 text-sm text-dark-400">{formatDate(inv.dueDate)}</td>
-                      <td className="px-5 py-3.5 text-sm text-dark-400">{formatDate(inv.paidAt)}</td>
+                      <td className="px-5 py-3.5 text-sm text-fg-muted">{formatDate(inv.dueDate)}</td>
+                      <td className="px-5 py-3.5 text-sm text-fg-muted">{formatDate(inv.paidAt)}</td>
                       <td className="px-5 py-3.5 text-center">
-                        <button type="button" onClick={() => deleteRecord('invoices', inv._id)} title="Delete invoice"
-                          className="p-1.5 text-dark-400 hover:text-red-400 hover:bg-dark-800 rounded-lg transition-colors"><Trash2 size={15} /></button>
+                        <button type="button" onClick={() => deleteRecord('invoices', inv._id)} title={tx('Delete invoice')}
+                          className="p-1.5 text-fg-muted hover:text-red-400 hover:bg-surface-2 rounded-lg transition-colors"><Trash2 size={15} /></button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               {invoices.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-32 text-dark-400">
+                <div className="flex flex-col items-center justify-center h-32 text-fg-muted">
                   <FileText size={28} className="mb-2" />
-                  <p className="text-sm">No invoices found</p>
+                  <p className="text-sm">{tx('No invoices found')}</p>
                 </div>
               )}
             </div>
           </>
         ) : activeTab === 'payments' ? (
           <>
-            <div className="flex items-center justify-between p-5 border-b border-dark-800">
-              <h3 className="text-sm font-semibold text-dark-100">Payments ({payments.length})</h3>
+            <div className="flex items-center justify-between p-5 border-b border-line">
+              <h3 className="text-sm font-semibold text-fg">Payments ({payments.length})</h3>
               <button type="button" onClick={() => setShowCreate('payments')}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors">
-                <Plus size={14} /> Record Payment
-              </button>
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors">
+                <Plus size={14} />{tx('Record Payment')}</button>
             </div>
             {showCreate === 'payments' && (
-              <div className="p-5 border-b border-dark-800">
+              <div className="p-5 border-b border-line">
                 <AccountingCreateForm kind="payments" invoices={invoices} onClose={() => setShowCreate(null)} onCreated={fetchAccountingData} />
               </div>
             )}
-            <div className="overflow-x-auto">
+            <div className="scroll-thin w-full min-w-0 overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-dark-800">
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Reference</th>
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Invoice</th>
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Customer</th>
-                    <th className="text-end text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Amount</th>
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Method</th>
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Date</th>
-                    <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Actions</th>
+                  <tr className="border-b border-line">
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Reference')}</th>
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Invoice')}</th>
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Customer')}</th>
+                    <th className="text-end text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Amount')}</th>
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Method')}</th>
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Date')}</th>
+                    <th className="text-center text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Actions')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dark-800">
+                <tbody className="divide-y divide-line">
                   {payments.map((pay: any) => (
-                    <tr key={pay._id} className="hover:bg-dark-800/50 transition-colors">
-                      <td className="px-5 py-3.5 text-sm font-medium text-dark-100">{pay.reference || pay._id?.slice(-8)}</td>
+                    <tr key={pay._id} className="hover:bg-surface-2/50 transition-colors">
+                      <td className="px-5 py-3.5 text-sm font-medium text-fg">{pay.reference || pay._id?.slice(-8)}</td>
                       <td className="px-5 py-3.5 text-sm text-kcc-green">{pay.invoiceId?.invoiceNumber || '-'}</td>
-                      <td className="px-5 py-3.5 text-sm text-dark-300">{pay.userId?.name || '-'}</td>
+                      <td className="px-5 py-3.5 text-sm text-fg-muted">{pay.userId?.name || '-'}</td>
                       <td className="px-5 py-3.5 text-end text-sm font-medium text-green-400">${(pay.amount || 0).toLocaleString()}</td>
-                      <td className="px-5 py-3.5 text-sm text-dark-400">{pay.method}</td>
-                      <td className="px-5 py-3.5 text-sm text-dark-400">{formatDate(pay.paidAt || pay.createdAt)}</td>
+                      <td className="px-5 py-3.5 text-sm text-fg-muted">{pay.method}</td>
+                      <td className="px-5 py-3.5 text-sm text-fg-muted">{formatDate(pay.paidAt || pay.createdAt)}</td>
                       <td className="px-5 py-3.5 text-center">
-                        <button type="button" onClick={() => deleteRecord('payments', pay._id)} title="Delete payment"
-                          className="p-1.5 text-dark-400 hover:text-red-400 hover:bg-dark-800 rounded-lg transition-colors"><Trash2 size={15} /></button>
+                        <button type="button" onClick={() => deleteRecord('payments', pay._id)} title={tx('Delete payment')}
+                          className="p-1.5 text-fg-muted hover:text-red-400 hover:bg-surface-2 rounded-lg transition-colors"><Trash2 size={15} /></button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               {payments.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-32 text-dark-400">
+                <div className="flex flex-col items-center justify-center h-32 text-fg-muted">
                   <CreditCard size={28} className="mb-2" />
-                  <p className="text-sm">No payments found</p>
+                  <p className="text-sm">{tx('No payments found')}</p>
                 </div>
               )}
             </div>
           </>
         ) : activeTab === 'expenses' ? (
           <>
-            <div className="flex items-center justify-between p-5 border-b border-dark-800">
-              <h3 className="text-sm font-semibold text-dark-100">Expenses ({expenses.length})</h3>
+            <div className="flex items-center justify-between p-5 border-b border-line">
+              <h3 className="text-sm font-semibold text-fg">Expenses ({expenses.length})</h3>
               <button type="button" onClick={() => setShowCreate('expenses')}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors">
-                <Plus size={14} /> New Expense
-              </button>
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors">
+                <Plus size={14} />{tx('New Expense')}</button>
             </div>
             {showCreate === 'expenses' && (
-              <div className="p-5 border-b border-dark-800">
+              <div className="p-5 border-b border-line">
                 <AccountingCreateForm kind="expenses" invoices={invoices} onClose={() => setShowCreate(null)} onCreated={fetchAccountingData} />
               </div>
             )}
-            <div className="overflow-x-auto">
+            <div className="scroll-thin w-full min-w-0 overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-dark-800">
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Category</th>
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Description</th>
-                    <th className="text-end text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Amount</th>
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Vendor</th>
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Date</th>
-                    <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Actions</th>
+                  <tr className="border-b border-line">
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Category')}</th>
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Description')}</th>
+                    <th className="text-end text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Amount')}</th>
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Vendor')}</th>
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Date')}</th>
+                    <th className="text-center text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Actions')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dark-800">
+                <tbody className="divide-y divide-line">
                   {expenses.map((exp: any) => (
-                    <tr key={exp._id} className="hover:bg-dark-800/50 transition-colors">
+                    <tr key={exp._id} className="hover:bg-surface-2/50 transition-colors">
                       <td className="px-5 py-3.5">
                         <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-kcc-beige/10 text-kcc-beige">{exp.category}</span>
                       </td>
-                      <td className="px-5 py-3.5 text-sm text-dark-300">{typeof exp.description === 'object' ? (exp.description?.en || exp.description?.ar || '-') : exp.description}</td>
+                      <td className="px-5 py-3.5 text-sm text-fg-muted">{typeof exp.description === 'object' ? (exp.description?.en || exp.description?.ar || '-') : exp.description}</td>
                       <td className="px-5 py-3.5 text-end text-sm font-medium text-red-400">${(exp.amount || 0).toLocaleString()}</td>
-                      <td className="px-5 py-3.5 text-sm text-dark-400">{exp.vendor}</td>
-                      <td className="px-5 py-3.5 text-sm text-dark-400">{formatDate(exp.date || exp.createdAt)}</td>
+                      <td className="px-5 py-3.5 text-sm text-fg-muted">{exp.vendor}</td>
+                      <td className="px-5 py-3.5 text-sm text-fg-muted">{formatDate(exp.date || exp.createdAt)}</td>
                       <td className="px-5 py-3.5 text-center">
-                        <button type="button" onClick={() => deleteRecord('expenses', exp._id)} title="Delete expense"
-                          className="p-1.5 text-dark-400 hover:text-red-400 hover:bg-dark-800 rounded-lg transition-colors"><Trash2 size={15} /></button>
+                        <button type="button" onClick={() => deleteRecord('expenses', exp._id)} title={tx('Delete expense')}
+                          className="p-1.5 text-fg-muted hover:text-red-400 hover:bg-surface-2 rounded-lg transition-colors"><Trash2 size={15} /></button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               {expenses.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-32 text-dark-400">
+                <div className="flex flex-col items-center justify-center h-32 text-fg-muted">
                   <Receipt size={28} className="mb-2" />
-                  <p className="text-sm">No expenses found</p>
+                  <p className="text-sm">{tx('No expenses found')}</p>
                 </div>
               )}
             </div>
@@ -392,19 +391,19 @@ export default function AccountingPage() {
           /* Reports Tab */
           <div className="p-8">
             {profitReport && (
-              <div className="mb-6 p-5 border border-dark-800 rounded-xl">
-                <h4 className="text-sm font-semibold text-dark-100 mb-3">Current Month P&L ({profitReport.month})</h4>
+              <div className="mb-6 p-5 border border-line rounded-xl">
+                <h4 className="text-sm font-semibold text-fg mb-3">Current Month P&L ({profitReport.month})</h4>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <p className="text-xs text-dark-500">Revenue</p>
+                    <p className="text-xs text-fg-subtle">{tx('Revenue')}</p>
                     <p className="text-lg font-bold text-green-400">${(profitReport.revenue || 0).toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-dark-500">Expenses</p>
+                    <p className="text-xs text-fg-subtle">{tx('Expenses')}</p>
                     <p className="text-lg font-bold text-red-400">${(profitReport.expenses || 0).toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-dark-500">Net Profit</p>
+                    <p className="text-xs text-fg-subtle">{tx('Net Profit')}</p>
                     <p className={`text-lg font-bold ${(profitReport.profit || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                       ${(profitReport.profit || 0).toLocaleString()}
                     </p>
@@ -421,14 +420,14 @@ export default function AccountingPage() {
               ].map((report) => {
                 const Icon = report.icon;
                 return (
-                  <div key={report.type} className="p-5 border border-dark-800 rounded-xl hover:border-dark-700 transition-colors cursor-pointer">
+                  <div key={report.type} className="p-5 border border-line rounded-xl hover:border-line transition-colors cursor-pointer">
                     <div className="flex items-center gap-3 mb-3">
                       <div className={`p-2.5 rounded-lg ${report.bg}`}>
                         <Icon size={20} className={report.color} />
                       </div>
                       <div>
-                        <h4 className="text-sm font-semibold text-dark-100">{report.title}</h4>
-                        <p className="text-xs text-dark-500">{report.desc}</p>
+                        <h4 className="text-sm font-semibold text-fg">{report.title}</h4>
+                        <p className="text-xs text-fg-subtle">{report.desc}</p>
                       </div>
                     </div>
                   </div>

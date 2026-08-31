@@ -8,13 +8,18 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ISubCategory {
   name: string;
+  /** Optional Arabic label — falls back to `name` when empty. */
+  nameAr?: string;
   slug: string;
   items: string[];
+  /** Arabic labels for `items`, index-aligned. Missing entries fall back. */
+  itemsAr?: string[];
   order: number;
 }
 
 export interface ICategory extends Document {
   name: string;
+  nameAr?: string;
   slug: string;
   order: number;
   active: boolean;
@@ -26,8 +31,10 @@ export interface ICategory extends Document {
 const SubCategorySchema = new Schema<ISubCategory>(
   {
     name: { type: String, required: true, trim: true },
+    nameAr: { type: String, trim: true },
     slug: { type: String, required: true, trim: true },
     items: { type: [String], default: [] },
+    itemsAr: { type: [String], default: [] },
     order: { type: Number, default: 0 },
   },
   { _id: false }
@@ -36,6 +43,7 @@ const SubCategorySchema = new Schema<ISubCategory>(
 const CategorySchema = new Schema<ICategory>(
   {
     name: { type: String, required: true, trim: true },
+    nameAr: { type: String, trim: true },
     slug: { type: String, required: true, unique: true, trim: true },
     order: { type: Number, default: 0 },
     active: { type: Boolean, default: true },

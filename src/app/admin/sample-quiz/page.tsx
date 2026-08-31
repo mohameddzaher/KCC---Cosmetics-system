@@ -2,93 +2,106 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { ListChecks, Boxes, ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Boxes, ExternalLink, Layers, ListChecks } from 'lucide-react';
+import { AutoGrid, Card, PageHeader } from '@/components/admin/ui';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function SampleQuizAdminLanding() {
-  const [counts, setCounts] = useState({ questions: 0, products: 0 });
+  const { t, pick } = useLanguage();
+  const [counts, setCounts] = useState({ general: 0, scoped: 0, products: 0 });
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/sample-quiz/brief-questions').then((r) => r.json()),
-      fetch('/api/sample-quiz/product-config').then((r) => r.ok ? r.json() : { configs: [] }),
+      fetch('/api/sample-quiz/brief-questions?includeInactive=true&all=true', { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : []))
+        .catch(() => []),
+      fetch('/api/sample-quiz/product-config', { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : { configs: [] }))
+        .catch(() => ({ configs: [] })),
     ]).then(([qs, pc]) => {
+      const all: Array<{ scope?: string }> = Array.isArray(qs) ? qs : [];
       setCounts({
-        questions: Array.isArray(qs) ? qs.length : 0,
+        general: all.filter((q) => (q.scope || 'general') === 'general').length,
+        scoped: all.filter((q) => (q.scope || 'general') !== 'general').length,
         products: Array.isArray(pc.configs) ? pc.configs.length : 0,
       });
-    }).catch(() => {});
+    });
   }, []);
 
   const cards = [
     {
-      key: 'questions',
-      title: 'Brief Questions',
-      desc: 'The 12 questions customers answer before picking a category. Add, reorder, edit options, set conditions.',
+      key: 'general',
+      title: t('admin.briefQuestions'),
+      desc: t('admin.briefQuestionsDesc'),
       href: '/admin/sample-quiz/questions',
       Icon: ListChecks,
-      stat: `${counts.questions} active`,
-      color: 'from-kcc-rose-light/40 to-kcc-rose/15',
+      stat: counts.general,
+    },
+    {
+      key: 'category',
+      title: t('admin.categoryQuestions'),
+      desc: t('admin.categoryQuestionsDesc'),
+      href: '/admin/sample-quiz/questions?scope=main&key=',
+      Icon: Layers,
+      stat: counts.scoped,
     },
     {
       key: 'products',
-      title: 'Product Spec Configs',
-      desc: 'For every product (level-3 item) decide which spec categories show, which options are allowed, and the rules.',
+      title: t('admin.productConfigs'),
+      desc: t('admin.productConfigsDesc'),
       href: '/admin/sample-quiz/products',
       Icon: Boxes,
-      stat: `${counts.products} configured`,
-      color: 'from-kcc-beige-light/40 to-kcc-beige/15',
+      stat: counts.products,
     },
   ];
 
   return (
-    <div className="max-w-5xl">
-      <div className="flex items-center gap-3 mb-2">
-        <Sparkles className="text-kcc-rose" size={18} />
-        <p className="text-[11px] uppercase tracking-[0.32em] text-dark-400 font-medium">
-          Sample Quiz Engine
-        </p>
-      </div>
-      <h1 className="text-3xl font-bold text-dark-50 mb-2">Quiz Configuration</h1>
-      <p className="text-dark-400 mb-10 max-w-xl">
-        Everything that powers the customer-facing Sample quiz. Edits are reflected on the site instantly — no caching.
-      </p>
+    <div>
+      <PageHeader title={t('admin.quizTitle')} subtitle={t('admin.quizSubtitle')} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <AutoGrid min="19rem" gap="1rem">
         {cards.map((c) => {
           const Icon = c.Icon;
           return (
-            <motion.div key={c.key} whileHover={{ y: -3 }}>
-              <Link
-                href={c.href}
-                className={`group block relative overflow-hidden rounded-2xl border border-dark-700 bg-dark-900 p-7 hover:border-kcc-rose/40 transition-all`}
-              >
-                <div className={`absolute inset-0 -z-0 bg-gradient-to-br ${c.color} opacity-30 group-hover:opacity-60 transition-opacity`} />
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="w-12 h-12 rounded-xl bg-kcc-rose/15 text-kcc-rose flex items-center justify-center">
-                      <Icon size={22} />
-                    </div>
-                    <span className="text-xs font-mono text-dark-400">{c.stat}</span>
-                  </div>
-                  <h2 className="text-xl font-semibold text-dark-50 mb-2">{c.title}</h2>
-                  <p className="text-sm text-dark-400 mb-6 leading-relaxed">{c.desc}</p>
-                  <span className="inline-flex items-center gap-1.5 text-sm text-kcc-rose font-medium group-hover:gap-2.5 transition-all">
-                    Manage <ArrowRight size={14} />
-                  </span>
-                </div>
-              </Link>
-            </motion.div>
+            <Link
+              key={c.key}
+              href={c.href}
+              className="group flex flex-col rounded-xl border border-line bg-surface p-5 transition-colors hover:border-brand"
+            >
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-soft text-brand-soft-fg">
+                  <Icon size={20} />
+                </span>
+                <span className="font-mono text-xs text-fg-subtle">{c.stat}</span>
+              </div>
+              <h2 className="mb-1.5 text-base font-semibold text-fg">{c.title}</h2>
+              <p className="mb-5 flex-1 text-sm leading-relaxed text-fg-muted">{c.desc}</p>
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-brand transition-all group-hover:gap-2.5">
+                {t('ui.open')} <ArrowRight size={14} className="rtl-flip" />
+              </span>
+            </Link>
           );
         })}
-      </div>
+      </AutoGrid>
 
-      <div className="mt-10 p-5 rounded-2xl border border-dark-700 bg-dark-900/60">
-        <p className="text-xs uppercase tracking-[0.22em] text-kcc-beige mb-2">Live preview</p>
-        <p className="text-sm text-dark-300">
-          Open the customer quiz at <Link href="/order/sample" target="_blank" className="text-kcc-rose underline">/order/sample</Link> in a new tab — refresh after saving an admin change to see it apply instantly.
+      <Card className="mt-5">
+        <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-fg-muted">
+          {t('ui.preview')}
         </p>
-      </div>
+        <p className="text-sm text-fg-muted">
+          {pick(
+            'Open the customer quiz in a new tab. Every admin change is live immediately — no cache to clear.',
+            'افتح استبيان العميل في تبويب جديد. كل تعديل من لوحة الإدارة يظهر فورًا — لا يوجد تخزين مؤقت.'
+          )}
+        </p>
+        <Link
+          href="/order/sample"
+          target="_blank"
+          className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"
+        >
+          /order/sample <ExternalLink size={13} />
+        </Link>
+      </Card>
     </div>
   );
 }

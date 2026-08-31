@@ -144,10 +144,8 @@ export default function FAQSection() {
             <HelpCircle size={12} />
             {locale === 'ar' ? 'مركز المساعدة' : 'Help Center'}
           </span>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
-            <span className="gradient-text">
-              {locale === 'ar' ? sectionTitle.ar : sectionTitle.en}
-            </span>
+          <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] leading-tight text-ink-800 mb-3">
+            {locale === 'ar' ? sectionTitle.ar : sectionTitle.en}
           </h2>
           <p className="text-cream-700 text-base sm:text-lg max-w-2xl mx-auto">
             {locale === 'ar' ? sectionSubtitle.ar : sectionSubtitle.en}
@@ -171,7 +169,7 @@ export default function FAQSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.06 }}
-                className={`group rounded-2xl bg-white/85 backdrop-blur-sm border transition-all duration-300 overflow-hidden ${
+                className={`group rounded-2xl bg-surface/85 backdrop-blur-sm border transition-all duration-300 overflow-hidden ${
                   isOpen
                     ? 'border-kcc-rose-dark/40 shadow-soft'
                     : 'border-cream-300 hover:border-kcc-beige/50 hover:shadow-soft'

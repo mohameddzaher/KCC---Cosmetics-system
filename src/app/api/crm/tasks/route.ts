@@ -2,14 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import CustomerActivity from '@/models/CustomerActivity';
 import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
 
-const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'STAFF'];
+const READ_PERM = 'crm.view' as const;
+const WRITE_PERM = 'crm.edit' as const;
 
 // GET /api/crm/tasks?status=open|done|all -> follow-up tasks across all contacts
 export async function GET(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !STAFF_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, READ_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

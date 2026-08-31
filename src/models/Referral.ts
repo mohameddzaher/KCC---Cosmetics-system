@@ -6,6 +6,8 @@ export interface IReferral extends Document {
   referralCode: string;
   status: 'pending' | 'credited';
   creditAmount: number;
+  /** Set from Settings → Referral Program when an expiry is configured. */
+  expiresAt?: Date;
   creditedAt: Date;
   orderId?: Types.ObjectId;
   createdAt: Date;
@@ -19,6 +21,7 @@ const ReferralSchema = new Schema<IReferral>(
     referralCode: { type: String, required: true, trim: true },
     status: { type: String, enum: ['pending', 'credited'], default: 'pending' },
     creditAmount: { type: Number, default: 0 },
+    expiresAt: { type: Date },
     creditedAt: { type: Date },
     orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
   },

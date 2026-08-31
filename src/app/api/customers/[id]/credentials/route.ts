@@ -4,9 +4,10 @@ import connectDB from '@/lib/db';
 import User from '@/models/User';
 import CustomerActivity from '@/models/CustomerActivity';
 import { getSession, hashPassword } from '@/lib/auth';
+import { can } from '@/lib/roles';
 
 type RouteContext = { params: Promise<{ id: string }> };
-const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
+const REQUIRED_PERM = 'customers.credentials' as const;
 
 // PUT /api/customers/[id]/credentials
 // Super-admin / admin sets the customer's login email (username) + password so
@@ -14,7 +15,7 @@ const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
 export async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const session = await getSession();
-    if (!session || !ADMIN_ROLES.includes(session.role)) {
+    if (!session || !can(session.role, REQUIRED_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

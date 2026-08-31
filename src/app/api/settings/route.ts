@@ -2,15 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import SiteSettings from '@/models/SiteSettings';
 import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
 
 const defaultSettings = {
   key: 'main',
   general: {
-    siteName: { en: 'KCC - Kuwait Custom Cups', ar: 'KCC - \u0623\u0643\u0648\u0627\u0628 \u0627\u0644\u0643\u0648\u064a\u062a \u0627\u0644\u0645\u062e\u0635\u0635\u0629' },
+    siteName: { en: 'KCC — Saudi Company for Cosmetics', ar: 'KCC — الشركة السعودية لمستحضرات التجميل' },
     contactEmail: '',
     contactPhone: '',
     contactAddress: { en: '', ar: '' },
-    companyName: { en: 'Kuwait Custom Cups Co.', ar: '\u0634\u0631\u0643\u0629 \u0623\u0643\u0648\u0627\u0628 \u0627\u0644\u0643\u0648\u064a\u062a \u0627\u0644\u0645\u062e\u0635\u0635\u0629' },
+    companyName: { en: 'Saudi Company for Cosmetics', ar: 'الشركة السعودية لمستحضرات التجميل' },
     socialMedia: {
       instagram: '',
       twitter: '',
@@ -40,7 +41,7 @@ const defaultSettings = {
 export async function GET(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+    if (!user || !can(user.role, 'settings.manage')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -64,7 +65,7 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+    if (!user || !can(user.role, 'settings.manage')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

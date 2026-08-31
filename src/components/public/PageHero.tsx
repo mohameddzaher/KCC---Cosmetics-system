@@ -43,7 +43,7 @@ export default function PageHero({ title, subtitle, image, eyebrow }: PageHeroPr
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.05 }}
-          className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-cream-50"
+          className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-on-dark"
         >
           {title}
         </motion.h1>
@@ -64,7 +64,7 @@ export default function PageHero({ title, subtitle, image, eyebrow }: PageHeroPr
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.25 }}
-            className="max-w-2xl mx-auto text-base sm:text-lg text-cream-200/90 leading-relaxed"
+            className="max-w-2xl mx-auto text-base sm:text-lg text-on-dark-soft/90 leading-relaxed"
           >
             {subtitle}
           </motion.p>

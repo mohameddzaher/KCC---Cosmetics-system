@@ -6,8 +6,11 @@ import PromoUsage from '@/models/PromoUsage';
 import Referral from '@/models/Referral';
 import User from '@/models/User';
 import Notification from '@/models/Notification';
-import { getSession, isAdmin } from '@/lib/auth';
+import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
+import { scopeFilterForRole } from '@/lib/orderWorkflow';
 import { generateOrderNumber } from '@/lib/api-helpers';
+import { sendEventEmail, adminUrl } from '@/lib/mailer';
 
 const toNonNegNumber = (v: unknown) => {
   const n = Number(v);
@@ -31,13 +34,33 @@ export async function GET(req: NextRequest) {
 
     const filter: Record<string, unknown> = {};
 
-    // Customers can only see their own orders
-    if (!isAdmin(user.role)) {
+    if (can(user.role, 'orders.view')) {
+      // Staff see the queue their role is responsible for. `orders.viewAll`
+      // lifts that restriction; the factory, for instance, never sees an order
+      // that has not been released to production.
+      if (!can(user.role, 'orders.viewAll')) {
+        const scope = scopeFilterForRole(user.role, user.id);
+        if (scope) Object.assign(filter, scope);
+      }
+    } else {
+      // Customers only ever see their own orders.
       filter.userId = user.id;
     }
 
     if (type) filter.type = type;
-    if (status) filter.status = status;
+    // An explicit ?status= narrows within — never widens — the role scope.
+    if (status) {
+      const scoped = filter.status as { $in?: string[] } | undefined;
+      if (!scoped?.$in || scoped.$in.includes(status)) filter.status = status;
+    }
+    const assignedTo = searchParams.get('assignedTo');
+    if (assignedTo === 'me') {
+      filter.$or = [
+        { 'assignments.accountManagerId': user.id },
+        { 'assignments.factoryUserId': user.id },
+        { 'assignments.logisticsUserId': user.id },
+      ];
+    }
 
     const [orders, total] = await Promise.all([
       Order.find(filter)
@@ -46,6 +69,9 @@ export async function GET(req: NextRequest) {
         .limit(limit)
         .populate('userId', 'name email company')
         .populate('promoCodeId', 'code type value')
+        .populate('assignments.accountManagerId', 'name email role')
+        .populate('assignments.factoryUserId', 'name email role')
+        .populate('assignments.logisticsUserId', 'name email role')
         .lean(),
       Order.countDocuments(filter),
     ]);
@@ -173,6 +199,15 @@ export async function POST(req: NextRequest) {
       attachments: body.attachments || [],
       bulkDetails: body.bulkDetails || undefined,
       convertedFromSample: body.convertedFromSample || undefined,
+      timeline: [
+        {
+          to: 'Submitted',
+          byId: user.id,
+          byName: user.name,
+          byRole: user.role,
+          at: new Date(),
+        },
+      ],
     });
 
     // Notify the admin team of the new order (feeds the admin notification bell)
@@ -187,6 +222,22 @@ export async function POST(req: NextRequest) {
         },
         data: { orderId: order._id, orderNumber: order.orderNumber },
         isRead: false,
+      });
+
+      // …and by email, if the team asked for that under Settings.
+      await sendEventEmail('emailNewOrder', {
+        subject: `New ${order.type} order — ${order.orderNumber}`,
+        heading: `New ${order.type} order`,
+        intro: `${who} just submitted an order.`,
+        rows: [
+          ['Order', order.orderNumber],
+          ['Type', order.type],
+          ['Customer', who],
+          ['Email', order.customerInfo?.email || '—'],
+          ['Phone', order.customerInfo?.phone || '—'],
+        ],
+        actionUrl: adminUrl(`/admin/orders/${order._id}`),
+        actionLabel: 'Open the order',
       });
     } catch { /* non-fatal */ }
 

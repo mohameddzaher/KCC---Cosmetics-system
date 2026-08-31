@@ -5,9 +5,19 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ChevronDown, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCmsSection } from '@/lib/useCmsSection';
 
 export default function HeroSection() {
   const { t } = useLanguage();
+
+  /**
+   * Editable under Admin → CMS Manager → "hero". The dictionary supplies the
+   * shipped wording, so an empty CMS section changes nothing.
+   */
+  const content = useCmsSection('hero', {
+    en: { subtitle: t('hero.subtitle'), description: t('hero.description') },
+    ar: { subtitle: t('hero.subtitle'), description: t('hero.description') },
+  });
   const sectionRef = useRef<HTMLElement>(null);
 
   return (
@@ -19,7 +29,7 @@ export default function HeroSection() {
       <div className="absolute inset-0">
         <img
           src="https://images.unsplash.com/photo-1631729371254-42c2892f0e6e?w=1920&q=80"
-          alt="Luxury cosmetics background"
+          alt={t('a11y.heroImageAlt')}
           className="w-full h-full object-cover scale-105"
         />
       </div>
@@ -139,10 +149,10 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.4 }}
-          className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight mb-5"
+          className="text-3xl sm:text-4xl lg:text-6xl font-black tracking-tight mb-5"
         >
           <span className="text-kcc-green drop-shadow-[0_4px_24px_rgba(45,106,79,0.45)]">K</span>
-          <span className="text-cream-50 drop-shadow-[0_4px_24px_rgba(255,246,241,0.25)]">CC</span>
+          <span className="text-on-dark drop-shadow-[0_4px_24px_rgba(255,246,241,0.25)]">CC</span>
         </motion.h1>
 
         {/* Decorative divider */}
@@ -162,9 +172,9 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.65 }}
-          className="text-base sm:text-lg lg:text-xl font-light text-cream-100 mb-3 font-serif italic"
+          className="text-base sm:text-lg lg:text-xl font-light text-on-dark mb-3 font-serif italic"
         >
-          {t('hero.subtitle')}
+          {content.subtitle}
         </motion.p>
 
         {/* Description */}
@@ -172,9 +182,9 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.8 }}
-          className="max-w-xl mx-auto text-sm text-cream-200/85 leading-relaxed mb-8"
+          className="max-w-xl mx-auto text-sm text-on-dark-soft/85 leading-relaxed mb-8"
         >
-          {t('hero.description')}
+          {content.description}
         </motion.p>
 
         {/* CTA Buttons */}
@@ -209,7 +219,7 @@ export default function HeroSection() {
         transition={{ duration: 0.6, delay: 1.5 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
       >
-        <span className="text-[10px] uppercase tracking-[0.25em] text-cream-200/50">
+        <span className="text-[10px] uppercase tracking-[0.25em] text-on-dark-soft/50">
           {t('hero.scroll')}
         </span>
         <motion.div

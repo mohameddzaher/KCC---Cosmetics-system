@@ -9,6 +9,7 @@ import {
 import ContactActions from '@/components/admin/ContactActions';
 import { STAGES, stageMeta } from '@/components/admin/CrmPanel';
 import { useLivePoll } from '@/lib/useLivePoll';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const emptyForm = {
   name: '', email: '', company: '', phone: '', whatsapp: '',
@@ -16,6 +17,7 @@ const emptyForm = {
 };
 
 export default function CrmPipelinePage() {
+  const { tx } = useLanguage();
   const [customers, setCustomers] = useState<any[]>([]);
   const [managers, setManagers] = useState<any[]>([]);
   const [openTasks, setOpenTasks] = useState(0);
@@ -124,31 +126,30 @@ export default function CrmPipelinePage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
-            <Search size={15} className="absolute start-3 top-1/2 -translate-y-1/2 text-dark-500" />
+            <Search size={15} className="absolute start-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
             <input
               value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search contacts..."
-              className="ps-9 pe-3 py-2 text-sm bg-dark-900 border border-dark-800 rounded-lg text-dark-100 placeholder:text-dark-500 focus:border-kcc-green focus:outline-none w-56"
+              placeholder={tx('Search contacts...')}
+              className="ps-9 pe-3 py-2 text-sm bg-surface border border-line rounded-lg text-fg placeholder:text-fg-subtle focus:border-kcc-green focus:outline-none w-56"
             />
           </div>
           <select
             value={managerFilter} onChange={(e) => setManagerFilter(e.target.value)}
-            title="Filter by account manager"
-            className="px-3 py-2 text-sm bg-dark-900 border border-dark-800 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+            title={tx('Filter by account manager')}
+            className="px-3 py-2 text-sm bg-surface border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
           >
-            <option value="all">All managers</option>
-            <option value="unassigned">Unassigned</option>
+            <option value="all">{tx('All managers')}</option>
+            <option value="unassigned">{tx('Unassigned')}</option>
             {managers.map((m) => <option key={m._id} value={m._id}>{m.name}</option>)}
           </select>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/admin/crm/tasks" className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-dark-200 bg-dark-900 border border-dark-800 rounded-lg hover:border-dark-700">
+          <Link href="/admin/crm/tasks" className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-fg bg-surface border border-line rounded-lg hover:border-line">
             <ListTodo size={16} /> Tasks{openTasks > 0 && <span className="px-1.5 py-0.5 text-xs rounded-full bg-yellow-500/20 text-yellow-300">{openTasks}</span>}
           </Link>
           <button type="button" onClick={() => { setForm(emptyForm); setShowForm(true); }}
-            className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors">
-            <Plus size={16} /> Add Contact
-          </button>
+            className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors">
+            <Plus size={16} />{tx('Add Contact')}</button>
         </div>
       </div>
 
@@ -157,12 +158,12 @@ export default function CrmPipelinePage() {
         {kpis.map((k) => {
           const Icon = k.icon;
           return (
-            <div key={k.label} className="p-4 bg-dark-900 border border-dark-800 rounded-xl">
+            <div key={k.label} className="p-4 bg-surface border border-line rounded-xl">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-dark-400">{k.label}</span>
+                <span className="text-sm text-fg-muted">{k.label}</span>
                 <Icon size={18} className={k.color} />
               </div>
-              <p className="text-2xl font-bold text-dark-50 mt-2">{k.value}</p>
+              <p className="text-2xl font-bold text-fg mt-2">{k.value}</p>
             </div>
           );
         })}
@@ -170,10 +171,10 @@ export default function CrmPipelinePage() {
 
       {/* Add contact form */}
       {showForm && (
-        <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
+        <div className="bg-surface border border-line rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-dark-100">New Contact / Lead</h3>
-            <button type="button" onClick={() => setShowForm(false)} className="text-dark-400 hover:text-dark-50" aria-label="Close"><X size={18} /></button>
+            <h3 className="text-sm font-semibold text-fg">{tx('New Contact / Lead')}</h3>
+            <button type="button" onClick={() => setShowForm(false)} className="text-fg-muted hover:text-fg" aria-label={tx('Close')}><X size={18} /></button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {([
@@ -181,38 +182,38 @@ export default function CrmPipelinePage() {
               ['phone', 'Phone'], ['whatsapp', 'WhatsApp'], ['website', 'Website'],
             ] as [string, string][]).map(([k, lbl]) => (
               <div key={k}>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">{lbl}</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{lbl}</label>
                 <input type="text" aria-label={lbl} value={(form as any)[k]}
                   onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none" />
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none" />
               </div>
             ))}
             <div>
-              <label className="block text-xs font-medium text-dark-400 mb-1.5">Stage</label>
+              <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Stage')}</label>
               <select value={form.stage} onChange={(e) => setForm((f) => ({ ...f, stage: e.target.value }))}
-                title="Stage" className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none">
+                title={tx('Stage')} className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none">
                 {STAGES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-dark-400 mb-1.5">Account Manager</label>
+              <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Account Manager')}</label>
               <select value={form.accountManagerId} onChange={(e) => setForm((f) => ({ ...f, accountManagerId: e.target.value }))}
-                title="Account manager" className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none">
+                title={tx('Account manager')} className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none">
                 <option value="">— Unassigned —</option>
                 {managers.map((m) => <option key={m._id} value={m._id}>{m.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-dark-400 mb-1.5">Source</label>
-              <input type="text" aria-label="Source" value={form.source}
-                onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))} placeholder="manual / referral / event"
-                className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none" />
+              <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Source')}</label>
+              <input type="text" aria-label={tx('Source')} value={form.source}
+                onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))} placeholder={tx('manual / referral / event')}
+                className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none" />
             </div>
           </div>
           <div className="flex justify-end gap-3 mt-5">
-            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm text-dark-400 border border-dark-700 rounded-lg hover:text-dark-50">Cancel</button>
+            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm text-fg-muted border border-line rounded-lg hover:text-fg">{tx('Cancel')}</button>
             <button type="button" onClick={createContact} disabled={saving}
-              className="px-4 py-2 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors disabled:opacity-50">
+              className="px-4 py-2 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors disabled:opacity-50">
               {saving ? <Loader2 size={14} className="animate-spin inline mr-1" /> : null}Create
             </button>
           </div>
@@ -234,14 +235,14 @@ export default function CrmPipelinePage() {
                 onDragLeave={() => setDragOverStage((cur) => (cur === s.key ? null : cur))}
                 onDrop={() => onDrop(s.key)}
                 className={`shrink-0 w-72 rounded-xl border transition-colors ${
-                  isOver ? 'border-kcc-green bg-kcc-green/5' : 'border-dark-800 bg-dark-900/50'
+                  isOver ? 'border-kcc-green bg-kcc-green/5' : 'border-line bg-surface/50'
                 }`}
               >
-                <div className="flex items-center justify-between px-3 py-3 border-b border-dark-800">
+                <div className="flex items-center justify-between px-3 py-3 border-b border-line">
                   <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold rounded-full ${s.color}`}>
                     {s.label}
                   </span>
-                  <span className="text-xs text-dark-500">{list.length}</span>
+                  <span className="text-xs text-fg-subtle">{list.length}</span>
                 </div>
                 <div className="p-2 space-y-2 min-h-[8rem] max-h-[calc(100vh-22rem)] overflow-y-auto">
                   {list.map((c) => (
@@ -250,32 +251,32 @@ export default function CrmPipelinePage() {
                       draggable
                       onDragStart={() => setDragId(c._id)}
                       onDragEnd={() => { setDragId(null); setDragOverStage(null); }}
-                      className={`group bg-dark-900 border border-dark-800 rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-dark-700 transition-colors ${
+                      className={`group bg-surface border border-line rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-line transition-colors ${
                         dragId === c._id ? 'opacity-50' : ''
                       }`}
                     >
                       <div className="flex items-start gap-2">
-                        <GripVertical size={14} className="text-dark-600 mt-0.5 shrink-0" />
+                        <GripVertical size={14} className="text-fg-subtle mt-0.5 shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <Link href={`/admin/customers/${c._id}`} className="text-sm font-medium text-dark-50 hover:text-kcc-green block truncate">
+                          <Link href={`/admin/customers/${c._id}`} className="text-sm font-medium text-fg hover:text-kcc-green block truncate">
                             {c.name}
                           </Link>
                           {c.company && (
-                            <p className="text-xs text-dark-500 flex items-center gap-1 truncate">
+                            <p className="text-xs text-fg-subtle flex items-center gap-1 truncate">
                               <Building2 size={10} /> {c.company}
                             </p>
                           )}
                           {(c.tags || []).length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1.5">
                               {(c.tags || []).slice(0, 3).map((t: string) => (
-                                <span key={t} className="px-1.5 py-0.5 text-[10px] rounded bg-dark-800 text-dark-300">{t}</span>
+                                <span key={t} className="px-1.5 py-0.5 text-[10px] rounded bg-surface-2 text-fg-muted">{t}</span>
                               ))}
                             </div>
                           )}
                           <div className="flex items-center justify-between mt-2">
                             <ContactActions phone={c.phone} whatsapp={c.whatsapp} email={c.email} website={c.website} size={13} />
                             {managerId(c) && (
-                              <span className="text-[10px] text-dark-500 flex items-center gap-1 truncate max-w-[6rem]">
+                              <span className="text-[10px] text-fg-subtle flex items-center gap-1 truncate max-w-[6rem]">
                                 <UserCheck size={10} className="text-kcc-green shrink-0" />
                                 {typeof c.accountManagerId === 'object' ? c.accountManagerId.name : ''}
                               </span>
@@ -286,9 +287,7 @@ export default function CrmPipelinePage() {
                     </div>
                   ))}
                   {list.length === 0 && (
-                    <div className="flex items-center justify-center h-20 text-xs text-dark-600 border border-dashed border-dark-800 rounded-lg">
-                      Drop here
-                    </div>
+                    <div className="flex items-center justify-center h-20 text-xs text-fg-subtle border border-dashed border-line rounded-lg">{tx('Drop here')}</div>
                   )}
                 </div>
               </div>

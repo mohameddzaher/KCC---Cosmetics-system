@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Calendar } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { onImgError } from '@/lib/imageFallback';
+import { useEffect, useState } from 'react';
 
 interface NewsItem {
   id: string;
@@ -14,7 +15,15 @@ interface NewsItem {
   image: string;
 }
 
-const newsItems: NewsItem[] = [
+/**
+ * Shipped copy, used until the team publishes real posts.
+ *
+ * Admin → CMS Manager → News writes NewsPost documents, and this section
+ * ignored them completely — you could publish a post and the homepage would
+ * still show these three. It now renders whatever is published, and only falls
+ * back to this list while there is nothing.
+ */
+const fallbackNews: NewsItem[] = [
   {
     id: '1',
     date: '2025-12-15',
@@ -84,6 +93,32 @@ const cardVariants = {
 
 export default function NewsSection() {
   const { t, locale } = useLanguage();
+  const [items, setItems] = useState<NewsItem[]>(fallbackNews);
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/content/news', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const list = Array.isArray(data) ? data : data?.items || [];
+        if (!alive || list.length === 0) return;
+        setItems(
+          list.slice(0, 3).map((post: Record<string, any>) => ({
+            id: String(post._id || post.slug),
+            date: post.publishedAt || post.createdAt || '',
+            title: post.title,
+            excerpt: post.excerpt,
+            image: post.imageUrl || '',
+          }))
+        );
+      })
+      .catch(() => {
+        /* keep the shipped copy rather than an empty section */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <section className="relative py-12 lg:py-16 bg-cream-100 overflow-hidden">
@@ -104,8 +139,8 @@ export default function NewsSection() {
           <span className="inline-block px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-rose rounded-full font-medium">
             {locale === 'ar' ? 'آخر التحديثات' : 'Latest Updates'}
           </span>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
-            <span className="gradient-text">{t('sections.news')}</span>
+          <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] leading-tight text-ink-800 mb-3">
+            {t('sections.news')}
           </h2>
           <p className="text-cream-700 text-base sm:text-lg max-w-2xl mx-auto">
             {t('sections.newsSubtitle')}
@@ -120,7 +155,7 @@ export default function NewsSection() {
           viewport={{ once: true }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
         >
-          {newsItems.map((item, idx) => {
+          {items.map((item, idx) => {
             const cardClass = idx % 2 === 0 ? 'glass-card-blush' : 'glass-card-champagne';
             const hoverBorder = idx % 2 === 0 ? 'hover:border-kcc-rose/45' : 'hover:border-kcc-beige/55';
             return (
@@ -140,7 +175,7 @@ export default function NewsSection() {
                   <div className="absolute inset-0 bg-gradient-to-t from-cream-50/95 via-cream-50/30 to-transparent" />
 
                   {/* Date badge */}
-                  <div className="absolute bottom-4 start-4 flex items-center gap-1.5 px-3 py-1.5 bg-white/90 rounded-lg text-xs text-ink-600 backdrop-blur-sm shadow-soft">
+                  <div className="absolute bottom-4 start-4 flex items-center gap-1.5 px-3 py-1.5 bg-surface/90 rounded-lg text-xs text-ink-600 backdrop-blur-sm shadow-soft">
                     <Calendar size={12} className="text-kcc-rose-dark" />
                     <span>{formatDate(item.date, locale)}</span>
                   </div>

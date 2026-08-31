@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
-  ShoppingBag, Calendar, Truck, Hash, Package, Eye, Beaker, ArrowRight
-} from 'lucide-react';
+  ShoppingBag, Calendar, Truck, Hash, Package, Eye, Beaker, ArrowRight, RefreshCw } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { statusLabel } from '@/lib/orderWorkflow';
 
 interface OrderItem {
   _id?: string;
@@ -34,56 +34,6 @@ interface OrderItem {
   };
 }
 
-const demoOrders: OrderItem[] = [
-  {
-    id: '1',
-    orderNumber: 'KCC-B-001',
-    type: 'bulk',
-    productType: 'Hydrating Cream',
-    size: '50ml',
-    containerType: 'Jar',
-    quantity: 500,
-    status: 'Delivered',
-    date: '2024-11-28',
-    deliveryTimeline: '2 Months',
-    paymentStatus: 'paid',
-  },
-  {
-    id: '2',
-    orderNumber: 'KCC-B-002',
-    type: 'bulk',
-    productType: 'Vitamin C Serum',
-    size: '30ml',
-    containerType: 'Dropper Bottle',
-    quantity: 1000,
-    status: 'In Production',
-    date: '2024-12-15',
-    deliveryTimeline: '3 Months',
-    paymentStatus: 'paid',
-  },
-  {
-    id: '3',
-    orderNumber: 'KCC-S-001',
-    type: 'sample',
-    productType: 'Serum',
-    size: '30ml',
-    containerType: 'Dropper Bottle',
-    status: 'Delivered',
-    date: '2024-11-15',
-    paymentStatus: 'paid',
-  },
-  {
-    id: '4',
-    orderNumber: 'KCC-S-003',
-    type: 'sample',
-    productType: 'Cleanser',
-    size: '100ml',
-    containerType: 'Pump Bottle',
-    status: 'Under Review',
-    date: '2024-12-20',
-    paymentStatus: 'pending',
-  },
-];
 
 const statusColors: Record<string, string> = {
   Submitted: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
@@ -94,7 +44,7 @@ const statusColors: Record<string, string> = {
   'In Production': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
   Shipped: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
   Delivered: 'bg-kcc-green/10 text-kcc-green border-kcc-green/20',
-  Closed: 'bg-dark-600/10 text-dark-400 border-dark-600/20',
+  Closed: 'bg-surface-3/10 text-fg-muted border-line-strong/20',
 };
 
 const paymentStatusColors: Record<string, string> = {
@@ -137,10 +87,22 @@ function getOrderType(order: OrderItem): 'sample' | 'bulk' {
   return order.type || (order.orderNumber?.includes('-S-') ? 'sample' : 'bulk');
 }
 
+/** Card actions: identical metrics, never wrap inside themselves. */
+const cardAction = {
+  base:
+    'flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-medium transition-colors',
+  get neutral() {
+    return `${this.base} border border-line bg-surface text-fg-muted hover:bg-surface-2 hover:text-fg`;
+  },
+  get primary() {
+    return `${this.base} bg-brand text-brand-fg hover:bg-brand-hover`;
+  },
+};
+
 export default function MyOrdersPage() {
   const { t, locale } = useLanguage();
   const { user } = useAuth();
-  const [orders, setOrders] = useState<OrderItem[]>(demoOrders);
+  const [orders, setOrders] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<FilterType>('all');
 
@@ -151,12 +113,12 @@ export default function MyOrdersPage() {
         const res = await fetch('/api/orders');
         if (res.ok) {
           const data = await res.json();
-          if (data.orders && data.orders.length > 0) {
-            setOrders(data.orders);
-          }
+          // Show exactly what the customer has, including nothing — this page
+          // used to fall back to invented orders whose links went nowhere.
+          setOrders(Array.isArray(data.orders) ? data.orders : []);
         }
       } catch {
-        // Use demo data
+        setOrders([]);
       } finally {
         setLoading(false);
       }
@@ -175,8 +137,8 @@ export default function MyOrdersPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-dark-50">{t('orders.title')}</h1>
-          <p className="text-sm text-dark-400 mt-1">{t('orders.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-fg">{t('orders.title')}</h1>
+          <p className="text-sm text-fg-muted mt-1">{t('orders.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Link
@@ -210,12 +172,12 @@ export default function MyOrdersPage() {
             className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl transition-all ${
               filter === tab.key
                 ? 'bg-kcc-green/10 text-kcc-green border border-kcc-green/30'
-                : 'bg-dark-800/50 text-dark-400 border border-dark-800 hover:text-dark-200 hover:border-dark-700'
+                : 'bg-surface-2/50 text-fg-muted border border-line hover:text-fg hover:border-line'
             }`}
           >
             {tab.label}
             <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-              filter === tab.key ? 'bg-kcc-green/20 text-kcc-green' : 'bg-dark-700 text-dark-500'
+              filter === tab.key ? 'bg-kcc-green/20 text-kcc-green' : 'bg-surface-3 text-fg-subtle'
             }`}>
               {tab.count}
             </span>
@@ -228,7 +190,10 @@ export default function MyOrdersPage() {
           <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-kcc-green" />
         </div>
       ) : (
-        <div className="space-y-4">
+        <div
+          className="grid items-stretch gap-4"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(23rem, 100%), 1fr))' }}
+        >
           {filteredOrders.map((order, i) => {
             const orderId = getOrderId(order);
             const orderType = getOrderType(order);
@@ -248,9 +213,9 @@ export default function MyOrdersPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className="bg-dark-900/50 border border-dark-800 rounded-2xl p-5 hover:border-dark-700 transition-colors"
+                className="flex min-w-0 flex-col rounded-2xl border border-line bg-surface p-5 transition-colors hover:border-line-strong"
               >
-                <div className="flex flex-col gap-4">
+                <div className="flex h-full min-w-0 flex-col gap-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-start gap-4">
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
@@ -262,7 +227,7 @@ export default function MyOrdersPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-dark-50">{productType}</h3>
+                          <h3 className="font-semibold text-fg">{productType}</h3>
                           <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                             isSample
                               ? 'bg-blue-500/10 text-blue-400'
@@ -270,36 +235,40 @@ export default function MyOrdersPage() {
                           }`}>
                             {isSample ? t('samples.sample') : t('admin.bulk')}
                           </span>
-                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full border ${statusColors[order.status] || 'bg-dark-700 text-dark-400 border-dark-600'}`}>
-                            {t(`statuses.${order.status}`)}
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full border ${statusColors[order.status] || 'bg-surface-3 text-fg-muted border-line-strong'}`}>
+                            {statusLabel(order.status, locale)}
                           </span>
                         </div>
-                        <p className="text-sm text-dark-400">
-                          {containerType && size ? `${containerType} - ${size}` : ''}
-                          {quantity ? ` | ${quantity.toLocaleString()} units` : ''}
+                        <p className="text-sm text-fg-muted">
+                          {[
+                            containerType && size ? `${containerType} - ${size}` : '',
+                            quantity ? `${quantity.toLocaleString()} units` : '',
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
                         </p>
                       </div>
                     </div>
                   </div>
 
                   {/* Order details grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-dark-800/50">
+                  <div className="grid grid-cols-2 gap-3 border-t border-line/50 pt-3">
                     <div>
-                      <p className="text-xs text-dark-500 mb-0.5">{t('samples.orderNumber')}</p>
-                      <p className="text-sm font-mono text-dark-200 flex items-center gap-1">
+                      <p className="text-xs text-fg-subtle mb-0.5">{t('samples.orderNumber')}</p>
+                      <p className="text-sm font-mono text-fg flex items-center gap-1">
                         <Hash size={12} />
                         {order.orderNumber}
                       </p>
                     </div>
                     {quantity && (
                       <div>
-                        <p className="text-xs text-dark-500 mb-0.5">{t('orders.bulkQuantity')}</p>
-                        <p className="text-sm font-semibold text-dark-200">{quantity.toLocaleString()} units</p>
+                        <p className="text-xs text-fg-subtle mb-0.5">{t('orders.bulkQuantity')}</p>
+                        <p className="text-sm font-semibold text-fg">{quantity.toLocaleString()} units</p>
                       </div>
                     )}
                     <div>
-                      <p className="text-xs text-dark-500 mb-0.5">{t('samples.created')}</p>
-                      <p className="text-sm text-dark-200 flex items-center gap-1">
+                      <p className="text-xs text-fg-subtle mb-0.5">{t('samples.created')}</p>
+                      <p className="text-sm text-fg flex items-center gap-1">
                         <Calendar size={12} />
                         {dateStr
                           ? new Date(dateStr).toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -308,35 +277,53 @@ export default function MyOrdersPage() {
                     </div>
                     {order.paymentStatus && (
                       <div>
-                        <p className="text-xs text-dark-500 mb-0.5">{t('samples.paymentStatus')}</p>
-                        <p className={`text-sm font-medium capitalize ${paymentStatusColors[order.paymentStatus] || 'text-dark-400'}`}>
+                        <p className="text-xs text-fg-subtle mb-0.5">{t('samples.paymentStatus')}</p>
+                        <p className={`text-sm font-medium capitalize ${paymentStatusColors[order.paymentStatus] || 'text-fg-muted'}`}>
                           {order.paymentStatus}
                         </p>
                       </div>
                     )}
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-3 pt-3 border-t border-dark-800/50">
+                  {/*
+                    One row, allowed to wrap BETWEEN buttons.
+
+                    It used to be `flex` with no `flex-wrap`, so when three
+                    buttons did not fit, flex shrank each one below its content
+                    width and the labels wrapped INSIDE the buttons instead —
+                    "View Details" came out three lines tall. `flex-wrap` plus
+                    `shrink-0` and `whitespace-nowrap` means a button either
+                    fits on this line or moves to the next one whole.
+                  */}
+                  <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-line/50 pt-3">
                     <Link
                       href={detailPath}
-                      className="flex items-center gap-2 px-4 py-2 bg-dark-800 border border-dark-700 text-dark-300 text-sm font-medium rounded-xl hover:bg-dark-700 hover:text-dark-50 transition-colors"
+                      className={cardAction.neutral}
                     >
                       <Eye size={14} />
                       {t('samples.viewDetails')}
                     </Link>
 
-                    {/* Reorder as Bulk for delivered samples */}
-                    {isSample && order.status === 'Delivered' && (
+                    {/* A sample can be reordered as a sample (with edits) or
+                        scaled up to bulk. A bulk order is already at scale, so
+                        the only sensible repeat is another bulk run. */}
+                    {isSample && (
                       <Link
-                        href={`/order/bulk?fromSample=${orderId}`}
-                        className="flex items-center gap-2 px-4 py-2 bg-kcc-beige/10 border border-kcc-beige/30 text-kcc-beige text-sm font-medium rounded-xl hover:bg-kcc-beige/20 transition-colors"
+                        href={`/order/sample?from=${orderId}`}
+                        title={t('order.orderAgainHint')}
+                        className={cardAction.primary}
                       >
-                        <Truck size={14} />
-                        {t('order.reorderAsBulk')}
-                        <ArrowRight size={14} />
+                        <RefreshCw size={14} />
+                        {t('order.orderAgainShort')}
                       </Link>
                     )}
+                    <Link
+                      href={`/order/bulk?fromSample=${orderId}`}
+                      className={cardAction.neutral}
+                    >
+                      <Truck size={14} />
+                      {isSample ? t('order.reorderAsBulk') : t('order.reorderThisBulk')}
+                    </Link>
                   </div>
                 </div>
               </motion.div>
@@ -344,17 +331,17 @@ export default function MyOrdersPage() {
           })}
 
           {filteredOrders.length === 0 && (
-            <div className="text-center py-20">
-              <ShoppingBag size={48} className="text-dark-700 mx-auto mb-4" />
-              <p className="text-dark-400 mb-4">
+            <div className="col-span-full py-20 text-center">
+              <ShoppingBag size={48} className="text-fg-subtle mx-auto mb-4" />
+              <p className="text-fg-muted mb-4">
                 {t('orders.noOrders')}
               </p>
-              <p className="text-sm text-dark-500 mb-4">{t('orders.startOrdering')}</p>
+              <p className="text-sm text-fg-subtle mb-4">{t('orders.startOrdering')}</p>
               <div className="flex items-center justify-center gap-3">
                 <Link href="/order/sample" className="text-kcc-green hover:text-kcc-green-light transition-colors text-sm font-medium">
                   {t('samples.newSample')}
                 </Link>
-                <span className="text-dark-600">|</span>
+                <span className="text-fg-subtle">|</span>
                 <Link href="/order/bulk" className="text-kcc-beige hover:text-kcc-beige/80 transition-colors text-sm font-medium">
                   {t('orders.newBulk')}
                 </Link>

@@ -4,10 +4,11 @@ import connectDB from '@/lib/db';
 import Referral from '@/models/Referral';
 import User from '@/models/User';
 import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
+const REQUIRED_PERM = 'referrals.manage' as const;
 
 const effectiveCredit = (status: string, amount: number) =>
   status === 'credited' ? (amount || 0) : 0;
@@ -15,7 +16,7 @@ const effectiveCredit = (status: string, amount: number) =>
 export async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
-    if (!user || !ADMIN_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, REQUIRED_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -57,7 +58,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
-    if (!user || !ADMIN_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, REQUIRED_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

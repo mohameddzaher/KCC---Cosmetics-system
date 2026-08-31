@@ -1,281 +1,129 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useQuiz } from '@/lib/sample-quiz/QuizContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { SECTIONS, useQuizFlow } from '@/lib/sample-quiz/flow';
 import ProgressBar from './ProgressBar';
 import SectionIntro from './SectionIntro';
 import PersonalizationStep from './steps/PersonalizationStep';
-import BriefStep from './steps/BriefStep';
 import CategoryStep from './steps/CategoryStep';
-import SpecsStep from './steps/SpecsStep';
+import QuestionStep from './steps/QuestionStep';
+import SpecStep from './steps/SpecStep';
 import ReviewStep from './steps/ReviewStep';
 import ThankYouStep from './steps/ThankYouStep';
 
-/**
- * Master quiz state machine. Owns all sub-step indices and calculates progress.
- *
- * Flow (per user feedback — Category before Brief so hair-specific questions
- * only fire when relevant):
- *
- *   personalization
- *   → category-intro → category L1 → L2 → L3
- *   → brief-intro → brief Q1..QN
- *   → specs-intro → specs S1..SN (fragrance has 1–3 sub-steps)
- *   → review
- *   → thankyou
- */
-
-type Stage =
-  | 'personalization'
-  | 'category-intro'
-  | 'category'
-  | 'brief-intro'
-  | 'brief'
-  | 'specs-intro'
-  | 'specs'
-  | 'review'
-  | 'thankyou';
-
-const STAGE_ORDER: Stage[] = [
-  'personalization',
-  'brief-intro', 'brief',
-  'category-intro', 'category',
-  'specs-intro', 'specs',
-  'review', 'thankyou',
-];
-
-const NAV_STORAGE_KEY = 'kcc-quiz-nav-v2';
-
-interface NavSnapshot {
-  stage: Stage;
-  categoryLevel: 1 | 2 | 3;
-  briefIndex: number;
-  specIndex: number;
-  fragSubStep: 0 | 1 | 2;
-}
-
-const DEFAULT_NAV: NavSnapshot = {
-  stage: 'personalization',
-  categoryLevel: 1,
-  briefIndex: 0,
-  specIndex: 0,
-  fragSubStep: 0,
+const INTRO_IMAGES = {
+  brief: 'https://images.unsplash.com/photo-1631729371254-42c2892f0e6e?w=1200&q=85&auto=format&fit=crop',
+  category: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=1200&q=80',
+  specs: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=1200&q=80',
 };
 
-function readNavFromStorage(): NavSnapshot {
-  if (typeof window === 'undefined') return DEFAULT_NAV;
-  try {
-    const raw = window.localStorage.getItem(NAV_STORAGE_KEY);
-    if (!raw) return DEFAULT_NAV;
-    const parsed = JSON.parse(raw) as Partial<NavSnapshot>;
-    // Don't restore to thankyou — that's a one-time success screen
-    if (parsed.stage === 'thankyou') return DEFAULT_NAV;
-    return { ...DEFAULT_NAV, ...parsed };
-  } catch {
-    return DEFAULT_NAV;
-  }
-}
-
+/**
+ * Renders whichever step the flow says is current.
+ *
+ * All the sequencing lives in `useQuizFlow` — this component only maps a step
+ * to a component. That is what makes "edit one answer and come straight back"
+ * a one-line call instead of a special case per phase.
+ */
 export default function QuizOrchestrator() {
   const { state } = useQuiz();
+  const { t } = useLanguage();
+  const flow = useQuizFlow(state);
 
-  // Lazy initial state — read from localStorage once on mount
-  const initialNav = readNavFromStorage();
-  const [stage, setStage] = useState<Stage>(initialNav.stage);
-  const [categoryLevel, setCategoryLevel] = useState<1 | 2 | 3>(initialNav.categoryLevel);
-  const [briefIndex, setBriefIndex] = useState(initialNav.briefIndex);
-  const [specIndex, setSpecIndex] = useState(initialNav.specIndex);
-  const [fragSubStep, setFragSubStep] = useState<0 | 1 | 2>(initialNav.fragSubStep);
-  const [briefCount, setBriefCount] = useState(12);
+  // The submission screen is terminal and outside the step list.
+  const submitted = !!state.submitted;
 
-  // Persist navigation snapshot on every change.
-  // Drop entry once submitted so a fresh visit starts at the personalization step.
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      if (state.submitted || stage === 'thankyou') {
-        window.localStorage.removeItem(NAV_STORAGE_KEY);
-      } else {
-        window.localStorage.setItem(
-          NAV_STORAGE_KEY,
-          JSON.stringify({ stage, categoryLevel, briefIndex, specIndex, fragSubStep })
-        );
-      }
-    } catch {
-      // Quota / private mode — silently ignore
-    }
-  }, [stage, categoryLevel, briefIndex, specIndex, fragSubStep, state.submitted]);
+    if (submitted) window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [submitted]);
 
-  // Track total brief questions so progress is accurate
-  useEffect(() => {
-    fetch('/api/sample-quiz/brief-questions', { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((d) => Array.isArray(d) && setBriefCount(d.length));
-  }, []);
-
-  // Sync to thank-you when submission arrives
-  useEffect(() => {
-    if (state.submitted) setStage('thankyou');
-  }, [state.submitted]);
-
-  // ── Progress calc ──
-  const stageWeight: Record<Stage, number> = {
-    'personalization': 0.05,
-    'brief-intro': 0.10,
-    'brief': 0.40,
-    'category-intro': 0.55,
-    'category': 0.65,
-    'specs-intro': 0.70,
-    'specs': 0.90,
-    'review': 0.97,
-    'thankyou': 1,
-  };
-  let progress = stageWeight[stage] * 100;
-  if (stage === 'brief' && briefCount > 0) {
-    const stageStart = stageWeight['brief'] * 100;
-    const stageEnd = stageWeight['category-intro'] * 100;
-    progress = stageStart + ((briefIndex) / briefCount) * (stageEnd - stageStart);
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-cream-50">
+        <ProgressBar percent={100} />
+        <main className="min-h-screen pb-24 pt-[8.5rem]">
+          <ThankYouStep />
+        </main>
+      </div>
+    );
   }
 
-  // ── Navigation helpers ──
-  function gotoNextStage() {
-    const idx = STAGE_ORDER.indexOf(stage);
-    if (idx < STAGE_ORDER.length - 1) setStage(STAGE_ORDER[idx + 1]);
-  }
-  function gotoPrevStage() {
-    const idx = STAGE_ORDER.indexOf(stage);
-    if (idx > 0) setStage(STAGE_ORDER[idx - 1]);
-  }
+  const { step, percent, sectionIndex, goNext, goBack, editFromReview, isEditingFromReview, canGoBack } = flow;
 
-  // Back-arrow handler — context aware
-  function handleTopBack() {
-    if (stage === 'category' && categoryLevel > 1) {
-      setCategoryLevel((categoryLevel - 1) as 1 | 2 | 3);
-      return;
-    }
-    if (stage === 'brief' && briefIndex > 0) {
-      setBriefIndex(briefIndex - 1);
-      return;
-    }
-    if (stage === 'specs' && specIndex > 0) {
-      setSpecIndex(specIndex - 1);
-      setFragSubStep(0);
-      return;
-    }
-    gotoPrevStage();
-  }
+  const railPhases = SECTIONS.map((s) => ({ key: s, label: t(`quiz.sections.${s}`) }));
 
-  // Hide back arrow on personalization + thankyou
-  const showBack = !['personalization', 'thankyou'].includes(stage);
+  // Only the very first load blocks the screen. Fetching a category's own
+  // questions used to replace the whole step with a spinner the moment you
+  // clicked a category — which read as the page reloading. Those now load in
+  // the background; the Continue button waits instead (see `busy` below).
+  const loading = flow.data.loadingGeneral;
 
-  // Step rail phases — shown above the questions on every step except thankyou
-  const railPhases = [
-    { key: 'personalization', label: 'You' },
-    { key: 'brief', label: 'Brief' },
-    { key: 'category', label: 'Product' },
-    { key: 'specs', label: 'Specs' },
-    { key: 'review', label: 'Review' },
-  ];
-  const railIndex = (() => {
-    if (stage === 'personalization') return 0;
-    if (stage === 'brief-intro' || stage === 'brief') return 1;
-    if (stage === 'category-intro' || stage === 'category') return 2;
-    if (stage === 'specs-intro' || stage === 'specs') return 3;
-    if (stage === 'review') return 4;
-    return 4;
-  })();
-  const showRail = stage !== 'thankyou';
+  /** Background work that should hold "Continue" but not blank the step. */
+  const busy =
+    (!!state.category.mainSlug && flow.data.loadingScoped) ||
+    (!!state.category.productKey && flow.data.loadingSpecs);
 
   return (
     <div className="min-h-screen bg-cream-50">
       <ProgressBar
-        percent={progress}
-        onBack={showBack ? handleTopBack : undefined}
-        phases={showRail ? railPhases : undefined}
-        currentPhaseIndex={railIndex}
+        percent={percent}
+        onBack={canGoBack ? goBack : undefined}
+        phases={step?.kind === 'review' || step ? railPhases : undefined}
+        currentPhaseIndex={sectionIndex}
       />
 
-      <main className="pt-[140px] pb-24 min-h-screen">
-        {stage === 'personalization' && (
-          <PersonalizationStep onNext={gotoNextStage} />
-        )}
-
-        {stage === 'category-intro' && (
+      <main className="min-h-screen pb-24 pt-[8.5rem] sm:pt-[9.5rem]">
+        {!step || (loading && step.kind !== 'personalization') ? (
+          <div className="flex min-h-[50vh] items-center justify-center text-sm uppercase tracking-widest text-cream-700">
+            {t('quiz.loading')}
+          </div>
+        ) : step.kind === 'personalization' ? (
+          <PersonalizationStep onNext={goNext} editingFromReview={isEditingFromReview} />
+        ) : step.kind === 'intro' ? (
           <SectionIntro
-            eyebrow="Step 03"
-            headline="Now, the product."
-            description="Tell us what we're crafting. Pick your category, then your sub-family, then the exact product."
-            imageUrl="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=1200&q=80"
-            imageAlt="Cosmetics flatlay"
-            onNext={() => { setCategoryLevel(1); gotoNextStage(); }}
-            ctaLabel="Pick your product"
+            stepKey={step.id}
+            eyebrow={t(`quiz.${step.intro}Eyebrow`)}
+            headline={t(`quiz.${step.intro}Title`)}
+            description={t(`quiz.${step.intro}Body`)}
+            ctaLabel={t(`quiz.${step.intro}Cta`)}
+            imageUrl={INTRO_IMAGES[step.intro]}
+            onNext={goNext}
+            onBack={canGoBack ? goBack : undefined}
+            backLabel={t('quiz.back')}
           />
-        )}
-
-        {stage === 'category' && (
+        ) : step.kind === 'category' ? (
           <CategoryStep
-            level={categoryLevel}
-            setLevel={setCategoryLevel}
-            onComplete={gotoNextStage}
-            onBack={gotoPrevStage}
+            level={step.level}
+            onNext={goNext}
+            onBack={goBack}
+            busy={busy}
+            editingFromReview={isEditingFromReview}
           />
-        )}
-
-        {stage === 'brief-intro' && (
-          <SectionIntro
-            eyebrow="Step 02"
-            headline="The creative brief."
-            description="A few quick questions so our R&D team can match your vision exactly. Most people finish in under 3 minutes."
-            imageUrl="https://images.unsplash.com/photo-1631729371254-42c2892f0e6e?w=1200&q=85&auto=format&fit=crop"
-            imageAlt="Beauty inspiration"
-            onNext={() => { setBriefIndex(0); gotoNextStage(); }}
-            ctaLabel="Begin the brief"
+        ) : step.kind === 'question' ? (
+          <QuestionStep
+            question={step.question}
+            indexInGroup={step.indexInGroup}
+            groupSize={step.groupSize}
+            isLastOfGroup={step.indexInGroup === step.groupSize - 1}
+            onNext={goNext}
+            onBack={goBack}
+            editingFromReview={isEditingFromReview}
           />
-        )}
-
-        {stage === 'brief' && (
-          <BriefStep
-            briefIndex={briefIndex}
-            setBriefIndex={setBriefIndex}
-            onComplete={gotoNextStage}
-            onBack={gotoPrevStage}
+        ) : step.kind === 'spec' ? (
+          <SpecStep
+            spec={step.spec}
+            master={step.master}
+            parts={step.parts}
+            indexInGroup={step.indexInGroup}
+            groupSize={step.groupSize}
+            onNext={goNext}
+            onBack={goBack}
+            editingFromReview={isEditingFromReview}
           />
+        ) : (
+          <ReviewStep steps={flow.steps} onEditStep={editFromReview} onBack={goBack} />
         )}
-
-        {stage === 'specs-intro' && (
-          <SectionIntro
-            eyebrow="Step 04"
-            headline="The technical specs."
-            description="Now let's dial in the science — actives, packaging, color, scent. This is where your formula gets its DNA."
-            imageUrl="https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=1200&q=80"
-            imageAlt="Cosmetic lab"
-            onNext={() => { setSpecIndex(0); setFragSubStep(0); gotoNextStage(); }}
-            ctaLabel="Customize specs"
-          />
-        )}
-
-        {stage === 'specs' && (
-          <SpecsStep
-            specIndex={specIndex}
-            setSpecIndex={setSpecIndex}
-            fragSubStep={fragSubStep}
-            setFragSubStep={setFragSubStep}
-            onComplete={gotoNextStage}
-            onBack={gotoPrevStage}
-          />
-        )}
-
-        {stage === 'review' && (
-          <ReviewStep
-            onEditPersonalization={() => setStage('personalization')}
-            onEditBrief={() => { setBriefIndex(0); setStage('brief'); }}
-            onEditCategory={() => { setCategoryLevel(1); setStage('category'); }}
-            onEditSpecs={() => { setSpecIndex(0); setFragSubStep(0); setStage('specs'); }}
-            onBack={gotoPrevStage}
-          />
-        )}
-
-        {stage === 'thankyou' && <ThankYouStep />}
       </main>
     </div>
   );

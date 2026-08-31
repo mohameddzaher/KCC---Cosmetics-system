@@ -4,40 +4,24 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  ArrowLeft, Loader2, Save, Package, User, CreditCard,
-  FileText, Calendar, Clock, MapPin, Phone, Mail, Building2,
+  ArrowLeft, Loader2, Save, User, CreditCard,
+  FileText, Clock, MapPin, Phone, Mail, Building2,
   Hash, DollarSign, Truck, CheckCircle, AlertCircle, Trash2
 } from 'lucide-react';
-
-const ORDER_STATUSES = [
-  'Submitted',
-  'Under Review',
-  'Approved',
-  'Quotation Sent',
-  'Awaiting Payment',
-  'In Production',
-  'Shipped',
-  'Delivered',
-  'Closed',
-];
+import OrderWorkflow from '@/components/admin/OrderWorkflow';
+import OrderAssignments from '@/components/admin/OrderAssignments';
+import OrderFeedbackPanel from '@/components/admin/OrderFeedbackPanel';
+import { usePermission } from '@/contexts/AuthContext';
+import { statusBadgeClass, statusLabel } from '@/lib/orderWorkflow';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const PAYMENT_STATUSES = ['pending', 'paid', 'refunded'];
-
-const statusColors: Record<string, string> = {
-  'Submitted': 'bg-blue-500/10 text-blue-400',
-  'Under Review': 'bg-yellow-500/10 text-yellow-400',
-  'Approved': 'bg-green-500/10 text-green-400',
-  'Quotation Sent': 'bg-purple-500/10 text-purple-400',
-  'Awaiting Payment': 'bg-orange-500/10 text-orange-400',
-  'In Production': 'bg-cyan-500/10 text-cyan-400',
-  'Shipped': 'bg-indigo-500/10 text-indigo-400',
-  'Delivered': 'bg-green-500/10 text-green-400',
-  'Closed': 'bg-dark-700 text-dark-400',
-};
 
 export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { t, locale, tx } = useLanguage();
+  const { can } = usePermission();
   const orderId = params.id as string;
 
   const [order, setOrder] = useState<any>(null);
@@ -106,7 +90,6 @@ export default function OrderDetailPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status,
           paymentStatus,
           internalNotes,
         }),
@@ -150,10 +133,10 @@ export default function OrderDetailPage() {
   if (error) {
     return (
       <div className="space-y-4">
-        <Link href="/admin/orders" className="inline-flex items-center gap-2 text-sm text-dark-400 hover:text-kcc-green transition-colors">
-          <ArrowLeft size={16} /> Back to Orders
+        <Link href="/admin/orders" className="inline-flex items-center gap-2 text-sm text-fg-muted hover:text-kcc-green transition-colors">
+          <ArrowLeft size={16} className="rtl-flip" /> {t('admin.ordersTitle')}
         </Link>
-        <div className="flex flex-col items-center justify-center h-48 text-dark-400">
+        <div className="flex flex-col items-center justify-center h-48 text-fg-muted">
           <AlertCircle size={32} className="mb-2" />
           <p>{error}</p>
         </div>
@@ -174,20 +157,20 @@ export default function OrderDetailPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Link href="/admin/orders" className="p-2 text-dark-400 hover:text-kcc-green hover:bg-dark-800 rounded-lg transition-colors">
+          <Link href="/admin/orders" className="p-2 text-fg-muted hover:text-kcc-green hover:bg-surface-2 rounded-lg transition-colors">
             <ArrowLeft size={18} />
           </Link>
           <div>
-            <h1 className="text-lg font-semibold text-dark-50">
-              Order {order.orderNumber}
+            <h1 className="text-lg font-semibold text-fg">
+              {t('admin.order')} {order.orderNumber}
             </h1>
             <div className="flex items-center gap-2 mt-0.5">
               <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
                 order.type === 'sample' ? 'bg-blue-500/10 text-blue-400' : 'bg-kcc-beige/10 text-kcc-beige'
               }`}>
-                {order.type === 'sample' ? 'Sample' : 'Bulk'}
+                {order.type === 'sample' ? t('admin.sample') : t('admin.bulk')}
               </span>
-              <span className="text-xs text-dark-500">{formatDate(order.createdAt)}</span>
+              <span className="text-xs text-fg-subtle">{formatDate(order.createdAt)}</span>
             </div>
           </div>
         </div>
@@ -198,16 +181,16 @@ export default function OrderDetailPage() {
             className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 rounded-lg transition-colors"
           >
             <Trash2 size={14} />
-            Delete
+            {t('ui.delete')}
           </button>
           <button
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors disabled:opacity-50"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            Save Changes
+            {t('ui.saveChanges')}
           </button>
         </div>
       </div>
@@ -216,97 +199,105 @@ export default function OrderDetailPage() {
       {saveSuccess && (
         <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-sm">
           <CheckCircle size={16} />
-          Order updated successfully!
+          {t('admin.saved')}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 xl:gap-6">
         {/* Left column - Order details */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Status & Payment */}
-          <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-dark-100 mb-4 flex items-center gap-2">
-              <Package size={16} className="text-kcc-green" />
-              Order Status
+        <div className="min-w-0 space-y-5 lg:col-span-2">
+          {/* Workflow — the only place a status can change */}
+          <OrderWorkflow
+            orderId={orderId}
+            status={status}
+            timeline={order.timeline || []}
+            onChanged={(nextStatus) => {
+              setStatus(nextStatus);
+              loadOrder();
+            }}
+          />
+
+          {/* The customer's verdict once it landed, plus our reply. */}
+          <OrderFeedbackPanel orderId={orderId} />
+
+          {can('orders.assign') && (
+            <OrderAssignments
+              orderId={orderId}
+              assignments={order.assignments || {}}
+              onSaved={loadOrder}
+            />
+          )}
+
+          <div className="bg-surface border border-line rounded-xl p-5">
+            <h2 className="text-sm font-semibold text-fg mb-4 flex items-center gap-2">
+              <CreditCard size={16} className="text-brand" />
+              {t('admin.payment')}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Status</label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
-                >
-                  {ORDER_STATUSES.map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Payment Status</label>
-                <select
-                  value={paymentStatus}
-                  onChange={(e) => setPaymentStatus(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
-                >
-                  {PAYMENT_STATUSES.map(s => (
-                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            <label className="field-label" htmlFor="payment-status">{t('admin.orderStatus')}</label>
+            <select
+              id="payment-status"
+              value={paymentStatus}
+              onChange={(e) => setPaymentStatus(e.target.value)}
+              className="field max-w-xs"
+            >
+              {PAYMENT_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s === 'paid' ? t('admin.paid') : s === 'refunded' ? t('ui.reset') : t('admin.unpaid')}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Customer Info */}
-          <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-dark-100 mb-4 flex items-center gap-2">
+          <div className="bg-surface border border-line rounded-xl p-5">
+            <h2 className="text-sm font-semibold text-fg mb-4 flex items-center gap-2">
               <User size={16} className="text-kcc-green" />
-              Customer Information
+              {t('admin.customerInfo')}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-2 text-sm">
-                <User size={14} className="text-dark-500 shrink-0" />
+                <User size={14} className="text-fg-subtle shrink-0" />
                 <div>
-                  <p className="text-dark-400 text-xs">Account Name</p>
-                  <p className="text-dark-100">{customer.name || '-'}</p>
+                  <p className="text-fg-muted text-xs">{tx('Account Name')}</p>
+                  <p className="text-fg">{customer.name || '-'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <Mail size={14} className="text-dark-500 shrink-0" />
+                <Mail size={14} className="text-fg-subtle shrink-0" />
                 <div>
-                  <p className="text-dark-400 text-xs">Account Email</p>
-                  <p className="text-dark-100">{customer.email || '-'}</p>
+                  <p className="text-fg-muted text-xs">{tx('Account Email')}</p>
+                  <p className="text-fg">{customer.email || '-'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <Building2 size={14} className="text-dark-500 shrink-0" />
+                <Building2 size={14} className="text-fg-subtle shrink-0" />
                 <div>
-                  <p className="text-dark-400 text-xs">Company</p>
-                  <p className="text-dark-100">{customerInfo.companyName || customer.company || '-'}</p>
+                  <p className="text-fg-muted text-xs">{tx('Company')}</p>
+                  <p className="text-fg">{customerInfo.companyName || customer.company || '-'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <Phone size={14} className="text-dark-500 shrink-0" />
+                <Phone size={14} className="text-fg-subtle shrink-0" />
                 <div>
-                  <p className="text-dark-400 text-xs">Phone</p>
-                  <p className="text-dark-100">{customerInfo.phone || customer.phone || '-'}</p>
+                  <p className="text-fg-muted text-xs">{tx('Phone')}</p>
+                  <p className="text-fg">{customerInfo.phone || customer.phone || '-'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <MapPin size={14} className="text-dark-500 shrink-0" />
+                <MapPin size={14} className="text-fg-subtle shrink-0" />
                 <div>
-                  <p className="text-dark-400 text-xs">Country / City</p>
-                  <p className="text-dark-100">
+                  <p className="text-fg-muted text-xs">{tx('Country / City')}</p>
+                  <p className="text-fg">
                     {[customerInfo.country, customerInfo.city].filter(Boolean).join(', ') || '-'}
                   </p>
                 </div>
               </div>
               {customerInfo.address && (
                 <div className="flex items-center gap-2 text-sm">
-                  <MapPin size={14} className="text-dark-500 shrink-0" />
+                  <MapPin size={14} className="text-fg-subtle shrink-0" />
                   <div>
-                    <p className="text-dark-400 text-xs">Address</p>
-                    <p className="text-dark-100">{customerInfo.address}</p>
+                    <p className="text-fg-muted text-xs">{tx('Address')}</p>
+                    <p className="text-fg">{customerInfo.address}</p>
                   </div>
                 </div>
               )}
@@ -315,28 +306,26 @@ export default function OrderDetailPage() {
 
           {/* Bulk Details (if applicable) */}
           {order.type === 'bulk' && bulkDetails && (
-            <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-              <h2 className="text-sm font-semibold text-dark-100 mb-4 flex items-center gap-2">
-                <Truck size={16} className="text-kcc-beige" />
-                Bulk Order Details
-              </h2>
+            <div className="bg-surface border border-line rounded-xl p-5">
+              <h2 className="text-sm font-semibold text-fg mb-4 flex items-center gap-2">
+                <Truck size={16} className="text-kcc-beige" />{tx('Bulk Order Details')}</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {bulkDetails.quantity && (
                   <div>
-                    <p className="text-xs text-dark-400">Quantity</p>
-                    <p className="text-sm font-medium text-dark-100">{bulkDetails.quantity.toLocaleString()} units</p>
+                    <p className="text-xs text-fg-muted">{tx('Quantity')}</p>
+                    <p className="text-sm font-medium text-fg">{bulkDetails.quantity.toLocaleString()} units</p>
                   </div>
                 )}
                 {bulkDetails.deliveryTimeline && (
                   <div>
-                    <p className="text-xs text-dark-400">Delivery Timeline</p>
-                    <p className="text-sm font-medium text-dark-100">{bulkDetails.deliveryTimeline}</p>
+                    <p className="text-xs text-fg-muted">{tx('Delivery Timeline')}</p>
+                    <p className="text-sm font-medium text-fg">{bulkDetails.deliveryTimeline}</p>
                   </div>
                 )}
                 {bulkDetails.pricingNotes && (
                   <div className="md:col-span-3">
-                    <p className="text-xs text-dark-400">Pricing Notes</p>
-                    <p className="text-sm text-dark-200 mt-1">{bulkDetails.pricingNotes}</p>
+                    <p className="text-xs text-fg-muted">{tx('Pricing Notes')}</p>
+                    <p className="text-sm text-fg mt-1">{bulkDetails.pricingNotes}</p>
                   </div>
                 )}
               </div>
@@ -344,26 +333,26 @@ export default function OrderDetailPage() {
           )}
 
           {/* Internal Notes */}
-          <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-dark-100 mb-4 flex items-center gap-2">
+          <div className="bg-surface border border-line rounded-xl p-5">
+            <h2 className="text-sm font-semibold text-fg mb-4 flex items-center gap-2">
               <FileText size={16} className="text-kcc-green" />
-              Internal Notes
+              {t('admin.internalNotes')}
             </h2>
             <textarea
               value={internalNotes}
               onChange={(e) => setInternalNotes(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none resize-none"
-              placeholder="Add internal notes about this order..."
+              className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none resize-none"
+              placeholder={t('admin.internalNotes')}
             />
           </div>
 
           {/* Attachments */}
           {order.attachments && order.attachments.length > 0 && (
-            <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-              <h2 className="text-sm font-semibold text-dark-100 mb-4 flex items-center gap-2">
+            <div className="bg-surface border border-line rounded-xl p-5">
+              <h2 className="text-sm font-semibold text-fg mb-4 flex items-center gap-2">
                 <FileText size={16} className="text-kcc-green" />
-                Attachments
+                {t('admin.attachments')}
               </h2>
               <div className="space-y-2">
                 {order.attachments.map((att: any, i: number) => (
@@ -372,7 +361,7 @@ export default function OrderDetailPage() {
                     href={att.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-2.5 bg-dark-950 border border-dark-800 rounded-lg text-sm text-dark-200 hover:text-kcc-green hover:border-kcc-green/30 transition-colors"
+                    className="flex items-center gap-2 p-2.5 bg-bg border border-line rounded-lg text-sm text-fg hover:text-kcc-green hover:border-kcc-green/30 transition-colors"
                   >
                     <FileText size={14} className="shrink-0" />
                     {att.name || `Attachment ${i + 1}`}
@@ -384,50 +373,46 @@ export default function OrderDetailPage() {
         </div>
 
         {/* Right column - Summary */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-5">
           {/* Financial Summary */}
-          <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-dark-100 mb-4 flex items-center gap-2">
-              <DollarSign size={16} className="text-kcc-green" />
-              Financial Summary
-            </h2>
+          <div className="bg-surface border border-line rounded-xl p-5">
+            <h2 className="text-sm font-semibold text-fg mb-4 flex items-center gap-2">
+              <DollarSign size={16} className="text-kcc-green" />{tx('Financial Summary')}</h2>
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-dark-400">Subtotal</span>
-                <span className="text-dark-100">{formatCurrency(totals.subtotal)}</span>
+                <span className="text-fg-muted">{tx('Subtotal')}</span>
+                <span className="text-fg">{formatCurrency(totals.subtotal)}</span>
               </div>
               {totals.discount > 0 && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-dark-400">Discount</span>
+                  <span className="text-fg-muted">{tx('Discount')}</span>
                   <span className="text-red-400">-{formatCurrency(totals.discount)}</span>
                 </div>
               )}
               {totals.tax > 0 && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-dark-400">Tax</span>
-                  <span className="text-dark-100">{formatCurrency(totals.tax)}</span>
+                  <span className="text-fg-muted">Tax</span>
+                  <span className="text-fg">{formatCurrency(totals.tax)}</span>
                 </div>
               )}
-              <div className="pt-3 border-t border-dark-800 flex items-center justify-between">
-                <span className="text-sm font-medium text-dark-200">Total</span>
+              <div className="pt-3 border-t border-line flex items-center justify-between">
+                <span className="text-sm font-medium text-fg">{tx('Total')}</span>
                 <span className="text-lg font-bold text-kcc-green">{formatCurrency(totals.total)}</span>
               </div>
             </div>
           </div>
 
           {/* Payment Info */}
-          <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-dark-100 mb-4 flex items-center gap-2">
-              <CreditCard size={16} className="text-kcc-green" />
-              Payment Info
-            </h2>
+          <div className="bg-surface border border-line rounded-xl p-5">
+            <h2 className="text-sm font-semibold text-fg mb-4 flex items-center gap-2">
+              <CreditCard size={16} className="text-kcc-green" />{tx('Payment Info')}</h2>
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-dark-400">Method</span>
-                <span className="text-dark-100 capitalize">{order.paymentMethod || '-'}</span>
+                <span className="text-fg-muted">{tx('Method')}</span>
+                <span className="text-fg capitalize">{order.paymentMethod || '-'}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-dark-400">Status</span>
+                <span className="text-fg-muted">{tx('Status')}</span>
                 <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
                   paymentStatus === 'paid' ? 'bg-green-500/10 text-green-400' :
                   paymentStatus === 'refunded' ? 'bg-red-500/10 text-red-400' :
@@ -441,16 +426,14 @@ export default function OrderDetailPage() {
 
           {/* Promo Code */}
           {promo && (
-            <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-              <h2 className="text-sm font-semibold text-dark-100 mb-4 flex items-center gap-2">
-                <Hash size={16} className="text-kcc-beige" />
-                Promo Code
-              </h2>
+            <div className="bg-surface border border-line rounded-xl p-5">
+              <h2 className="text-sm font-semibold text-fg mb-4 flex items-center gap-2">
+                <Hash size={16} className="text-kcc-beige" />{tx('Promo Code')}</h2>
               <div className="space-y-2">
                 <code className="text-sm font-bold text-kcc-green bg-kcc-green/10 px-2.5 py-1 rounded">
                   {promo.code}
                 </code>
-                <p className="text-xs text-dark-400">
+                <p className="text-xs text-fg-muted">
                   {promo.type === 'percentage' ? `${promo.value}% off` : `$${promo.value} off`}
                 </p>
               </div>
@@ -459,8 +442,8 @@ export default function OrderDetailPage() {
 
           {/* Referral Code */}
           {order.referralCode && (
-            <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-              <h2 className="text-sm font-semibold text-dark-100 mb-3">Referral Code</h2>
+            <div className="bg-surface border border-line rounded-xl p-5">
+              <h2 className="text-sm font-semibold text-fg mb-3">{tx('Referral Code')}</h2>
               <code className="text-sm text-kcc-beige bg-kcc-beige/10 px-2.5 py-1 rounded">
                 {order.referralCode}
               </code>
@@ -468,37 +451,33 @@ export default function OrderDetailPage() {
           )}
 
           {/* Timeline */}
-          <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-dark-100 mb-4 flex items-center gap-2">
-              <Clock size={16} className="text-kcc-green" />
-              Timeline
-            </h2>
+          <div className="bg-surface border border-line rounded-xl p-5">
+            <h2 className="text-sm font-semibold text-fg mb-4 flex items-center gap-2">
+              <Clock size={16} className="text-kcc-green" />{tx('Timeline')}</h2>
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-dark-400">Created</span>
-                <span className="text-dark-200">{formatDate(order.createdAt)}</span>
+                <span className="text-fg-muted">{tx('Created')}</span>
+                <span className="text-fg">{formatDate(order.createdAt)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-dark-400">Last Updated</span>
-                <span className="text-dark-200">{formatDate(order.updatedAt)}</span>
+                <span className="text-fg-muted">{tx('Last Updated')}</span>
+                <span className="text-fg">{formatDate(order.updatedAt)}</span>
               </div>
             </div>
           </div>
 
           {/* Converted From Sample */}
           {order.convertedFromSample && (
-            <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-              <h2 className="text-sm font-semibold text-dark-100 mb-3">Converted From Sample</h2>
+            <div className="bg-surface border border-line rounded-xl p-5">
+              <h2 className="text-sm font-semibold text-fg mb-3">{tx('Converted From Sample')}</h2>
               <Link
                 href={`/admin/orders/${order.convertedFromSample._id}`}
                 className="text-sm text-kcc-green hover:underline"
               >
                 {order.convertedFromSample.orderNumber}
               </Link>
-              <span className={`ml-2 inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
-                statusColors[order.convertedFromSample.status] || 'bg-dark-700 text-dark-400'
-              }`}>
-                {order.convertedFromSample.status}
+              <span className={`ms-2 badge ${statusBadgeClass(order.convertedFromSample.status)}`}>
+                {statusLabel(order.convertedFromSample.status, locale)}
               </span>
             </div>
           )}

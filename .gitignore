@@ -62,3 +62,8 @@ next-env.d.ts
 # Local credentials (never commit)
 CREDENTIALS.local.md
 *.local.md
+CREDENTIALS.local.json
+*.local.json
+
+# Local quiz attachments (served through /api/files, never committed)
+.uploads/

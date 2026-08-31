@@ -110,7 +110,7 @@ export default function FactoriesPage() {
       />
 
       {/* Factories */}
-      <section className="py-16 px-4">
+      <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto space-y-8">
           {list.map((factory, i) => (
             <motion.div
@@ -119,7 +119,7 @@ export default function FactoriesPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.15 }}
-              className="bg-white border border-cream-300 shadow-soft rounded-2xl overflow-hidden hover:border-cream-400 transition-colors"
+              className="bg-surface border border-cream-300 shadow-soft rounded-2xl overflow-hidden hover:border-cream-400 transition-colors"
             >
               <div className="grid lg:grid-cols-5 gap-0">
                 {/* Factory image */}

@@ -5,10 +5,12 @@ import {
   Inbox, Mail, Loader2, Trash2, Building2, Phone, Search, Users,
 } from 'lucide-react';
 import { useLivePoll } from '@/lib/useLivePoll';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type Tab = 'messages' | 'subscribers';
 
 export default function InboxPage() {
+  const { tx } = useLanguage();
   const [tab, setTab] = useState<Tab>('messages');
   const [messages, setMessages] = useState<any[]>([]);
   const [subs, setSubs] = useState<any[]>([]);
@@ -68,19 +70,19 @@ export default function InboxPage() {
           {([['messages', `Messages (${messages.length})`, Mail], ['subscribers', `Subscribers (${subs.length})`, Users]] as const).map(([k, label, Icon]) => (
             <button key={k} type="button" onClick={() => setTab(k as Tab)}
               className={`flex items-center gap-2 px-3.5 py-2 text-sm font-medium rounded-lg border transition-colors ${
-                tab === k ? 'bg-kcc-green/10 text-kcc-green border-kcc-green/40' : 'text-dark-400 border-dark-800 hover:text-dark-100'}`}>
+                tab === k ? 'bg-kcc-green/10 text-kcc-green border-kcc-green/40' : 'text-fg-muted border-line hover:text-fg'}`}>
               <Icon size={15} /> {label}
             </button>
           ))}
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search size={15} className="absolute start-3 top-1/2 -translate-y-1/2 text-dark-500" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..."
-              className="ps-9 pe-3 py-2 text-sm bg-dark-900 border border-dark-800 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none w-52" />
+            <Search size={15} className="absolute start-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tx('Search...')}
+              className="ps-9 pe-3 py-2 text-sm bg-surface border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none w-52" />
           </div>
           {tab === 'subscribers' && subs.length > 0 && (
-            <button type="button" onClick={exportSubs} className="px-3 py-2 text-sm text-dark-200 border border-dark-800 rounded-lg hover:border-dark-700">Export CSV</button>
+            <button type="button" onClick={exportSubs} className="px-3 py-2 text-sm text-fg border border-line rounded-lg hover:border-line">{tx('Export CSV')}</button>
           )}
         </div>
       </div>
@@ -93,21 +95,21 @@ export default function InboxPage() {
         ) : (
           <div className="space-y-3">
             {filteredMsgs.map((m) => (
-              <div key={m._id} className="bg-dark-900 border border-dark-800 rounded-xl p-5">
+              <div key={m._id} className="bg-surface border border-line rounded-xl p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-dark-50">{m.name}</span>
+                      <span className="text-sm font-semibold text-fg">{m.name}</span>
                       <a href={`mailto:${m.email}`} className="text-xs text-kcc-green hover:underline flex items-center gap-1"><Mail size={11} />{m.email}</a>
-                      {m.company && <span className="text-xs text-dark-500 flex items-center gap-1"><Building2 size={11} />{m.company}</span>}
-                      {m.phone && <a href={`tel:${m.phone}`} className="text-xs text-dark-400 flex items-center gap-1"><Phone size={11} />{m.phone}</a>}
+                      {m.company && <span className="text-xs text-fg-subtle flex items-center gap-1"><Building2 size={11} />{m.company}</span>}
+                      {m.phone && <a href={`tel:${m.phone}`} className="text-xs text-fg-muted flex items-center gap-1"><Phone size={11} />{m.phone}</a>}
                     </div>
-                    <p className="text-sm text-dark-200 mt-2 whitespace-pre-wrap">{m.message}</p>
-                    <p className="text-[11px] text-dark-600 mt-2">{fmt(m.createdAt)}</p>
+                    <p className="text-sm text-fg mt-2 whitespace-pre-wrap">{m.message}</p>
+                    <p className="text-[11px] text-fg-subtle mt-2">{fmt(m.createdAt)}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <a href={`mailto:${m.email}`} className="p-1.5 text-dark-400 hover:text-kcc-green hover:bg-dark-800 rounded-lg" title="Reply"><Mail size={15} /></a>
-                    <button type="button" onClick={() => delMessage(m._id)} className="p-1.5 text-dark-400 hover:text-red-400 hover:bg-dark-800 rounded-lg" title="Delete"><Trash2 size={15} /></button>
+                    <a href={`mailto:${m.email}`} className="p-1.5 text-fg-muted hover:text-kcc-green hover:bg-surface-2 rounded-lg" title={tx('Reply')}><Mail size={15} /></a>
+                    <button type="button" onClick={() => delMessage(m._id)} className="p-1.5 text-fg-muted hover:text-red-400 hover:bg-surface-2 rounded-lg" title={tx('Delete')}><Trash2 size={15} /></button>
                   </div>
                 </div>
               </div>
@@ -117,13 +119,13 @@ export default function InboxPage() {
       ) : filteredSubs.length === 0 ? (
         <Empty icon={Users} text="No subscribers yet" />
       ) : (
-        <div className="bg-dark-900 border border-dark-800 rounded-xl overflow-hidden divide-y divide-dark-800">
+        <div className="bg-surface border border-line rounded-xl overflow-hidden divide-y divide-line">
           {filteredSubs.map((s) => (
             <div key={s._id} className="flex items-center justify-between px-5 py-3">
-              <a href={`mailto:${s.email}`} className="text-sm text-dark-100 hover:text-kcc-green flex items-center gap-2"><Mail size={14} className="text-dark-500" />{s.email}</a>
+              <a href={`mailto:${s.email}`} className="text-sm text-fg hover:text-kcc-green flex items-center gap-2"><Mail size={14} className="text-fg-subtle" />{s.email}</a>
               <div className="flex items-center gap-3">
-                <span className="text-xs text-dark-500">{s.createdAt ? fmt(s.createdAt) : ''}</span>
-                <button type="button" onClick={() => delSub(s._id)} className="p-1.5 text-dark-400 hover:text-red-400 hover:bg-dark-800 rounded-lg" title="Remove"><Trash2 size={14} /></button>
+                <span className="text-xs text-fg-subtle">{s.createdAt ? fmt(s.createdAt) : ''}</span>
+                <button type="button" onClick={() => delSub(s._id)} className="p-1.5 text-fg-muted hover:text-red-400 hover:bg-surface-2 rounded-lg" title={tx('Remove')}><Trash2 size={14} /></button>
               </div>
             </div>
           ))}
@@ -135,7 +137,7 @@ export default function InboxPage() {
 
 function Empty({ icon: Icon, text }: { icon: any; text: string }) {
   return (
-    <div className="flex flex-col items-center justify-center h-48 text-dark-400 bg-dark-900 border border-dark-800 rounded-xl">
+    <div className="flex flex-col items-center justify-center h-48 text-fg-muted bg-surface border border-line rounded-xl">
       <Icon size={30} className="mb-2" /><p>{text}</p>
     </div>
   );

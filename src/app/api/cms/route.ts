@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import CmsSection from '@/models/CmsSection';
 import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
 
 export async function GET(req: NextRequest) {
   try {
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+    if (!user || !can(user.role, 'cms.manage')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

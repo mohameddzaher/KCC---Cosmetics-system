@@ -57,21 +57,21 @@ export default function ProductionPage() {
             <div className="aspect-video rounded-2xl overflow-hidden border border-cream-300">
               <img
                 src="https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=800&q=80"
-                alt="Cosmetics laboratory with advanced formulation equipment"
+                alt={t('a11y.labImageAlt')}
                 className="w-full h-full object-cover"
               />
             </div>
             <div className="aspect-video rounded-2xl overflow-hidden border border-cream-300">
               <img
                 src="https://images.unsplash.com/photo-1581093458791-9f3c3250a8b0?w=800&q=80"
-                alt="Manufacturing facility with production lines"
+                alt={t('a11y.manufacturingImageAlt')}
                 className="w-full h-full object-cover"
               />
             </div>
             <div className="aspect-video rounded-2xl overflow-hidden border border-cream-300 sm:col-span-2 md:col-span-1">
               <img
                 src="https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=800&q=80"
-                alt="Quality testing laboratory equipment"
+                alt={t('a11y.qualityImageAlt')}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -80,7 +80,7 @@ export default function ProductionPage() {
       </section>
 
       {/* Lab Capabilities */}
-      <section className="py-20 px-4">
+      <section className="py-14 px-4">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -88,7 +88,7 @@ export default function ProductionPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">Lab & Manufacturing Capabilities</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">{t('policies.labCapabilities')}</h2>
             <p className="text-cream-700 max-w-xl mx-auto">
               Our facilities are equipped with cutting-edge technology for every stage of cosmetics production.
             </p>
@@ -104,7 +104,7 @@ export default function ProductionPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="p-6 bg-white border border-cream-300 shadow-soft rounded-xl hover:border-cream-400 transition-colors group"
+                  className="p-6 bg-surface border border-cream-300 shadow-soft rounded-xl hover:border-cream-400 transition-colors group"
                 >
                   <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-kcc-green/15 text-kcc-green mb-4 group-hover:bg-kcc-green/20 transition-colors">
                     <Icon size={24} />
@@ -119,7 +119,7 @@ export default function ProductionPage() {
       </section>
 
       {/* QA Process */}
-      <section className="py-20 px-4 border-y border-cream-300">
+      <section className="py-14 px-4 border-y border-cream-300">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -127,7 +127,7 @@ export default function ProductionPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">Quality Assurance Process</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">{t('policies.qualityAssurance')}</h2>
             <p className="text-cream-700 max-w-xl mx-auto">
               Rigorous quality control at every step ensures consistency, safety, and regulatory compliance.
             </p>
@@ -143,7 +143,7 @@ export default function ProductionPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="flex gap-5 p-6 bg-white border border-cream-300 shadow-soft rounded-xl"
+                  className="flex gap-5 p-6 bg-surface border border-cream-300 shadow-soft rounded-xl"
                 >
                   <div className="shrink-0 w-12 h-12 rounded-xl bg-kcc-beige-light/55 text-kcc-beige-dark flex items-center justify-center">
                     <Icon size={24} />
@@ -160,7 +160,7 @@ export default function ProductionPage() {
       </section>
 
       {/* R&D Section */}
-      <section className="py-20 px-4">
+      <section className="py-14 px-4">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -168,7 +168,7 @@ export default function ProductionPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">Research & Development</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">{t('policies.researchDevelopment')}</h2>
             <p className="text-cream-700 max-w-xl mx-auto">
               Our R&D team drives innovation with cutting-edge formulation science and market trend analysis.
             </p>
@@ -182,7 +182,7 @@ export default function ProductionPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
-                className="p-5 bg-white border border-cream-300 shadow-soft rounded-xl hover:border-cream-400 transition-colors"
+                className="p-5 bg-surface border border-cream-300 shadow-soft rounded-xl hover:border-cream-400 transition-colors"
               >
                 <div className="flex items-start gap-3">
                   <Sparkles size={18} className="text-kcc-green mt-1 shrink-0" />

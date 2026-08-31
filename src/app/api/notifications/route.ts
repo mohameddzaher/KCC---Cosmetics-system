@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Notification from '@/models/Notification';
 import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,7 +13,7 @@ export async function GET(req: NextRequest) {
     await connectDB();
 
     let filter: any = {};
-    if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+    if (!can(user.role, 'dashboard.view')) {
       filter.$or = [
         { userId: user.id },
         { userId: { $exists: false } },
@@ -50,7 +51,7 @@ export async function PUT(req: NextRequest) {
     if (
       notification.userId &&
       notification.userId.toString() !== user.id &&
-      !['SUPER_ADMIN', 'ADMIN'].includes(user.role)
+      !can(user.role, 'dashboard.view')
     ) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

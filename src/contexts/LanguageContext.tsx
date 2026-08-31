@@ -1,26 +1,59 @@
 'use client';
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import { Locale, defaultLocale, getDictionary } from '@/i18n/dictionaries';
+import { translateString } from '@/i18n/strings';
+
+type Vars = Record<string, string | number>;
 
 interface LanguageContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: (key: string) => string;
+  /**
+   * Translate a dot-path key. Supports `{name}` placeholders:
+   *   t('quiz.questionOf', { current: 2, total: 9 })
+   * Returns the key itself when missing so the gap is obvious on screen.
+   */
+  t: (key: string, vars?: Vars) => string;
+  /**
+   * The list form of `t`, for dictionary entries that are arrays of strings —
+   * bullet lists that must stay in step across both languages.
+   * Returns an empty array when the key is missing or is not a list.
+   */
+  tArr: (key: string) => string[];
+  /** Pick the right half of a bilingual `{ en, ar }` field from the database. */
+  tf: (field: { en?: string; ar?: string } | undefined | null, fallback?: string) => string;
+  /** Pick between two parallel fields, e.g. titleEn / titleAr. */
+  pick: (en: string | undefined | null, ar: string | undefined | null) => string;
+  /**
+   * Translate by English source string (admin chrome). Falls back to the
+   * English text when no translation exists, so a gap is visible, not fatal.
+   */
+  tx: (en: string) => string;
   dir: 'ltr' | 'rtl';
+  isRTL: boolean;
   dict: ReturnType<typeof getDictionary>;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+const STORAGE_KEY = 'kcc-locale';
+
+function interpolate(template: string, vars?: Vars): string {
+  if (!vars) return template;
+  return template.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
+}
+
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(defaultLocale);
-  const [dict, setDict] = useState(getDictionary(defaultLocale));
 
+  // The inline boot script in <head> already stamped lang/dir from storage,
+  // so this only syncs React state — no visible flash.
   useEffect(() => {
-    const saved = localStorage.getItem('kcc-locale') as Locale;
-    if (saved && (saved === 'en' || saved === 'ar')) {
-      setLocaleState(saved);
-      setDict(getDictionary(saved));
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY) as Locale | null;
+      if (saved === 'en' || saved === 'ar') setLocaleState(saved);
+    } catch {
+      /* private mode — stay on the default */
     }
   }, []);
 
@@ -29,34 +62,88 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
   }, [locale]);
 
+  const dict = useMemo(() => getDictionary(locale), [locale]);
+
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);
-    setDict(getDictionary(newLocale));
-    localStorage.setItem('kcc-locale', newLocale);
+    try {
+      localStorage.setItem(STORAGE_KEY, newLocale);
+    } catch {
+      /* ignore */
+    }
     document.documentElement.lang = newLocale;
     document.documentElement.dir = newLocale === 'ar' ? 'rtl' : 'ltr';
   }, []);
 
-  const t = useCallback((key: string): string => {
-    const keys = key.split('.');
-    let current: any = dict;
-    for (const k of keys) {
-      if (current && typeof current === 'object' && k in current) {
-        current = current[k];
-      } else {
-        return key;
+  const t = useCallback(
+    (key: string, vars?: Vars): string => {
+      const keys = key.split('.');
+      let current: unknown = dict;
+      for (const k of keys) {
+        if (current && typeof current === 'object' && k in (current as object)) {
+          current = (current as Record<string, unknown>)[k];
+        } else {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(`[i18n] missing key "${key}" for locale "${locale}"`);
+          }
+          return key;
+        }
       }
-    }
-    return typeof current === 'string' ? current : key;
-  }, [dict]);
-
-  const dir = locale === 'ar' ? 'rtl' : 'ltr';
-
-  return (
-    <LanguageContext.Provider value={{ locale, setLocale, t, dir, dict }}>
-      {children}
-    </LanguageContext.Provider>
+      return typeof current === 'string' ? interpolate(current, vars) : key;
+    },
+    [dict, locale]
   );
+
+  /**
+   * The list form of `t`. A few dictionary entries are arrays — bullet lists
+   * that have to stay in step between the two languages — and `t` returns the
+   * key for anything that is not a string.
+   */
+  const tArr = useCallback(
+    (key: string): string[] => {
+      const keys = key.split('.');
+      let current: unknown = dict;
+      for (const k of keys) {
+        if (current && typeof current === 'object' && k in (current as object)) {
+          current = (current as Record<string, unknown>)[k];
+        } else {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(`[i18n] missing list "${key}" for locale "${locale}"`);
+          }
+          return [];
+        }
+      }
+      return Array.isArray(current) ? current.filter((x): x is string => typeof x === 'string') : [];
+    },
+    [dict, locale]
+  );
+
+  const tf = useCallback(
+    (field: { en?: string; ar?: string } | undefined | null, fallback = ''): string => {
+      if (!field) return fallback;
+      return field[locale] || field.en || field.ar || fallback;
+    },
+    [locale]
+  );
+
+  const pick = useCallback(
+    (en: string | undefined | null, ar: string | undefined | null): string => {
+      if (locale === 'ar') return ar || en || '';
+      return en || ar || '';
+    },
+    [locale]
+  );
+
+  const tx = useCallback((en: string) => translateString(en, locale), [locale]);
+
+  const dir: 'ltr' | 'rtl' = locale === 'ar' ? 'rtl' : 'ltr';
+
+  const value = useMemo(
+    () => ({ locale, setLocale, t, tArr, tf, pick, tx, dir, isRTL: locale === 'ar', dict }),
+    [locale, setLocale, t, tArr, tf, pick, tx, dir, dict]
+  );
+
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
 export function useLanguage() {
@@ -65,7 +152,7 @@ export function useLanguage() {
   return context;
 }
 
-// Helper to get bilingual field value
+// Helper to get bilingual field value outside of React.
 export function getLocalizedField(field: { en?: string; ar?: string } | undefined, locale: Locale): string {
   if (!field) return '';
   return field[locale] || field.en || '';

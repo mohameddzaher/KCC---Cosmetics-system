@@ -3,6 +3,7 @@ import connectDB from '@/lib/db';
 import mongoose from 'mongoose';
 import { rateLimit } from '@/lib/rateLimit';
 import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
 
 // Simple newsletter subscriber schema
 const subscriberSchema = new mongoose.Schema(
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   try {
     const user = await getSession();
-    if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+    if (!user || !can(user.role, 'cms.manage')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -62,7 +63,7 @@ export async function GET() {
 export async function DELETE(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+    if (!user || !can(user.role, 'cms.manage')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

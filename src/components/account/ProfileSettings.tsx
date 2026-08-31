@@ -2,12 +2,14 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { UserCog, KeyRound, Loader2, Check, AlertCircle } from 'lucide-react';
+import { UserCog, KeyRound, Loader2, Check, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type Tab = 'profile' | 'password';
 
 export default function ProfileSettings() {
+  const { tx } = useLanguage();
   const { refreshUser } = useAuth();
   const [tab, setTab] = useState<Tab>('profile');
   const [loading, setLoading] = useState(true);
@@ -22,6 +24,7 @@ export default function ProfileSettings() {
   const [pw, setPw] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const [savingPw, setSavingPw] = useState(false);
   const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [showPw, setShowPw] = useState(false);
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
@@ -90,51 +93,49 @@ export default function ProfileSettings() {
     }
   };
 
-  const input = 'w-full px-3 py-2.5 text-sm bg-dark-800 border border-dark-700 rounded-xl text-dark-100 placeholder:text-dark-500 focus:border-kcc-green focus:outline-none';
-  const label = 'block text-xs font-medium text-dark-400 mb-1.5';
+  const input = 'w-full px-3 py-2.5 text-sm bg-surface-2 border border-line rounded-xl text-fg placeholder:text-fg-subtle focus:border-kcc-green focus:outline-none';
+  const label = 'block text-xs font-medium text-fg-muted mb-1.5';
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.18 }}
-      className="bg-dark-900/50 border border-dark-800 rounded-2xl overflow-hidden"
+      className="bg-surface/50 border border-line rounded-2xl overflow-hidden"
     >
-      <div className="flex border-b border-dark-800">
+      <div className="scroll-thin flex justify-center overflow-x-auto border-b border-line">
         <button type="button" onClick={() => setTab('profile')}
-          className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors ${
-            tab === 'profile' ? 'text-kcc-green border-b-2 border-kcc-green' : 'text-dark-400 hover:text-dark-100'}`}>
-          <UserCog size={16} /> Edit Profile
-        </button>
+          className={`flex shrink-0 items-center gap-2 whitespace-nowrap px-5 py-3.5 text-sm font-medium transition-colors ${
+            tab === 'profile' ? 'text-kcc-green border-b-2 border-kcc-green' : 'text-fg-muted hover:text-fg'}`}>
+          <UserCog size={16} />{tx('Edit Profile')}</button>
         <button type="button" onClick={() => setTab('password')}
-          className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors ${
-            tab === 'password' ? 'text-kcc-green border-b-2 border-kcc-green' : 'text-dark-400 hover:text-dark-100'}`}>
-          <KeyRound size={16} /> Change Password
-        </button>
+          className={`flex shrink-0 items-center gap-2 whitespace-nowrap px-5 py-3.5 text-sm font-medium transition-colors ${
+            tab === 'password' ? 'text-kcc-green border-b-2 border-kcc-green' : 'text-fg-muted hover:text-fg'}`}>
+          <KeyRound size={16} />{tx('Change Password')}</button>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center h-40"><Loader2 className="animate-spin text-kcc-green" size={22} /></div>
       ) : tab === 'profile' ? (
         <div className="p-6 space-y-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div><label className={label}>Full Name</label>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div><label className={label}>{tx('Full Name')}</label>
               <input className={input} value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} /></div>
-            <div><label className={label}>Email</label>
+            <div><label className={label}>{tx('Email')}</label>
               <input type="email" className={input} value={profile.email} onChange={e => setProfile(p => ({ ...p, email: e.target.value }))} /></div>
-            <div><label className={label}>Phone</label>
-              <input className={input} value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} placeholder="+20 1xx xxx xxxx" /></div>
-            <div><label className={label}>WhatsApp</label>
-              <input className={input} value={profile.whatsapp} onChange={e => setProfile(p => ({ ...p, whatsapp: e.target.value }))} placeholder="+20 1xx xxx xxxx" /></div>
-            <div><label className={label}>Company</label>
+            <div><label className={label}>{tx('Phone')}</label>
+              <input className={input} value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} placeholder="+966 5x xxx xxxx" /></div>
+            <div><label className={label}>{tx('WhatsApp')}</label>
+              <input className={input} value={profile.whatsapp} onChange={e => setProfile(p => ({ ...p, whatsapp: e.target.value }))} placeholder="+966 5x xxx xxxx" /></div>
+            <div><label className={label}>{tx('Company')}</label>
               <input className={input} value={profile.company} onChange={e => setProfile(p => ({ ...p, company: e.target.value }))} /></div>
-            <div><label className={label}>Website</label>
+            <div><label className={label}>{tx('Website')}</label>
               <input className={input} value={profile.website} onChange={e => setProfile(p => ({ ...p, website: e.target.value }))} placeholder="https://..." /></div>
-            <div><label className={label}>Country</label>
+            <div><label className={label}>{tx('Country')}</label>
               <input className={input} value={profile.country} onChange={e => setProfile(p => ({ ...p, country: e.target.value }))} /></div>
-            <div><label className={label}>City</label>
+            <div><label className={label}>{tx('City')}</label>
               <input className={input} value={profile.city} onChange={e => setProfile(p => ({ ...p, city: e.target.value }))} /></div>
-            <div className="sm:col-span-2"><label className={label}>Address</label>
+            <div className="sm:col-span-2 xl:col-span-3"><label className={label}>{tx('Address')}</label>
               <input className={input} value={profile.address} onChange={e => setProfile(p => ({ ...p, address: e.target.value }))} /></div>
           </div>
           {profileMsg && (
@@ -144,19 +145,34 @@ export default function ProfileSettings() {
           )}
           <div className="flex justify-end">
             <button type="button" onClick={saveProfile} disabled={savingProfile}
-              className="px-5 py-2.5 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-xl transition-colors disabled:opacity-50">
-              {savingProfile ? <Loader2 size={14} className="animate-spin inline mr-1.5" /> : null}Save Changes
+              className="px-5 py-2.5 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-xl transition-colors disabled:opacity-50">
+              {savingProfile ? <Loader2 size={14} className="me-1.5 inline animate-spin" /> : null}
+              {tx('Save Changes')}
             </button>
           </div>
         </div>
       ) : (
-        <div className="p-6 space-y-4 max-w-md">
-          <div><label className={label}>Current Password</label>
-            <input type="password" className={input} value={pw.currentPassword} onChange={e => setPw(p => ({ ...p, currentPassword: e.target.value }))} /></div>
-          <div><label className={label}>New Password</label>
-            <input type="password" className={input} value={pw.newPassword} onChange={e => setPw(p => ({ ...p, newPassword: e.target.value }))} /></div>
-          <div><label className={label}>Confirm New Password</label>
-            <input type="password" className={input} value={pw.confirm} onChange={e => setPw(p => ({ ...p, confirm: e.target.value }))} /></div>
+        <div className="space-y-4 p-6">
+          {/* One toggle for the three fields: when you are changing a password
+              you want to check all of them at once, not one at a time. */}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setShowPw((v) => !v)}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-fg-muted transition-colors hover:text-fg"
+            >
+              {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+              {showPw ? tx('Hide password') : tx('Show password')}
+            </button>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div><label className={label}>{tx('Current Password')}</label>
+              <input type={showPw ? 'text' : 'password'} autoComplete="current-password" className={input} value={pw.currentPassword} onChange={e => setPw(p => ({ ...p, currentPassword: e.target.value }))} /></div>
+            <div><label className={label}>{tx('New Password')}</label>
+              <input type={showPw ? 'text' : 'password'} autoComplete="new-password" className={input} value={pw.newPassword} onChange={e => setPw(p => ({ ...p, newPassword: e.target.value }))} /></div>
+            <div><label className={label}>{tx('Confirm New Password')}</label>
+              <input type={showPw ? 'text' : 'password'} autoComplete="new-password" className={input} value={pw.confirm} onChange={e => setPw(p => ({ ...p, confirm: e.target.value }))} /></div>
+          </div>
           {pwMsg && (
             <div className={`flex items-center gap-2 text-sm ${pwMsg.ok ? 'text-kcc-green' : 'text-red-400'}`}>
               {pwMsg.ok ? <Check size={15} /> : <AlertCircle size={15} />}{pwMsg.text}
@@ -164,7 +180,7 @@ export default function ProfileSettings() {
           )}
           <div className="flex justify-end">
             <button type="button" onClick={savePassword} disabled={savingPw}
-              className="px-5 py-2.5 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-xl transition-colors disabled:opacity-50">
+              className="px-5 py-2.5 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-xl transition-colors disabled:opacity-50">
               {savingPw ? <Loader2 size={14} className="animate-spin inline mr-1.5" /> : null}Update Password
             </button>
           </div>

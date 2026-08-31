@@ -4,11 +4,13 @@ import InventoryItem from '@/models/InventoryItem';
 import InventoryMovement from '@/models/InventoryMovement';
 import Notification from '@/models/Notification';
 import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
+import { sendEventEmail, adminUrl } from '@/lib/mailer';
 
 export async function GET(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !['SUPER_ADMIN', 'ADMIN', 'STAFF'].includes(user.role)) {
+    if (!user || !can(user.role, 'inventory.view')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -37,7 +39,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !['SUPER_ADMIN', 'ADMIN', 'STAFF'].includes(user.role)) {
+    if (!user || !can(user.role, 'inventory.view')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -100,6 +102,19 @@ export async function POST(req: NextRequest) {
           ar: `${item.name.ar} (SKU: ${item.sku}) المخزون عند ${newStock} وحدة، أقل من الحد الأدنى ${item.lowStockThreshold}.`,
         },
         data: { itemId: item._id, sku: item.sku, currentStock: newStock, threshold: item.lowStockThreshold },
+      });
+
+      await sendEventEmail('emailLowStock', {
+        subject: `Low stock: ${item.name.en} (${item.sku})`,
+        heading: 'Stock has fallen below its threshold',
+        rows: [
+          ['Item', item.name.en],
+          ['SKU', item.sku],
+          ['In stock', String(newStock)],
+          ['Threshold', String(item.lowStockThreshold)],
+        ],
+        actionUrl: adminUrl('/admin/inventory'),
+        actionLabel: 'Open inventory',
       });
     }
 

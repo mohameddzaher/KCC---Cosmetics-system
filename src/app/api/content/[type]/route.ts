@@ -8,10 +8,11 @@ import Factory from '@/models/Factory';
 import PortfolioItem from '@/models/PortfolioItem';
 import FAQ from '@/models/FAQ';
 import NewsPost from '@/models/NewsPost';
+import { can } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
-const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
+const REQUIRED_PERM = 'cms.manage' as const;
 
 const MODELS: Record<string, any> = {
   services: Service,
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ type: s
     let includeAll = false;
     if (all) {
       const user = await getSession();
-      includeAll = !!user && ADMIN_ROLES.includes(user.role);
+      includeAll = !!user && can(user.role, REQUIRED_PERM);
     }
 
     const filter: Record<string, unknown> = {};
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ type: s
 export async function POST(req: NextRequest, context: { params: Promise<{ type: string }> }) {
   try {
     const user = await getSession();
-    if (!user || !ADMIN_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, REQUIRED_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     const { type } = await context.params;

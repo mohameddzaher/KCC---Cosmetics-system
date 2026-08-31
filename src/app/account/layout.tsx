@@ -31,7 +31,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     return (
       <>
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen bg-dark-950">
+        <div className="flex items-center justify-center min-h-screen bg-bg">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-kcc-green" />
         </div>
       </>
@@ -50,37 +50,41 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-dark-950 pt-20 lg:pt-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar */}
-            <aside className="lg:w-64 shrink-0">
-              <nav className="bg-dark-900/50 border border-dark-800 rounded-2xl p-3 space-y-1 lg:sticky lg:top-24">
-                {sidebarLinks.map((link) => {
-                  const Icon = link.icon;
-                  return (
-                    <Link
-                      key={link.key}
-                      href={link.href}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                        isActive(link.href)
-                          ? 'bg-kcc-green/10 text-kcc-green'
-                          : 'text-dark-400 hover:text-dark-50 hover:bg-dark-800'
-                      }`}
-                    >
-                      <Icon size={18} />
-                      {link.label}
-                    </Link>
-                  );
-                })}
-              </nav>
-            </aside>
+      <div className="min-h-screen bg-bg pt-20 lg:pt-24">
+        <div className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
+          {/*
+            The three account sections used to sit in a card down the left,
+            which cost a fixed column of width on every page and pushed the
+            content — grids of orders and samples — into a narrow strip. They
+            are a set of three, so they read better as a row across the top,
+            leaving the whole width to what the page is actually for.
+          */}
+          <nav
+            aria-label={t('account.title')}
+            className="tab-bar scroll-thin mb-7"
+          >
+            {sidebarLinks.map((link) => {
+              const Icon = link.icon;
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.key}
+                  href={link.href}
+                  aria-current={active ? 'page' : undefined}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors sm:gap-2 sm:px-4 sm:text-sm ${
+                    active
+                      ? 'bg-kcc-green/10 text-kcc-green'
+                      : 'text-fg-muted hover:bg-surface-2 hover:text-fg'
+                  }`}
+                >
+                  <Icon size={17} className="hidden sm:block" />
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
 
-            {/* Main Content */}
-            <main className="flex-1 min-w-0">
-              {children}
-            </main>
-          </div>
+          <main className="min-w-0">{children}</main>
         </div>
       </div>
       <Footer />

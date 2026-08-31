@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
 import ImageUpload from '@/components/admin/ImageUpload';
 import {
   Plus, Edit2, Trash2, Eye, ChevronDown, Loader2,
   FileText, Briefcase, MessageSquare, Award, Factory,
   Image, Newspaper, HelpCircle, X, Save
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const contentTabs = [
   { key: 'vision2030', label: 'Vision 2030', icon: Award },
@@ -63,7 +63,7 @@ function buildContentPayload(tab: string, f: any) {
 }
 
 export default function CmsPage() {
-  const { locale } = useLanguage();
+  const { locale, tx } = useLanguage();
   const [activeTab, setActiveTab] = useState('sections');
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -303,34 +303,34 @@ export default function CmsPage() {
 
     if (items.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center h-48 text-dark-400">
+        <div className="flex flex-col items-center justify-center h-48 text-fg-muted">
           <FileText size={32} className="mb-2" />
-          <p>No items found</p>
+          <p>{tx('No items found')}</p>
         </div>
       );
     }
 
     return (
-      <div className="overflow-x-auto">
+      <div className="scroll-thin w-full min-w-0 overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-dark-800">
-              <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Title / Name</th>
-              <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Details</th>
-              <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Status</th>
-              <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Actions</th>
+            <tr className="border-b border-line">
+              <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Title / Name')}</th>
+              <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Details')}</th>
+              <th className="text-center text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Status')}</th>
+              <th className="text-center text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Actions')}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-dark-800">
+          <tbody className="divide-y divide-line">
             {items.map((item) => (
-              <tr key={item._id} className="hover:bg-dark-800/50 transition-colors">
+              <tr key={item._id} className="hover:bg-surface-2/50 transition-colors">
                 <td className="px-5 py-3.5">
-                  <p className="text-sm font-medium text-dark-100">{getDisplayField(item)}</p>
-                  {item.key && <p className="text-xs text-dark-500 mt-0.5">Key: {item.key}</p>}
-                  {item.slug && <p className="text-xs text-dark-500 mt-0.5">Slug: {item.slug}</p>}
+                  <p className="text-sm font-medium text-fg">{getDisplayField(item)}</p>
+                  {item.key && <p className="text-xs text-fg-subtle mt-0.5">Key: {item.key}</p>}
+                  {item.slug && <p className="text-xs text-fg-subtle mt-0.5">Slug: {item.slug}</p>}
                 </td>
                 <td className="px-5 py-3.5">
-                  <p className="text-sm text-dark-400 max-w-xs truncate">{getSubField(item)}</p>
+                  <p className="text-sm text-fg-muted max-w-xs truncate">{getSubField(item)}</p>
                 </td>
                 <td className="px-5 py-3.5 text-center">
                   <button
@@ -339,7 +339,7 @@ export default function CmsPage() {
                     className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
                       item.enabled
                         ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
-                        : 'bg-dark-700 text-dark-400 hover:bg-dark-600'
+                        : 'bg-surface-3 text-fg-muted hover:bg-surface-3'
                     }`}
                   >
                     {item.enabled ? 'Active' : 'Disabled'}
@@ -350,16 +350,16 @@ export default function CmsPage() {
                     <button
                       type="button"
                       onClick={() => handleOpenEdit(item)}
-                      className="p-1.5 text-dark-400 hover:text-kcc-green hover:bg-dark-800 rounded-lg transition-colors"
-                      title="Edit"
+                      className="p-1.5 text-fg-muted hover:text-kcc-green hover:bg-surface-2 rounded-lg transition-colors"
+                      title={tx('Edit')}
                     >
                       <Edit2 size={15} />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(item._id)}
-                      className="p-1.5 text-dark-400 hover:text-red-400 hover:bg-dark-800 rounded-lg transition-colors"
-                      title="Delete"
+                      className="p-1.5 text-fg-muted hover:text-red-400 hover:bg-surface-2 rounded-lg transition-colors"
+                      title={tx('Delete')}
                     >
                       <Trash2 size={15} />
                     </button>
@@ -376,7 +376,7 @@ export default function CmsPage() {
   return (
     <div className="space-y-6">
       {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-2 p-1 bg-dark-900 border border-dark-800 rounded-xl">
+      <div className="tab-bar">
         {contentTabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -387,7 +387,7 @@ export default function CmsPage() {
               className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
                 activeTab === tab.key
                   ? 'bg-kcc-green/10 text-kcc-green'
-                  : 'text-dark-400 hover:text-dark-50 hover:bg-dark-800'
+                  : 'text-fg-muted hover:text-fg hover:bg-surface-2'
               }`}
             >
               <Icon size={15} />
@@ -398,118 +398,116 @@ export default function CmsPage() {
       </div>
 
       {/* Content Area */}
-      <div className="bg-dark-900 border border-dark-800 rounded-xl">
+      <div className="bg-surface border border-line rounded-xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-dark-800">
-          <h2 className="text-base font-semibold text-dark-50 capitalize">{activeTab}</h2>
+        <div className="flex items-center justify-between p-5 border-b border-line">
+          <h2 className="text-base font-semibold text-fg capitalize">{activeTab}</h2>
           <button
             type="button"
             onClick={handleOpenCreate}
-            className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors"
           >
-            <Plus size={16} />
-            Add New
-          </button>
+            <Plus size={16} />{tx('Add New')}</button>
         </div>
 
         {/* Edit Form */}
         {showForm && (
-          <div className="p-5 border-b border-dark-800 bg-dark-800/30">
+          <div className="p-5 border-b border-line bg-surface-2/30">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-dark-100">
+              <h3 className="text-sm font-semibold text-fg">
                 {editItem ? 'Edit Item' : 'Add New Item'}
               </h3>
               <button
                 type="button"
                 onClick={() => { setShowForm(false); setEditItem(null); }}
-                className="text-dark-400 hover:text-dark-50"
+                className="text-fg-muted hover:text-fg"
               >
                 <X size={18} />
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Title (EN)</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Title (EN)')}</label>
                 <input
                   type="text"
                   value={formData.titleEn}
                   onChange={(e) => setFormData(prev => ({ ...prev, titleEn: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
-                  placeholder="Enter title in English"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
+                  placeholder={tx('Enter title in English')}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Title (AR)</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Title (AR)')}</label>
                 <input
                   type="text"
                   value={formData.titleAr}
                   onChange={(e) => setFormData(prev => ({ ...prev, titleAr: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
-                  placeholder="Enter title in Arabic"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
+                  placeholder={tx('Enter title in Arabic')}
                   dir="rtl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Description (EN)</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Description (EN)')}</label>
                 <textarea
                   value={formData.descriptionEn}
                   onChange={(e) => setFormData(prev => ({ ...prev, descriptionEn: e.target.value }))}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none resize-none"
-                  placeholder="Enter description"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none resize-none"
+                  placeholder={tx('Enter description')}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Description (AR)</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Description (AR)')}</label>
                 <textarea
                   value={formData.descriptionAr}
                   onChange={(e) => setFormData(prev => ({ ...prev, descriptionAr: e.target.value }))}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none resize-none"
-                  placeholder="Enter description in Arabic"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none resize-none"
+                  placeholder={tx('Enter description in Arabic')}
                   dir="rtl"
                 />
               </div>
               {activeTab === 'vision2030' && (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-dark-400 mb-1.5">Badge (EN)</label>
+                    <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Badge (EN)')}</label>
                     <input
                       type="text"
                       value={formData.badgeEn}
                       onChange={(e) => setFormData(prev => ({ ...prev, badgeEn: e.target.value }))}
-                      className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                      className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                       placeholder="KCC x Saudi Vision 2030"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-dark-400 mb-1.5">Badge (AR)</label>
+                    <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Badge (AR)')}</label>
                     <input
                       type="text"
                       value={formData.badgeAr}
                       onChange={(e) => setFormData(prev => ({ ...prev, badgeAr: e.target.value }))}
-                      className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                      className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                       placeholder="KCC × رؤية السعودية 2030"
                       dir="rtl"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-dark-400 mb-1.5">Subtitle (EN)</label>
+                    <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Subtitle (EN)')}</label>
                     <input
                       type="text"
                       value={formData.subtitleEn}
                       onChange={(e) => setFormData(prev => ({ ...prev, subtitleEn: e.target.value }))}
-                      className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
-                      placeholder="Innovation, quality, sustainability, jobs..."
+                      className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
+                      placeholder={tx('Innovation, quality, sustainability, jobs...')}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-dark-400 mb-1.5">Subtitle (AR)</label>
+                    <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Subtitle (AR)')}</label>
                     <input
                       type="text"
                       value={formData.subtitleAr}
                       onChange={(e) => setFormData(prev => ({ ...prev, subtitleAr: e.target.value }))}
-                      className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                      className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                       placeholder="الابتكار، الجودة، الاستدامة..."
                       dir="rtl"
                     />
@@ -526,13 +524,13 @@ export default function CmsPage() {
                 </div>
               )}
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Slug</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Slug')}</label>
                 <input
                   type="text"
                   value={formData.slug}
                   onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
-                  placeholder="auto-generated-from-title"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
+                  placeholder={tx('auto-generated-from-title')}
                 />
               </div>
               <div className="flex items-end">
@@ -541,9 +539,9 @@ export default function CmsPage() {
                     type="checkbox"
                     checked={formData.enabled}
                     onChange={(e) => setFormData(prev => ({ ...prev, enabled: e.target.checked }))}
-                    className="w-4 h-4 rounded border-dark-700 bg-dark-950 text-kcc-green focus:ring-kcc-green"
+                    className="w-4 h-4 rounded border-line bg-bg text-kcc-green focus:ring-kcc-green"
                   />
-                  <span className="text-sm text-dark-300">Enabled</span>
+                  <span className="text-sm text-fg-muted">{tx('Enabled')}</span>
                 </label>
               </div>
             </div>
@@ -551,15 +549,13 @@ export default function CmsPage() {
               <button
                 type="button"
                 onClick={() => { setShowForm(false); setEditItem(null); }}
-                className="px-4 py-2 text-sm text-dark-400 border border-dark-700 rounded-lg hover:text-dark-50 hover:border-dark-600"
-              >
-                Cancel
-              </button>
+                className="px-4 py-2 text-sm text-fg-muted border border-line rounded-lg hover:text-fg hover:border-line-strong"
+              >{tx('Cancel')}</button>
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors disabled:opacity-50"
               >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                 {editItem ? 'Update' : 'Create'}

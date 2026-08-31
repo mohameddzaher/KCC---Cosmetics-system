@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import connectDB from '@/lib/db';
 import Order from '@/models/Order';
-import { getSession, isAdmin } from '@/lib/auth';
+import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -27,14 +28,19 @@ export async function GET(
       .populate('userId', 'name email company phone')
       .populate('promoCodeId', 'code type value')
       .populate('surveyResponseId')
-      .populate('convertedFromSample', 'orderNumber type status');
+      .populate('convertedFromSample', 'orderNumber type status')
+      .populate('assignments.accountManagerId', 'name email role')
+      .populate('assignments.factoryUserId', 'name email role')
+      .populate('assignments.logisticsUserId', 'name email role')
+      .populate('timeline.byId', 'name role');
 
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // Customers can only see their own orders
-    if (!isAdmin(user.role) && order.userId._id.toString() !== user.id) {
+    // Staff with orders.view may open any order; customers only their own.
+    const ownerId = order.userId?._id?.toString() ?? order.userId?.toString();
+    if (!can(user.role, 'orders.view') && ownerId !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -72,24 +78,56 @@ export async function PUT(
 
     const body = await req.json();
 
-    // Admin can update any field
-    if (isAdmin(user.role)) {
-      const allowedAdminFields: Record<string, unknown> = {};
+    // Staff edits. `status` is deliberately NOT settable here — it moves only
+    // through POST /api/orders/[id]/transition, which enforces the workflow
+    // rules and writes the audit timeline.
+    if (can(user.role, 'orders.edit')) {
+      const update: Record<string, unknown> = {};
 
-      if (body.status !== undefined) allowedAdminFields.status = body.status;
-      if (body.internalNotes !== undefined) allowedAdminFields.internalNotes = body.internalNotes;
-      if (body.paymentStatus !== undefined) allowedAdminFields.paymentStatus = body.paymentStatus;
-      if (body.totals !== undefined) allowedAdminFields.totals = body.totals;
-      if (body.bulkDetails !== undefined) allowedAdminFields.bulkDetails = body.bulkDetails;
-      if (body.attachments !== undefined) allowedAdminFields.attachments = body.attachments;
-      if (body.customerInfo !== undefined) allowedAdminFields.customerInfo = body.customerInfo;
+      if (body.internalNotes !== undefined) update.internalNotes = body.internalNotes;
+      if (body.paymentStatus !== undefined) update.paymentStatus = body.paymentStatus;
+      if (body.totals !== undefined) update.totals = body.totals;
+      if (body.bulkDetails !== undefined) update.bulkDetails = body.bulkDetails;
+      if (body.attachments !== undefined) update.attachments = body.attachments;
+      if (body.customerInfo !== undefined) update.customerInfo = body.customerInfo;
+      if (body.priority !== undefined) update.priority = body.priority;
+      if (body.dueDate !== undefined) update.dueDate = body.dueDate || null;
 
-      const updatedOrder = await Order.findByIdAndUpdate(id, allowedAdminFields, {
+      if (body.assignments !== undefined) {
+        if (!can(user.role, 'orders.assign')) {
+          return NextResponse.json(
+            { error: 'Your role cannot reassign orders.' },
+            { status: 403 }
+          );
+        }
+        const a = body.assignments as Record<string, unknown>;
+        update.assignments = {
+          ...(existingOrder.assignments?.toObject?.() ?? existingOrder.assignments ?? {}),
+          ...(a.accountManagerId !== undefined ? { accountManagerId: a.accountManagerId || null } : {}),
+          ...(a.factoryUserId !== undefined ? { factoryUserId: a.factoryUserId || null } : {}),
+          ...(a.logisticsUserId !== undefined ? { logisticsUserId: a.logisticsUserId || null } : {}),
+          ...(a.courierName !== undefined ? { courierName: a.courierName } : {}),
+          ...(a.courierPhone !== undefined ? { courierPhone: a.courierPhone } : {}),
+          ...(a.trackingNumber !== undefined ? { trackingNumber: a.trackingNumber } : {}),
+        };
+      }
+
+      if (body.status !== undefined && body.status !== existingOrder.status) {
+        return NextResponse.json(
+          { error: 'Use the workflow actions to change an order status.' },
+          { status: 400 }
+        );
+      }
+
+      const updatedOrder = await Order.findByIdAndUpdate(id, update, {
         new: true,
         runValidators: true,
       })
         .populate('userId', 'name email company')
-        .populate('promoCodeId', 'code type value');
+        .populate('promoCodeId', 'code type value')
+        .populate('assignments.accountManagerId', 'name email role')
+        .populate('assignments.factoryUserId', 'name email role')
+        .populate('assignments.logisticsUserId', 'name email role');
 
       return NextResponse.json(updatedOrder);
     }
@@ -133,7 +171,7 @@ export async function PUT(
 export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
-    if (!user || !isAdmin(user.role)) {
+    if (!user || !can(user.role, 'orders.delete')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

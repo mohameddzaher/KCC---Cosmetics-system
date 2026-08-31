@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import connectDB from './db';
 import User from '@/models/User';
+import { isAdminRole, isStaffRole, can, type Permission, type Role } from './roles';
+import { loadRolePermissions } from './rolePermissions';
 
 /**
  * Never fall back to a hardcoded secret in production — that would let anyone
@@ -27,7 +29,7 @@ export interface SessionUser {
   id: string;
   email: string;
   name: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'CUSTOMER';
+  role: Role;
   company?: string;
   languagePref?: string;
 }
@@ -61,6 +63,12 @@ export async function getSession(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
   if (!token) return null;
+
+  // Every route that checks a permission calls this first, so it is the one
+  // place to make sure the Super Admin's role configuration is loaded before
+  // the synchronous `can()` is asked anything. Cached; see rolePermissions.ts.
+  await loadRolePermissions();
+
   return verifyToken(token);
 }
 
@@ -72,11 +80,20 @@ export async function requireAuth(roles?: string[]): Promise<SessionUser> {
 }
 
 export function isAdmin(role: string): boolean {
-  return ['SUPER_ADMIN', 'ADMIN'].includes(role);
+  return isAdminRole(role);
 }
 
+/** Any non-customer account — i.e. may reach /admin at all. */
 export function isStaff(role: string): boolean {
-  return ['SUPER_ADMIN', 'ADMIN', 'STAFF'].includes(role);
+  return isStaffRole(role);
+}
+
+/** Throws unless the session holds the given permission. */
+export async function requirePermission(permission: Permission): Promise<SessionUser> {
+  const session = await getSession();
+  if (!session) throw new Error('Unauthorized');
+  if (!can(session.role, permission)) throw new Error('Forbidden');
+  return session;
 }
 
 export class AccountDisabledError extends Error {

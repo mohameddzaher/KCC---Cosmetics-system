@@ -4,6 +4,7 @@ import User from '@/models/User';
 import { hashPassword, createToken, AUTH_COOKIE_NAME, AUTH_MAX_AGE_SECONDS, SessionUser } from '@/lib/auth';
 import { generateReferralCode } from '@/lib/api-helpers';
 import { rateLimit } from '@/lib/rateLimit';
+import { sendEventEmail, adminUrl } from '@/lib/mailer';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -57,6 +58,23 @@ export async function POST(req: NextRequest) {
       languagePref: 'en',
       isActive: true,
     });
+
+    // Tell the team a customer signed themselves up, if they asked to hear it.
+    try {
+      await sendEventEmail('emailNewCustomer', {
+        subject: `New customer registration — ${user.name}`,
+        heading: 'A new customer registered',
+        rows: [
+          ['Name', user.name],
+          ['Email', user.email],
+          ['Company', user.company || '—'],
+          ['Phone', user.phone || '—'],
+          ['Country', user.country || '—'],
+        ],
+        actionUrl: adminUrl(`/admin/customers/${user._id}`),
+        actionLabel: 'Open the customer',
+      });
+    } catch { /* registration must never fail because of an email */ }
 
     const sessionUser: SessionUser = {
       id: user._id.toString(),

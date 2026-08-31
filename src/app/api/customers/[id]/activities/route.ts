@@ -4,16 +4,18 @@ import connectDB from '@/lib/db';
 import CustomerActivity from '@/models/CustomerActivity';
 import User from '@/models/User';
 import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'STAFF'];
+const READ_PERM = 'customers.view' as const;
+const WRITE_PERM = 'customers.edit' as const;
 const ACTIVITY_TYPES = ['note', 'call', 'email', 'whatsapp', 'meeting', 'task'];
 
 export async function GET(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
-    if (!user || !STAFF_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, READ_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -32,7 +34,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 export async function POST(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
-    if (!user || !STAFF_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, WRITE_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

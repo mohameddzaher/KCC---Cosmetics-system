@@ -96,10 +96,8 @@ export default function NewsletterSection() {
           </div>
 
           {/* Heading */}
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
-            <span className="gradient-text-rose">
-              {locale === 'ar' ? content.title.ar : content.title.en}
-            </span>
+          <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] leading-tight text-ink-800 mb-3">
+            {locale === 'ar' ? content.title.ar : content.title.en}
           </h2>
 
           {/* Subtitle */}
@@ -142,7 +140,7 @@ export default function NewsletterSection() {
                       if (status === 'error') setStatus('idle');
                     }}
                     placeholder={locale === 'ar' ? content.placeholder.ar : content.placeholder.en}
-                    className={`w-full px-4 py-3.5 bg-white border rounded-xl text-ink-700 text-sm placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark/60 focus:ring-2 focus:ring-kcc-rose/20 transition-all duration-200 ${
+                    className={`w-full px-4 py-3.5 bg-surface border rounded-xl text-ink-700 text-sm placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark/60 focus:ring-2 focus:ring-kcc-rose/20 transition-all duration-200 ${
                       status === 'error' ? 'border-blush-500/70' : 'border-cream-300'
                     }`}
                     dir={locale === 'ar' ? 'rtl' : 'ltr'}

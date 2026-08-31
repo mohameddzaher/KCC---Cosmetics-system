@@ -73,7 +73,7 @@ export default function PortfolioPage() {
       />
 
       {/* Filter & Grid */}
-      <section className="py-16 px-4">
+      <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto">
           {/* Category Filters */}
           <div className="flex flex-wrap gap-2 mb-10 justify-center">
@@ -84,8 +84,8 @@ export default function PortfolioPage() {
                 onClick={() => setActiveCategory(cat)}
                 className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${
                   activeCategory === cat
-                    ? 'bg-kcc-green text-white shadow-lg shadow-kcc-green/20'
-                    : 'bg-cream-200 text-cream-700 hover:text-ink-700 hover:bg-white border border-cream-300'
+                    ? 'bg-brand text-brand-fg shadow-lg shadow-brand/20'
+                    : 'bg-cream-200 text-cream-700 hover:text-ink-700 hover:bg-surface border border-cream-300'
                 }`}
               >
                 {cat}
@@ -105,7 +105,7 @@ export default function PortfolioPage() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
                   onClick={() => setSelected(item)}
-                  className="group bg-white border border-cream-300 shadow-soft rounded-2xl overflow-hidden hover:border-kcc-rose/40 hover:shadow-soft-lg cursor-pointer transition-all"
+                  className="group bg-surface border border-cream-300 shadow-soft rounded-2xl overflow-hidden hover:border-kcc-rose/40 hover:shadow-soft-lg cursor-pointer transition-all"
                 >
                   {/* Product image */}
                   <div className="aspect-square overflow-hidden relative">
@@ -134,7 +134,7 @@ export default function PortfolioPage() {
           </motion.div>
 
           {filtered.length === 0 && (
-            <div className="text-center py-16">
+            <div className="text-center py-12">
               <p className="text-cream-700">{t('common.noResults')}</p>
             </div>
           )}
@@ -152,12 +152,12 @@ export default function PortfolioPage() {
             <motion.div
               initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl overflow-hidden max-w-lg w-full shadow-soft-lg max-h-[90vh] overflow-y-auto"
+              className="bg-surface rounded-2xl overflow-hidden max-w-lg w-full shadow-soft-lg max-h-[90vh] overflow-y-auto"
             >
               <div className="relative aspect-video overflow-hidden">
                 <img onError={onImgError} src={selected.image} alt={selected.title} className="w-full h-full object-cover" />
-                <button type="button" onClick={() => setSelected(null)} aria-label="Close"
-                  className="absolute top-3 end-3 w-9 h-9 rounded-full bg-white/90 text-ink-700 flex items-center justify-center hover:bg-white">
+                <button type="button" onClick={() => setSelected(null)} aria-label={t('a11y.close')}
+                  className="absolute top-3 end-3 w-9 h-9 rounded-full bg-surface/90 text-ink-700 flex items-center justify-center hover:bg-surface">
                   <X size={18} />
                 </button>
               </div>

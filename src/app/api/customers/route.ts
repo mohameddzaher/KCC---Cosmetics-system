@@ -4,13 +4,15 @@ import User from '@/models/User';
 import CustomerActivity from '@/models/CustomerActivity';
 import { getSession, hashPassword } from '@/lib/auth';
 import { generateReferralCode } from '@/lib/api-helpers';
+import { can } from '@/lib/roles';
 
-const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'STAFF'];
+const READ_PERM = 'customers.view' as const;
+const WRITE_PERM = 'customers.edit' as const;
 
 export async function GET(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !STAFF_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, READ_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -30,7 +32,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !STAFF_ROLES.includes(session.role)) {
+    if (!session || !can(session.role, WRITE_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

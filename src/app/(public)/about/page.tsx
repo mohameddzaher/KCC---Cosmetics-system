@@ -60,12 +60,12 @@ export default function AboutPage() {
       />
 
       {/* Story Section */}
-      <section className="py-20 px-4">
+      <section className="py-14 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
@@ -78,8 +78,8 @@ export default function AboutPage() {
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.2 }}
               className="relative"
@@ -87,7 +87,7 @@ export default function AboutPage() {
               <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-cream-400">
                 <img
                   src="https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=800&q=80"
-                  alt="KCC cosmetics laboratory with advanced equipment"
+                  alt={t('a11y.labImageAlt')}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -97,7 +97,7 @@ export default function AboutPage() {
       </section>
 
       {/* Stats */}
-      <section className="py-16 px-4 border-y border-cream-300">
+      <section className="py-12 px-4 border-y border-cream-300">
         <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-8">
           {stats.map((stat, i) => (
             <motion.div
@@ -116,14 +116,14 @@ export default function AboutPage() {
       </section>
 
       {/* Mission, Vision, Values */}
-      <section className="py-20 px-4">
+      <section className="py-14 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 gap-6 mb-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="p-8 bg-white border border-cream-300 shadow-soft rounded-2xl"
+              className="p-8 bg-surface border border-cream-300 shadow-soft rounded-2xl"
             >
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-kcc-green/15 text-kcc-green mb-5">
                 <Target size={24} />
@@ -139,7 +139,7 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.15 }}
-              className="p-8 bg-white border border-cream-300 shadow-soft rounded-2xl"
+              className="p-8 bg-surface border border-cream-300 shadow-soft rounded-2xl"
             >
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-kcc-beige-light/55 text-kcc-beige-dark mb-5">
                 <Eye size={24} />
@@ -166,7 +166,7 @@ export default function AboutPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="p-6 bg-white border border-cream-300 shadow-soft rounded-xl hover:border-cream-400 transition-colors"
+                  className="p-6 bg-surface border border-cream-300 shadow-soft rounded-xl hover:border-cream-400 transition-colors"
                 >
                   <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-kcc-green/15 text-kcc-green mb-4">
                     <Icon size={20} />
@@ -181,7 +181,7 @@ export default function AboutPage() {
       </section>
 
       {/* Leadership Section — CEO Only */}
-      <section className="py-20 px-4 border-t border-cream-300">
+      <section className="py-14 px-4 border-t border-cream-300">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">{t('about.leadershipTeam')}</h2>
@@ -196,7 +196,7 @@ export default function AboutPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="text-center p-6 bg-white border border-cream-300 shadow-soft rounded-xl"
+                  className="text-center p-6 bg-surface border border-cream-300 shadow-soft rounded-xl"
                 >
                   <div className="w-24 h-24 mx-auto rounded-full overflow-hidden mb-4 border-2 border-cream-400">
                     {member.image ? (
@@ -223,7 +223,7 @@ export default function AboutPage() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="text-center p-6 bg-white border border-cream-300 shadow-soft rounded-xl"
+                className="text-center p-6 bg-surface border border-cream-300 shadow-soft rounded-xl"
               >
                 <div className="w-24 h-24 mx-auto rounded-full overflow-hidden mb-4 border-2 border-cream-400">
                   <Image
@@ -243,7 +243,7 @@ export default function AboutPage() {
       </section>
 
       {/* Our Team Section */}
-      <section className="py-20 px-4 border-t border-cream-300">
+      <section className="py-14 px-4 border-t border-cream-300">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 mb-3">{t('about.ourTeam')}</h2>
@@ -258,7 +258,7 @@ export default function AboutPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="text-center p-6 bg-white border border-cream-300 shadow-soft rounded-xl hover:border-cream-400 transition-colors"
+                  className="text-center p-6 bg-surface border border-cream-300 shadow-soft rounded-xl hover:border-cream-400 transition-colors"
                 >
                   <div className="w-20 h-20 mx-auto rounded-full overflow-hidden mb-4 border-2 border-cream-400">
                     {member.image ? (
@@ -295,7 +295,7 @@ export default function AboutPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="text-center p-6 bg-white border border-cream-300 shadow-soft rounded-xl hover:border-cream-400 transition-colors"
+                  className="text-center p-6 bg-surface border border-cream-300 shadow-soft rounded-xl hover:border-cream-400 transition-colors"
                 >
                   <div className="w-20 h-20 mx-auto rounded-full overflow-hidden mb-4 border-2 border-cream-400">
                     <Image

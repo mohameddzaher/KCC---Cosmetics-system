@@ -3,6 +3,7 @@ import connectDB from '@/lib/db';
 import KnowledgeArticle from '@/models/KnowledgeArticle';
 import { getSession } from '@/lib/auth';
 import { escapeRegex } from '@/lib/api-helpers';
+import { can } from '@/lib/roles';
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
     // By default, only show enabled articles (public). Admin can pass ?all=true to see all.
     if (all === 'true') {
       const user = await getSession();
-      if (!user || !['SUPER_ADMIN', 'ADMIN', 'STAFF'].includes(user.role)) {
+      if (!user || !can(user.role, 'knowledge.manage')) {
         filter.enabled = true; // fallback to public filter if not admin
       }
     } else {
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+    if (!user || !can(user.role, 'knowledge.manage')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

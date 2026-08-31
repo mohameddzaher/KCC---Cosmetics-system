@@ -2,67 +2,109 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import {
+  ArrowUpRight, Facebook, Instagram, Linkedin, Mail, MapPin, Phone, Twitter, Youtube,
+} from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram, Youtube, Sparkles } from 'lucide-react';
 
-const digits = (v?: string) => (v ? v.replace(/[^\d]/g, '') : '');
+interface PublicSettings {
+  contactEmail?: string;
+  contactPhone?: string;
+  emails?: { info?: string };
+  phones?: { primary?: string; secondary?: string };
+  contactAddress?: { en?: string; ar?: string };
+  socialMedia?: Record<string, string | undefined>;
+}
 
+/**
+ * Site footer.
+ *
+ * Restrained rather than decorative: one warm dark ground, a single hairline
+ * champagne rule, and type doing the work. The brand block gets a serif
+ * wordmark and room to breathe; the three link columns are quiet; the
+ * certification line sits at the base as a trust signal rather than a badge
+ * wall. Accent colour is used once per column, never mixed inside a line.
+ */
 export default function Footer() {
   const { t, locale } = useLanguage();
-  const [s, setS] = useState<any>(null);
+  const [settings, setSettings] = useState<PublicSettings | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     fetch('/api/settings/public', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (!cancelled) setS(d); })
+      .then((d) => {
+        if (!cancelled) setSettings(d);
+      })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const g = s || {};
+  const g = settings || {};
   const email = g.contactEmail || g.emails?.info || 'info@kcc-bv.com';
   const phone1 = g.contactPhone || g.phones?.primary || '+966 53 848 6109';
   const phone2 = g.phones?.secondary || '';
-  const address = (g.contactAddress?.[locale] || g.contactAddress?.en) || t('footer.address');
+  const address = g.contactAddress?.[locale] || g.contactAddress?.en || t('footer.address');
   const social = g.socialMedia || {};
 
-  return (
-    <footer className="relative bg-espresso-radial border-t border-espresso-700/50 overflow-hidden">
-      {/* Decorative glows */}
-      <div className="absolute top-0 start-0 w-[420px] h-[420px] rounded-full bg-kcc-rose-dark/20 blur-[160px] pointer-events-none" />
-      <div className="absolute bottom-0 end-0 w-[360px] h-[360px] rounded-full bg-kcc-beige-dark/22 blur-[160px] pointer-events-none" />
-      <div className="absolute inset-0 dot-pattern-dark opacity-40 pointer-events-none" />
+  const socialLinks = [
+    { Icon: Instagram, label: 'Instagram', href: social.instagram },
+    { Icon: Linkedin, label: 'LinkedIn', href: social.linkedin },
+    { Icon: Facebook, label: 'Facebook', href: social.facebook },
+    { Icon: Twitter, label: 'X', href: social.twitter },
+    { Icon: Youtube, label: 'YouTube', href: social.youtube },
+  ].filter((x) => x.href);
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-          {/* Brand */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-3xl font-black tracking-tight">
-                <span className="text-kcc-green">K</span>
-                <span className="text-cream-50">CC</span>
+  const columns = [
+    {
+      title: t('footer.quickLinks'),
+      links: [
+        { label: t('nav.about'), href: '/about' },
+        { label: t('nav.certificates'), href: '/certificates' },
+        { label: t('nav.portfolio'), href: '/portfolio' },
+        { label: t('nav.production'), href: '/production' },
+        { label: t('nav.factories'), href: '/factories' },
+        { label: t('nav.news'), href: '/news' },
+      ],
+    },
+    {
+      title: t('sections.services'),
+      links: [
+        { label: t('order.sampleTitle'), href: '/order/sample' },
+        { label: t('order.bulkTitle'), href: '/order/bulk' },
+        { label: t('nav.aiAssistant'), href: '/ai-assistant' },
+        { label: t('nav.contact'), href: '/contact' },
+      ],
+    },
+  ];
+
+  return (
+    <footer className="relative overflow-hidden bg-espresso-900">
+      {/* One hairline of champagne — the only ornament at the top edge. */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-kcc-beige/45 to-transparent" />
+
+      {/* A single, very soft warm glow. No competing colour fields. */}
+      <div className="pointer-events-none absolute -top-24 start-1/4 h-[380px] w-[380px] rounded-full bg-kcc-rose-dark/10 blur-[150px]" />
+
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
+        <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr] lg:gap-12">
+          {/* ---------------- Brand ---------------- */}
+          <div className="max-w-sm">
+            <Link href="/" className="inline-flex items-baseline gap-1.5">
+              <span className="font-serif text-3xl leading-none tracking-tight text-on-dark">
+                <span className="text-kcc-green-light">K</span>CC
               </span>
-            </div>
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles size={12} className="text-kcc-rose" />
-              <span className="text-[10px] uppercase tracking-[0.25em] text-kcc-rose-light/90">
-                Saudi Cosmetics House
-              </span>
-            </div>
-            <p className="text-cream-100 text-sm leading-relaxed mb-6">
-              {t('hero.description')}
+            </Link>
+            <p className="mt-2 text-[10px] uppercase tracking-[0.3em] text-kcc-beige">
+              {t('hero.subtitle')}
             </p>
-            <div className="flex items-center gap-3">
-              {[
-                { Icon: Facebook, label: 'Facebook', href: social.facebook },
-                { Icon: Instagram, label: 'Instagram', href: social.instagram },
-                { Icon: Linkedin, label: 'LinkedIn', href: social.linkedin },
-                { Icon: Twitter, label: 'Twitter', href: social.twitter },
-                { Icon: Youtube, label: 'YouTube', href: social.youtube },
-              ]
-                .filter((x) => x.href)
-                .map(({ Icon, label, href }) => (
+            <p className="mt-5 text-sm leading-relaxed text-on-dark-soft">{t('hero.description')}</p>
+
+            {socialLinks.length > 0 && (
+              <div className="mt-6 flex items-center gap-2">
+                {socialLinks.map(({ Icon, label, href }) => (
                   <a
                     key={label}
                     href={href}
@@ -70,105 +112,102 @@ export default function Footer() {
                     rel="noopener noreferrer"
                     aria-label={label}
                     title={label}
-                    className="p-2 rounded-xl bg-espresso-700/60 border border-cream-300/10 text-cream-200 hover:text-kcc-rose hover:border-kcc-rose/40 hover:bg-espresso-600/60 transition-all"
+                    className="rounded-full border border-white/12 p-2.5 text-on-dark-muted transition-colors hover:border-kcc-beige/50 hover:text-kcc-beige"
                   >
-                    <Icon size={16} />
+                    <Icon size={15} />
                   </a>
                 ))}
-            </div>
+              </div>
+            )}
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-sm font-semibold text-cream-50 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-kcc-rose" />
-              {t('footer.quickLinks')}
-            </h3>
-            <ul className="space-y-3">
-              {[
-                { label: t('nav.about'), href: '/about' },
-                { label: t('nav.certificates'), href: '/certificates' },
-                { label: t('nav.portfolio'), href: '/portfolio' },
-                { label: t('nav.production'), href: '/production' },
-                { label: t('nav.factories'), href: '/factories' },
-                { label: t('nav.news'), href: '/news' },
-              ].map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-cream-100/85 hover:text-kcc-rose-light transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* ---------------- Link columns ---------------- */}
+          {columns.map((col) => (
+            <nav key={col.title} aria-label={col.title}>
+              <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-on-dark-muted">
+                {col.title}
+              </h3>
+              <ul className="mt-5 space-y-3">
+                {col.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="group inline-flex items-center gap-1 text-sm text-on-dark-soft transition-colors hover:text-on-dark"
+                    >
+                      {link.label}
+                      <ArrowUpRight
+                        size={12}
+                        className="rtl-flip opacity-0 transition-opacity group-hover:opacity-60"
+                      />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
 
-          {/* Services */}
+          {/* ---------------- Contact ---------------- */}
           <div>
-            <h3 className="text-sm font-semibold text-cream-50 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-kcc-beige" />
-              {t('sections.services')}
-            </h3>
-            <ul className="space-y-3">
-              {[
-                { label: t('order.sampleTitle'), href: '/order/sample' },
-                { label: t('order.bulkTitle'), href: '/order/bulk' },
-                { label: t('nav.aiAssistant'), href: '/ai-assistant' },
-                { label: t('nav.contact'), href: '/contact' },
-              ].map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-cream-100/85 hover:text-kcc-beige-light transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h3 className="text-sm font-semibold text-cream-50 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-kcc-gold" />
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-on-dark-muted">
               {t('footer.contactInfo')}
             </h3>
-            <ul className="space-y-3">
+            <ul className="mt-5 space-y-4 text-sm">
               <li className="flex items-start gap-3">
-                <MapPin size={16} className="text-kcc-rose mt-0.5 shrink-0" />
-                <span className="text-sm text-cream-100">{address}</span>
+                <MapPin size={15} className="mt-0.5 shrink-0 text-kcc-beige" />
+                <span className="text-on-dark-soft">{address}</span>
               </li>
               <li className="flex items-center gap-3">
-                <Phone size={16} className="text-kcc-rose shrink-0" />
-                <a href={`tel:${phone1.replace(/\s+/g, '')}`} className="text-sm text-cream-100 hover:text-kcc-rose-light transition-colors">{phone1}</a>
+                <Phone size={15} className="shrink-0 text-kcc-beige" />
+                <a
+                  href={`tel:${phone1.replace(/\s+/g, '')}`}
+                  dir="ltr"
+                  className="text-on-dark-soft transition-colors hover:text-on-dark"
+                >
+                  {phone1}
+                </a>
               </li>
               {phone2 && (
                 <li className="flex items-center gap-3">
-                  <Phone size={16} className="text-kcc-rose shrink-0" />
-                  <a href={`tel:${phone2.replace(/\s+/g, '')}`} className="text-sm text-cream-100 hover:text-kcc-rose-light transition-colors">{phone2}</a>
+                  <Phone size={15} className="shrink-0 text-kcc-beige" />
+                  <a
+                    href={`tel:${phone2.replace(/\s+/g, '')}`}
+                    dir="ltr"
+                    className="text-on-dark-soft transition-colors hover:text-on-dark"
+                  >
+                    {phone2}
+                  </a>
                 </li>
               )}
               <li className="flex items-center gap-3">
-                <Mail size={16} className="text-kcc-rose shrink-0" />
-                <a href={`mailto:${email}`} className="text-sm text-cream-100 hover:text-kcc-rose-light transition-colors">{email}</a>
+                <Mail size={15} className="shrink-0 text-kcc-beige" />
+                <a
+                  href={`mailto:${email}`}
+                  className="text-on-dark-soft transition-colors hover:text-on-dark"
+                >
+                  {email}
+                </a>
               </li>
             </ul>
           </div>
         </div>
       </div>
 
-      {/* Bottom bar */}
-      <div className="relative z-10 border-t border-espresso-700/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-cream-200/60">{t('footer.rights')}</p>
-          <div className="flex items-center gap-6">
-            <Link href="/policies" className="text-xs text-cream-200/60 hover:text-kcc-rose-light transition-colors">
+      {/* ---------------- Base bar ---------------- */}
+      <div className="relative z-10 border-t border-white/10">
+        <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-4 px-4 py-6 sm:flex-row sm:px-6 lg:px-8">
+          <p className="text-xs text-on-dark-faint">{t('footer.rights')}</p>
+
+          <div className="flex items-center gap-5">
+            <Link
+              href="/policies"
+              className="text-xs text-on-dark-faint transition-colors hover:text-on-dark-soft"
+            >
               {t('footer.privacy')}
             </Link>
-            <Link href="/policies" className="text-xs text-cream-200/60 hover:text-kcc-rose-light transition-colors">
+            <Link
+              href="/policies"
+              className="text-xs text-on-dark-faint transition-colors hover:text-on-dark-soft"
+            >
               {t('footer.terms')}
             </Link>
           </div>

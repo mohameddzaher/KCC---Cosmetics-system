@@ -81,7 +81,7 @@ export default function ContactPage() {
       />
 
       {/* Content */}
-      <section className="py-12 sm:py-16 px-4">
+      <section className="py-12 sm:py-12 px-4">
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Contact quick info */}
           <motion.div
@@ -93,7 +93,7 @@ export default function ContactPage() {
             {contactInfo.map((item, i) => {
               const Icon = item.icon;
               return (
-                <div key={i} className="flex gap-3 p-4 bg-white border border-cream-300 shadow-soft rounded-xl">
+                <div key={i} className="flex gap-3 p-4 bg-surface border border-cream-300 shadow-soft rounded-xl">
                   <div className="shrink-0 w-9 h-9 rounded-lg bg-kcc-green/15 text-kcc-green flex items-center justify-center">
                     <Icon size={16} />
                   </div>
@@ -110,12 +110,12 @@ export default function ContactPage() {
           <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
             {/* Form */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="h-full"
           >
-            <div className="bg-white border border-cream-300 shadow-soft rounded-2xl p-6 sm:p-8 h-full">
+            <div className="bg-surface border border-cream-300 shadow-soft rounded-2xl p-6 sm:p-8 h-full">
               {success ? (
                 <div className="text-center py-12">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-kcc-green/20 mb-4">
@@ -142,7 +142,7 @@ export default function ContactPage() {
                         value={form.name}
                         onChange={(e) => update('name', e.target.value)}
                         required
-                        className="w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors"
+                        className="w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors"
                         placeholder={t('contact.namePlaceholder')}
                       />
                     </div>
@@ -155,7 +155,7 @@ export default function ContactPage() {
                         value={form.email}
                         onChange={(e) => update('email', e.target.value)}
                         required
-                        className="w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors"
+                        className="w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors"
                         placeholder={t('contact.emailPlaceholder')}
                       />
                     </div>
@@ -165,7 +165,7 @@ export default function ContactPage() {
                         type="tel"
                         value={form.phone}
                         onChange={(e) => update('phone', e.target.value)}
-                        className="w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors"
+                        className="w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors"
                         placeholder={t('contact.phonePlaceholder')}
                       />
                     </div>
@@ -175,7 +175,7 @@ export default function ContactPage() {
                         type="text"
                         value={form.company}
                         onChange={(e) => update('company', e.target.value)}
-                        className="w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors"
+                        className="w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors"
                         placeholder={t('contact.companyPlaceholder')}
                       />
                     </div>
@@ -189,7 +189,7 @@ export default function ContactPage() {
                       onChange={(e) => update('message', e.target.value)}
                       required
                       rows={5}
-                      className="w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors resize-none"
+                      className="w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors resize-none"
                       placeholder={t('contact.messagePlaceholder')}
                     />
                   </div>
@@ -211,13 +211,13 @@ export default function ContactPage() {
 
           {/* Map & location card */}
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
             className="space-y-4"
           >
-            <div className="bg-white border border-cream-300 shadow-soft rounded-2xl p-5">
+            <div className="bg-surface border border-cream-300 shadow-soft rounded-2xl p-5">
               <p className="text-xs uppercase tracking-[0.18em] text-kcc-beige-dark mb-2">{t('contact.locationLabel')}</p>
               <h3 className="text-lg font-semibold text-ink-700 mb-1">{t('contact.locationTitle')}</h3>
               <p className="text-sm text-cream-700 mb-4">{t('contact.locationDesc')}</p>
@@ -230,7 +230,7 @@ export default function ContactPage() {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="KCC Location - Jeddah, Saudi Arabia"
+                title={t('a11y.mapTitle')}
               />
               </div>
             </div>

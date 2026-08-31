@@ -22,10 +22,13 @@ export function buildOrderPayload(state: QuizState, customerInfo: {
     quizVersion: 'v2',
     customerName: state.customerName,
     brief: state.briefAnswers,
+    /** Answers to the category/sub-category/product-scoped question sets. */
+    categoryAnswers: state.categoryAnswers,
     questionNotes: state.questionNotes,
     category: state.category,
     specs: state.specs,
     fragrance: state.fragrance,
+    packaging: state.packaging,
 
     // ── Legacy mirrors (for backward-compat with old admin views) ──
     productType: state.category.subName?.toLowerCase() || 'other',

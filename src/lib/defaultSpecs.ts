@@ -7,6 +7,9 @@ const SPEC_ORDER = [
   'fine-actives',
   'product-color',
   'product-packaging',
+  'package-cap',
+  'package-label',
+  'package-finish',
   'package-color',
   'fragrances',
 ] as const;
@@ -17,11 +20,14 @@ const MAX_SELECT: Record<string, number> = {
   'fine-actives': 3,
   'product-color': 1,
   'product-packaging': 1,
+  'package-cap': 1,
+  'package-label': 1,
+  'package-finish': 1,
   'package-color': 1,
   'fragrances': 99,
 };
 
-const REQUIRED = ['product-color', 'product-packaging', 'package-color', 'fragrances'];
+const REQUIRED = ['product-color', 'product-packaging', 'fragrances'];
 
 /**
  * Builds a default specs[] array (all categories enabled, all options allowed)

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { Upload, Loader2, X, ImageIcon } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Props {
   value: string;
@@ -14,6 +15,7 @@ interface Props {
  * The upload endpoint validates type/size and returns a hosted URL.
  */
 export default function ImageUpload({ value, onChange, label = 'Image' }: Props) {
+  const { tx } = useLanguage();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,15 +42,15 @@ export default function ImageUpload({ value, onChange, label = 'Image' }: Props)
 
   return (
     <div>
-      <label className="block text-xs font-medium text-dark-400 mb-1.5">{label}</label>
+      <label className="block text-xs font-medium text-fg-muted mb-1.5">{label}</label>
       <div className="flex items-start gap-3">
         {/* Preview */}
-        <div className="w-20 h-20 rounded-lg border border-dark-700 bg-dark-950 overflow-hidden flex items-center justify-center shrink-0">
+        <div className="w-20 h-20 rounded-lg border border-line bg-bg overflow-hidden flex items-center justify-center shrink-0">
           {value ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={value} alt="preview" className="w-full h-full object-cover" />
+            <img src={value} alt={tx('preview')} className="w-full h-full object-cover" />
           ) : (
-            <ImageIcon size={22} className="text-dark-600" />
+            <ImageIcon size={22} className="text-fg-subtle" />
           )}
         </div>
 
@@ -58,24 +60,23 @@ export default function ImageUpload({ value, onChange, label = 'Image' }: Props)
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={uploading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-dark-200 border border-dark-700 rounded-lg hover:border-kcc-green/40 hover:text-kcc-green disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-fg border border-line rounded-lg hover:border-kcc-green/40 hover:text-kcc-green disabled:opacity-50"
             >
               {uploading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
               {uploading ? 'Uploading…' : 'Upload image'}
             </button>
             {value && (
               <button type="button" onClick={() => onChange('')}
-                className="inline-flex items-center gap-1 px-2 py-1.5 text-xs text-dark-400 hover:text-red-400">
-                <X size={13} /> Remove
-              </button>
+                className="inline-flex items-center gap-1 px-2 py-1.5 text-xs text-fg-muted hover:text-red-400">
+                <X size={13} />{tx('Remove')}</button>
             )}
           </div>
           <input
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="…or paste an image URL"
-            className="w-full px-3 py-1.5 text-xs bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+            placeholder={tx('…or paste an image URL')}
+            className="w-full px-3 py-1.5 text-xs bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
           />
           {error && <p className="text-xs text-red-400">{error}</p>}
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
+import OptionGrid from './OptionGrid';
 
 interface ChipSingleProps {
   options: Array<{ value: string; label: string; description?: string }>;
@@ -10,53 +10,47 @@ interface ChipSingleProps {
 }
 
 /**
- * Uniform pill cards — same height, same padding, centered text.
- * Auto-grid: 2 cols on mobile, 3–4 on desktop based on count.
+ * Single-select tiles. Auto-filling grid so short option lists stay compact and
+ * long ones use the full width instead of running down the page.
  */
 export default function ChipSingle({ options, value, onChange }: ChipSingleProps) {
-  const cols =
-    options.length <= 2 ? 'grid-cols-2 max-w-2xl' :
-    options.length === 3 ? 'grid-cols-2 sm:grid-cols-3 max-w-3xl' :
-    options.length <= 4 ? 'grid-cols-2 lg:grid-cols-4 max-w-4xl' :
-    'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 max-w-5xl';
-
   const hasDesc = options.some((o) => o.description);
+  const min = hasDesc ? '15rem' : options.length <= 3 ? '12rem' : '10.5rem';
 
   return (
-    <div className={`grid ${cols} gap-3 mx-auto`}>
+    <OptionGrid min={min}>
       {options.map((opt) => {
         const active = value === opt.value;
         return (
-          <motion.button
+          <button
             key={opt.value}
             type="button"
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.97 }}
+            aria-pressed={active}
             onClick={() => onChange(opt.value)}
-            className={`relative flex flex-col items-center justify-center text-center px-5 py-6 rounded-2xl border-2 transition-all duration-300 ${
-              hasDesc ? 'min-h-[120px]' : 'min-h-[80px]'
+            className={`relative flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-5 py-5 text-center transition-all duration-200 ${
+              hasDesc ? 'min-h-[6.5rem]' : 'min-h-[4.25rem]'
             } ${
               active
-                ? 'bg-espresso-900 text-cream-50 border-espresso-900 shadow-soft-lg'
-                : 'bg-white text-ink-800 border-cream-300 hover:border-ink-700 shadow-soft'
+                ? 'border-fg bg-surface-inverse text-fg-inverse shadow-soft-lg'
+                : 'border-cream-300 bg-surface text-ink-800 shadow-soft hover:-translate-y-0.5 hover:border-ink-700'
             }`}
           >
             {active && (
-              <span className="absolute top-2.5 end-2.5 w-5 h-5 rounded-full bg-kcc-rose-light text-espresso-900 flex items-center justify-center">
+              <span className="absolute end-2 top-2 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-kcc-rose-light p-0.5 text-fg">
                 <Check size={11} strokeWidth={3} />
               </span>
             )}
-            <span className={`text-sm font-medium leading-tight ${active ? 'font-semibold' : ''}`}>
+            <span className={`text-sm leading-snug ${active ? 'font-semibold' : 'font-medium'}`}>
               {opt.label}
             </span>
             {opt.description && (
-              <span className={`mt-1.5 text-xs leading-snug ${active ? 'text-cream-200' : 'text-cream-700'}`}>
+              <span className={`text-xs leading-snug ${active ? 'text-cream-200' : 'text-cream-700'}`}>
                 {opt.description}
               </span>
             )}
-          </motion.button>
+          </button>
         );
       })}
-    </div>
+    </OptionGrid>
   );
 }

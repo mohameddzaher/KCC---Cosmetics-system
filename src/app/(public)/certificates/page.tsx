@@ -122,7 +122,7 @@ export default function CertificatesPage() {
       />
 
       {/* Certificates Grid */}
-      <section className="py-16 px-4">
+      <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="grid sm:grid-cols-2 gap-6">
             {list.map((cert, i) => (
@@ -134,7 +134,7 @@ export default function CertificatesPage() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
                 onClick={() => setSelected(cert)}
-                className="text-start p-6 bg-white border border-cream-300 shadow-soft rounded-2xl hover:border-cream-400 hover:bg-white/90 transition-all duration-300 group"
+                className="text-start p-6 bg-surface border border-cream-300 shadow-soft rounded-2xl hover:border-cream-400 hover:bg-surface/90 transition-all duration-300 group"
               >
                 {/* Certificate image */}
                 <div className="aspect-[3/2] rounded-xl overflow-hidden border border-cream-400 mb-5 relative">
@@ -192,7 +192,7 @@ export default function CertificatesPage() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg bg-white border border-cream-300 rounded-2xl overflow-hidden"
+              className="w-full max-w-lg bg-surface border border-cream-300 rounded-2xl overflow-hidden"
             >
               {/* Header image */}
               <div className="aspect-[2/1] relative overflow-hidden">
@@ -207,7 +207,7 @@ export default function CertificatesPage() {
                 <button
                   type="button"
                   onClick={() => setSelected(null)}
-                  className="absolute top-4 end-4 p-2 bg-white/95 rounded-lg text-cream-700 hover:text-ink-700 transition-colors"
+                  className="absolute top-4 end-4 p-2 bg-surface/95 rounded-lg text-cream-700 hover:text-ink-700 transition-colors"
                   title={t('common.close')}
                 >
                   <X size={18} />

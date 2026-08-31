@@ -3,14 +3,16 @@ import mongoose from 'mongoose';
 import connectDB from '@/lib/db';
 import Expense from '@/models/Expense';
 import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
 
 type RouteContext = { params: Promise<{ id: string }> };
-const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
+const READ_PERM = 'accounting.view' as const;
+const WRITE_PERM = 'accounting.manage' as const;
 
 export async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
-    if (!user || !ADMIN_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, WRITE_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -30,7 +32,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
-    if (!user || !ADMIN_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, WRITE_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'CUSTOMER';
+import { ROLES, type Role } from '@/lib/roles';
+
+export type UserRole = Role;
 export type CustomerStage = 'lead' | 'prospect' | 'active' | 'vip' | 'inactive' | 'churned';
 
 export interface IUser extends Document {
@@ -25,6 +27,10 @@ export interface IUser extends Document {
   source?: string;
   accountManagerId?: Types.ObjectId;
   lastContactedAt?: Date;
+  /** Staff-only: department label shown in the team directory. */
+  department?: string;
+  /** Staff-only: free-text job title shown next to the role badge. */
+  jobTitle?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,7 +42,7 @@ const UserSchema = new Schema<IUser>(
     password: { type: String, required: true },
     role: {
       type: String,
-      enum: ['SUPER_ADMIN', 'ADMIN', 'STAFF', 'CUSTOMER'],
+      enum: ROLES as unknown as string[],
       default: 'CUSTOMER',
     },
     company: { type: String, trim: true },
@@ -59,6 +65,8 @@ const UserSchema = new Schema<IUser>(
     source: { type: String, trim: true },
     accountManagerId: { type: Schema.Types.ObjectId, ref: 'User' },
     lastContactedAt: { type: Date },
+    department: { type: String, trim: true },
+    jobTitle: { type: String, trim: true },
   },
   { timestamps: true }
 );

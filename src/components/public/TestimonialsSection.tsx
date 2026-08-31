@@ -103,8 +103,8 @@ export default function TestimonialsSection() {
           <span className="inline-block px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-rose rounded-full font-medium">
             {locale === 'ar' ? 'بصمات نلتزم بها' : 'Voices of Trust'}
           </span>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
-            <span className="gradient-text-rose">{t('sections.testimonials')}</span>
+          <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] leading-tight text-ink-800 mb-3">
+            {t('sections.testimonials')}
           </h2>
         </motion.div>
 
@@ -127,8 +127,8 @@ export default function TestimonialsSection() {
             <AnimatePresence mode="wait">
               <motion.div
                 key={current}
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -30 }}
                 transition={{ duration: 0.4 }}
                 className="relative p-8 sm:p-10 lg:p-12"
@@ -169,8 +169,8 @@ export default function TestimonialsSection() {
             <button
               type="button"
               onClick={prevSlide}
-              className="p-2.5 rounded-xl bg-white border border-cream-300 text-ink-600 hover:text-kcc-rose-dark hover:border-kcc-rose-dark/40 hover:shadow-soft transition-all duration-200"
-              aria-label="Previous testimonial"
+              className="p-2.5 rounded-xl bg-surface border border-cream-300 text-ink-600 hover:text-kcc-rose-dark hover:border-kcc-rose-dark/40 hover:shadow-soft transition-all duration-200"
+              aria-label={t('a11y.previousTestimonial')}
             >
               <ChevronLeft size={20} className="rtl-flip" />
             </button>
@@ -195,8 +195,8 @@ export default function TestimonialsSection() {
             <button
               type="button"
               onClick={nextSlide}
-              className="p-2.5 rounded-xl bg-white border border-cream-300 text-ink-600 hover:text-kcc-rose-dark hover:border-kcc-rose-dark/40 hover:shadow-soft transition-all duration-200"
-              aria-label="Next testimonial"
+              className="p-2.5 rounded-xl bg-surface border border-cream-300 text-ink-600 hover:text-kcc-rose-dark hover:border-kcc-rose-dark/40 hover:shadow-soft transition-all duration-200"
+              aria-label={t('a11y.nextTestimonial')}
             >
               <ChevronRight size={20} className="rtl-flip" />
             </button>

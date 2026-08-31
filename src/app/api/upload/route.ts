@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { can } from '@/lib/roles';
 
 export async function POST(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+    if (!user || !can(user.role, 'cms.manage')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

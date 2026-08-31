@@ -21,15 +21,18 @@ export async function GET() {
       const categories = cats.map((c: any, i: number) => ({
         id: c.order ?? i + 1,
         name: c.name,
+        nameAr: c.nameAr || '',
         slug: c.slug,
         level: 1,
         subcategories: [...c.subcategories]
           .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
           .map((s: any) => ({
             name: s.name,
+            nameAr: s.nameAr || '',
             slug: s.slug,
             level: 2,
             items: s.items || [],
+            itemsAr: s.itemsAr || [],
           })),
       }));
       return NextResponse.json({ categories });

@@ -51,7 +51,7 @@ Optional:
 |---|---|
 | `OPENAI_API_KEY` | AI assistant |
 | `UPLOADS_DIR` | Local uploads dir |
-| `SMTP_*` | Outgoing mail |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` / `SMTP_SECURE` | Outgoing mail. Until these are set, the notification toggles in Settings save but send nothing — the screen states this and offers a test send once configured. |
 
 ---
 

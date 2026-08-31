@@ -19,12 +19,20 @@ const genReferral = (name: string) => {
   return `${clean}${rnd}`;
 };
 
+/** One account per role, so every permission set can be checked end to end. */
 export const USERS = [
-  { name: 'KCC Super Admin', email: 'superadmin@kcc-bv.com', role: 'SUPER_ADMIN', password: 'KCC-Super@2026!', company: 'KCC' },
-  { name: 'KCC Admin',        email: 'admin@kcc-bv.com',      role: 'ADMIN',       password: 'KCC-Admin@2026!', company: 'KCC' },
-  { name: 'KCC Staff',        email: 'staff@kcc-bv.com',      role: 'STAFF',       password: 'KCC-Staff@2026!', company: 'KCC' },
-  { name: 'Sample Customer',  email: 'customer@kcc-bv.com',   role: 'CUSTOMER',    password: 'KCC-Client@2026!', company: 'Demo Brand' },
-];
+  { name: 'KCC Super Admin',   email: 'superadmin@kcc-bv.com', role: 'SUPER_ADMIN',     password: 'KCC-Super@2026!',     company: 'KCC', jobTitle: 'System owner',        department: 'Management' },
+  { name: 'KCC Admin',         email: 'admin@kcc-bv.com',      role: 'ADMIN',           password: 'KCC-Admin@2026!',     company: 'KCC', jobTitle: 'Operations director', department: 'Management' },
+  { name: 'KCC Sales',         email: 'sales@kcc-bv.com',      role: 'SALES',           password: 'KCC-Sales@2026!',     company: 'KCC', jobTitle: 'Sales executive',     department: 'Commercial' },
+  { name: 'KCC Account Mgr',   email: 'accounts@kcc-bv.com',   role: 'ACCOUNT_MANAGER', password: 'KCC-Account@2026!',   company: 'KCC', jobTitle: 'Account manager',     department: 'Commercial' },
+  { name: 'KCC Factory',       email: 'factory@kcc-bv.com',    role: 'FACTORY',         password: 'KCC-Factory@2026!',   company: 'KCC', jobTitle: 'Production lead',     department: 'Manufacturing' },
+  { name: 'KCC Dispatch',      email: 'dispatch@kcc-bv.com',   role: 'LOGISTICS',       password: 'KCC-Dispatch@2026!',  company: 'KCC', jobTitle: 'Dispatch supervisor', department: 'Logistics' },
+  { name: 'KCC Accountant',    email: 'finance@kcc-bv.com',    role: 'ACCOUNTANT',      password: 'KCC-Finance@2026!',   company: 'KCC', jobTitle: 'Accountant',          department: 'Finance' },
+  { name: 'KCC Support',       email: 'support@kcc-bv.com',    role: 'SUPPORT',         password: 'KCC-Support@2026!',   company: 'KCC', jobTitle: 'Support agent',       department: 'Customer care' },
+  { name: 'KCC Editor',        email: 'editor@kcc-bv.com',     role: 'CONTENT_EDITOR',  password: 'KCC-Editor@2026!',    company: 'KCC', jobTitle: 'Content editor',      department: 'Marketing' },
+  { name: 'KCC Staff',         email: 'staff@kcc-bv.com',      role: 'STAFF',           password: 'KCC-Staff@2026!',     company: 'KCC', jobTitle: 'Staff',               department: 'General' },
+  { name: 'Sample Customer',   email: 'customer@kcc-bv.com',   role: 'CUSTOMER',        password: 'KCC-Client@2026!',    company: 'Demo Brand' },
+] as Array<{ name: string; email: string; role: string; password: string; company: string; jobTitle?: string; department?: string }>;
 
 async function run() {
   await mongoose.connect(process.env.MONGODB_URI!);
@@ -41,6 +49,8 @@ async function run() {
           role: u.role,
           password: hash,
           company: u.company,
+          jobTitle: u.jobTitle,
+          department: u.department,
           isActive: true,
           languagePref: 'en',
         },
@@ -50,6 +60,10 @@ async function run() {
     );
     console.log(`  ✓ ${u.role.padEnd(12)} ${u.email}`);
   }
+
+  const counts = await User.aggregate([{ $group: { _id: '$role', n: { $sum: 1 } } }, { $sort: { _id: 1 } }]);
+  console.log('\nAccounts per role:');
+  for (const c of counts) console.log(`  ${String(c._id).padEnd(16)} ${c.n}`);
 
   console.log('\nDone. Credentials are in CREDENTIALS.local.md (gitignored).');
   await mongoose.disconnect();

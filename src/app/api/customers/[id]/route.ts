@@ -6,15 +6,17 @@ import Order from '@/models/Order';
 import Referral from '@/models/Referral';
 import CustomerActivity from '@/models/CustomerActivity';
 import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'STAFF'];
+const READ_PERM = 'customers.view' as const;
+const WRITE_PERM = 'customers.edit' as const;
 
 export async function GET(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
-    if (!user || !STAFF_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, READ_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -48,7 +50,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
     const activities = await CustomerActivity.find({ customerId: id }).sort({ createdAt: -1 });
 
     // Team list for account-manager assignment
-    const managers = await User.find({ role: { $in: ['SUPER_ADMIN', 'ADMIN', 'STAFF'] } })
+    const managers = await User.find({ role: { $in: 'customers.view' } })
       .select('name email role')
       .sort({ name: 1 });
 
@@ -63,7 +65,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 export async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
-    if (!user || !STAFF_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, WRITE_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -126,7 +128,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
-    if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+    if (!user || !can(user.role, 'customers.edit')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Lightbulb, Beaker, FlaskConical, ClipboardCheck, Factory, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCmsSection } from '@/lib/useCmsSection';
 
 const steps = [
   {
@@ -55,8 +56,22 @@ const steps = [
   },
 ];
 
+const ICONS = steps.map((s) => s.icon);
+
+/** Editable under Admin → CMS Manager → "process". */
+const DEFAULTS = {
+  en: { steps: steps.map((s) => ({ title: s.title.en, description: s.description.en })) },
+  ar: { steps: steps.map((s) => ({ title: s.title.ar, description: s.description.ar })) },
+};
+
 export default function ProcessSection() {
   const { t, locale } = useLanguage();
+  const content = useCmsSection('process', DEFAULTS);
+  // An admin who adds a step gets an icon; one who removes a step loses one.
+  const items = content.steps.map((step: { title: string; description: string }, i: number) => ({
+    ...step,
+    icon: ICONS[i % ICONS.length],
+  }));
 
   return (
     <section className="relative py-12 lg:py-16 bg-cream-100 overflow-hidden">
@@ -77,8 +92,8 @@ export default function ProcessSection() {
           <span className="inline-block px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-champagne rounded-full font-medium">
             {locale === 'ar' ? 'رحلة الإبداع' : 'Crafted Journey'}
           </span>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
-            <span className="gradient-text-rose">{t('sections.process')}</span>
+          <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] leading-tight text-ink-800 mb-3">
+            {t('sections.process')}
           </h2>
           <p className="text-cream-700 text-base sm:text-lg max-w-2xl mx-auto">
             {t('sections.processSubtitle')}
@@ -92,7 +107,7 @@ export default function ProcessSection() {
             <div className="absolute top-7 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-kcc-rose/40 to-transparent" />
 
             <div className="grid grid-cols-6 gap-4">
-              {steps.map((step, index) => {
+              {items.map((step, index) => {
                 const Icon = step.icon;
                 return (
                   <motion.div
@@ -109,18 +124,18 @@ export default function ProcessSection() {
                     </div>
 
                     {/* Step number badge */}
-                    <span className="absolute top-0 -end-1 w-5 h-5 rounded-full bg-white border border-kcc-beige/60 text-[10px] font-bold text-kcc-beige-dark flex items-center justify-center shadow-soft">
+                    <span className="absolute top-0 -end-1 w-5 h-5 rounded-full bg-surface border border-kcc-beige/60 text-[10px] font-bold text-kcc-beige-dark flex items-center justify-center shadow-soft">
                       {index + 1}
                     </span>
 
                     {/* Title */}
                     <h3 className="text-sm font-semibold text-ink-700 mb-2">
-                      {locale === 'ar' ? step.title.ar : step.title.en}
+                      {step.title}
                     </h3>
 
                     {/* Description */}
                     <p className="text-xs text-cream-700 leading-relaxed px-1">
-                      {locale === 'ar' ? step.description.ar : step.description.en}
+                      {step.description}
                     </p>
                   </motion.div>
                 );
@@ -136,13 +151,13 @@ export default function ProcessSection() {
             <div className="absolute start-7 top-0 bottom-0 w-[2px] bg-gradient-to-b from-kcc-rose/40 via-kcc-beige/40 to-transparent" />
 
             <div className="space-y-8">
-              {steps.map((step, index) => {
+              {items.map((step, index) => {
                 const Icon = step.icon;
                 return (
                   <motion.div
                     key={index}
-                    initial={{ opacity: 0, x: locale === 'ar' ? 30 : -30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
                     className="relative flex items-start gap-5"
@@ -160,10 +175,10 @@ export default function ProcessSection() {
                         </span>
                       </div>
                       <h3 className="text-base font-semibold text-ink-700 mb-1.5">
-                        {locale === 'ar' ? step.title.ar : step.title.en}
+                        {step.title}
                       </h3>
                       <p className="text-sm text-cream-700 leading-relaxed">
-                        {locale === 'ar' ? step.description.ar : step.description.en}
+                        {step.description}
                       </p>
                     </div>
                   </motion.div>

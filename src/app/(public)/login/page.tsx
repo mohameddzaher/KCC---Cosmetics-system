@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import PasswordToggle from '@/components/common/PasswordToggle';
 
 export default function LoginPage() {
   const { t } = useLanguage();
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -58,7 +60,7 @@ export default function LoginPage() {
         transition={{ duration: 0.5 }}
         className="relative w-full max-w-md"
       >
-        <div className="bg-white border border-cream-300 shadow-soft rounded-2xl p-8 backdrop-blur-sm">
+        <div className="bg-surface border border-cream-300 shadow-soft rounded-2xl p-8 backdrop-blur-sm">
           {/* Logo */}
           <div className="text-center mb-8">
             <Link href="/" className="inline-block">
@@ -94,7 +96,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full ps-12 pe-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors"
+                  className="w-full ps-12 pe-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors"
                   placeholder={t('auth.emailPlaceholder')}
                 />
               </div>
@@ -105,13 +107,14 @@ export default function LoginPage() {
               <div className="relative">
                 <Lock size={18} className="absolute start-4 top-1/2 -translate-y-1/2 text-cream-600" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full ps-12 pe-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors"
+                  className="w-full ps-12 pe-12 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark transition-colors"
                   placeholder={t('auth.passwordPlaceholder')}
                 />
+                <PasswordToggle shown={showPassword} onToggle={() => setShowPassword((v) => !v)} />
               </div>
             </div>
 

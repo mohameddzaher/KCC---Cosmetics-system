@@ -8,25 +8,15 @@ import {
 } from 'lucide-react';
 import { useLivePoll } from '@/lib/useLivePoll';
 import OrdersStats from '@/components/admin/OrdersStats';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { ORDER_STATUSES, statusBadgeClass, statusLabel } from '@/lib/orderWorkflow';
 
-const statusBadgeClasses: Record<string, string> = {
-  'Submitted': 'bg-blue-500/10 text-blue-400',
-  'Under Review': 'bg-yellow-500/10 text-yellow-400',
-  'Approved': 'bg-green-500/10 text-green-400',
-  'Quotation Sent': 'bg-orange-500/10 text-orange-400',
-  'Awaiting Payment': 'bg-amber-500/10 text-amber-400',
-  'In Production': 'bg-purple-500/10 text-purple-400',
-  'Shipped': 'bg-cyan-500/10 text-cyan-400',
-  'Delivered': 'bg-emerald-500/10 text-emerald-400',
-  'Closed': 'bg-dark-500/10 text-dark-400',
-};
-
-const allStatuses = [
-  'All', 'Submitted', 'Under Review', 'Approved', 'Quotation Sent',
-  'Awaiting Payment', 'In Production', 'Shipped', 'Delivered', 'Closed'
-];
+// The filter list is derived from the workflow, so a new status appears here
+// the moment it is added to src/lib/orderWorkflow.ts.
+const allStatuses = ['All', ...ORDER_STATUSES];
 
 export default function OrdersPage() {
+  const { t, tx, locale } = useLanguage();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -121,21 +111,21 @@ export default function OrdersPage() {
       <OrdersStats />
 
       {/* Filters Row */}
-      <div className="flex flex-wrap items-center gap-3 p-4 bg-dark-900 border border-dark-800 rounded-xl">
+      <div className="flex flex-wrap items-center gap-3 p-4 bg-surface border border-line rounded-xl">
         {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
-          <Search size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-dark-500" />
+          <Search size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); }}
-            placeholder="Search orders, customers..."
-            className="w-full ps-9 pe-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 placeholder:text-dark-500 focus:border-kcc-green focus:outline-none"
+            placeholder={tx('Search orders, customers...')}
+            className="w-full ps-9 pe-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg placeholder:text-fg-subtle focus:border-kcc-green focus:outline-none"
           />
         </div>
 
         {/* Type Filter */}
-        <div className="flex items-center gap-1 p-0.5 bg-dark-800 rounded-lg">
+        <div className="flex items-center gap-1 p-0.5 bg-surface-2 rounded-lg">
           {[
             { value: 'all', label: 'All', icon: null },
             { value: 'sample', label: 'Sample', icon: ShoppingCart },
@@ -145,7 +135,7 @@ export default function OrdersPage() {
               key={opt.value}
               onClick={() => { setTypeFilter(opt.value); setCurrentPage(1); }}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                typeFilter === opt.value ? 'bg-kcc-green/20 text-kcc-green' : 'text-dark-400 hover:text-dark-200'
+                typeFilter === opt.value ? 'bg-kcc-green/20 text-kcc-green' : 'text-fg-muted hover:text-fg'
               }`}
             >
               {opt.icon && <opt.icon size={13} />}
@@ -158,81 +148,81 @@ export default function OrdersPage() {
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-          className="px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none appearance-none cursor-pointer"
+          className="field max-w-[14rem] cursor-pointer"
         >
-          {allStatuses.map(s => (
-            <option key={s} value={s}>{s}</option>
+          {allStatuses.map((s) => (
+            <option key={s} value={s}>
+              {s === 'All' ? t('admin.allStatuses') : statusLabel(s, locale)}
+            </option>
           ))}
         </select>
 
         {/* Date Range */}
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Calendar size={14} className="absolute start-2.5 top-1/2 -translate-y-1/2 text-dark-500" />
+            <Calendar size={14} className="absolute start-2.5 top-1/2 -translate-y-1/2 text-fg-subtle" />
             <input
               type="date"
               value={dateFrom}
               onChange={(e) => { setDateFrom(e.target.value); }}
-              className="ps-8 pe-2 py-2 text-xs bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+              className="ps-8 pe-2 py-2 text-xs bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
             />
           </div>
-          <span className="text-dark-500 text-xs">to</span>
+          <span className="text-fg-subtle text-xs">to</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => { setDateTo(e.target.value); }}
-            className="px-2 py-2 text-xs bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+            className="px-2 py-2 text-xs bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
           />
         </div>
 
         {/* Export */}
         <button
           onClick={handleExportCSV}
-          className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-dark-300 border border-dark-700 rounded-lg hover:text-dark-50 hover:border-dark-600 transition-colors"
+          className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-fg-muted border border-line rounded-lg hover:text-fg hover:border-line-strong transition-colors"
         >
-          <Download size={15} />
-          Export CSV
-        </button>
+          <Download size={15} />{tx('Export CSV')}</button>
       </div>
 
       {/* Results Count */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-dark-400">
+        <p className="text-sm text-fg-muted">
           Showing {filteredOrders.length} of {totalOrders} orders
         </p>
       </div>
 
       {/* Orders Table */}
-      <div className="bg-dark-900 border border-dark-800 rounded-xl overflow-hidden">
+      <div className="bg-surface border border-line rounded-xl overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-48">
             <Loader2 className="animate-spin text-kcc-green" size={24} />
           </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-dark-400">
+          <div className="flex flex-col items-center justify-center h-48 text-fg-muted">
             <ShoppingCart size={32} className="mb-2" />
-            <p>No orders found</p>
+            <p>{tx('No orders found')}</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="scroll-thin w-full min-w-0 overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-dark-800">
-                  <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Order #</th>
-                  <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Type</th>
-                  <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Customer</th>
-                  <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Status</th>
-                  <th className="text-end text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Total</th>
-                  <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Payment</th>
-                  <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Date</th>
-                  <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Actions</th>
+                <tr className="border-b border-line">
+                  <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Order #')}</th>
+                  <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Type')}</th>
+                  <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Customer')}</th>
+                  <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Status')}</th>
+                  <th className="text-end text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Total')}</th>
+                  <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Payment')}</th>
+                  <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Date')}</th>
+                  <th className="text-center text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Actions')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-dark-800">
+              <tbody className="divide-y divide-line">
                 {filteredOrders.map((order) => (
-                  <tr key={order._id} className="hover:bg-dark-800/50 transition-colors cursor-pointer" onClick={() => window.location.href = `/admin/orders/${order._id}`}>
+                  <tr key={order._id} className="hover:bg-surface-2/50 transition-colors cursor-pointer" onClick={() => window.location.href = `/admin/orders/${order._id}`}>
                     <td className="px-5 py-3.5">
-                      <span className="text-sm font-medium text-dark-100">{order.orderNumber}</span>
+                      <span className="text-sm font-medium text-fg">{order.orderNumber}</span>
                     </td>
                     <td className="px-5 py-3.5">
                       <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
@@ -242,15 +232,15 @@ export default function OrdersPage() {
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
-                      <p className="text-sm text-dark-200">{order.customerInfo?.personName || order.userId?.name || '-'}</p>
-                      <p className="text-xs text-dark-500">{order.customerInfo?.companyName || order.userId?.company || ''}</p>
+                      <p className="text-sm text-fg">{order.customerInfo?.personName || order.userId?.name || '-'}</p>
+                      <p className="text-xs text-fg-subtle">{order.customerInfo?.companyName || order.userId?.company || ''}</p>
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${statusBadgeClasses[order.status] || ''}`}>
-                        {order.status}
+                      <span className={`badge ${statusBadgeClass(order.status)}`}>
+                        {statusLabel(order.status, locale)}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-end text-sm text-dark-200 font-medium">${(order.totals?.total || 0).toLocaleString()}</td>
+                    <td className="px-5 py-3.5 text-end text-sm text-fg font-medium">${(order.totals?.total || 0).toLocaleString()}</td>
                     <td className="px-5 py-3.5">
                       <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
                         order.paymentStatus === 'paid' ? 'bg-green-500/10 text-green-400' :
@@ -260,9 +250,9 @@ export default function OrdersPage() {
                         {order.paymentStatus}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-sm text-dark-400">{formatDate(order.createdAt)}</td>
+                    <td className="px-5 py-3.5 text-sm text-fg-muted">{formatDate(order.createdAt)}</td>
                     <td className="px-5 py-3.5 text-center" onClick={(e) => e.stopPropagation()}>
-                      <Link href={`/admin/orders/${order._id}`} className="inline-flex p-1.5 text-dark-400 hover:text-kcc-green hover:bg-dark-800 rounded-lg transition-colors">
+                      <Link href={`/admin/orders/${order._id}`} className="inline-flex p-1.5 text-fg-muted hover:text-kcc-green hover:bg-surface-2 rounded-lg transition-colors">
                         <Eye size={16} />
                       </Link>
                     </td>
@@ -277,14 +267,14 @@ export default function OrdersPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-dark-500">
+          <p className="text-sm text-fg-subtle">
             Page {currentPage} of {totalPages}
           </p>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-2 text-dark-400 hover:text-dark-50 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-dark-800"
+              className="p-2 text-fg-muted hover:text-fg disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-surface-2"
             >
               <ChevronLeft size={16} />
             </button>
@@ -304,7 +294,7 @@ export default function OrdersPage() {
                   key={page}
                   onClick={() => setCurrentPage(page)}
                   className={`w-8 h-8 text-sm rounded-lg transition-colors ${
-                    currentPage === page ? 'bg-kcc-green/20 text-kcc-green font-medium' : 'text-dark-400 hover:text-dark-50 hover:bg-dark-800'
+                    currentPage === page ? 'bg-kcc-green/20 text-kcc-green font-medium' : 'text-fg-muted hover:text-fg hover:bg-surface-2'
                   }`}
                 >
                   {page}
@@ -314,7 +304,7 @@ export default function OrdersPage() {
             <button
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="p-2 text-dark-400 hover:text-dark-50 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-dark-800"
+              className="p-2 text-fg-muted hover:text-fg disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-surface-2"
             >
               <ChevronRight size={16} />
             </button>

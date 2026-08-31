@@ -1,6 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
+import { useEffect } from 'react';
 import CTAButton from './CTAButton';
 
 interface SectionIntroProps {
@@ -10,12 +11,19 @@ interface SectionIntroProps {
   imageUrl: string;
   imageAlt?: string;
   onNext: () => void;
+  onBack?: () => void;
+  backLabel?: string;
   ctaLabel?: string;
+  stepKey: string;
 }
 
 /**
- * Section intro — shown before Phase 2, Phase 3, Phase 4.
- * Layout: 50/50 split — image left, copy right.
+ * Divider screen between phases.
+ *
+ * The image is a bounded panel, not a full-bleed hero: it used to be sized off
+ * the viewport, which on a laptop pushed the copy and the button below the
+ * fold and made every intro feel oversized. Now the whole screen fits inside
+ * one viewport height at every breakpoint, with the image capped.
  */
 export default function SectionIntro({
   eyebrow,
@@ -24,41 +32,69 @@ export default function SectionIntro({
   imageUrl,
   imageAlt = '',
   onNext,
+  onBack,
+  backLabel,
   ctaLabel = 'Begin',
+  stepKey,
 }: SectionIntroProps) {
-  return (
-    <div className="min-h-[calc(100vh-220px)] grid grid-cols-1 lg:grid-cols-2">
-      {/* Image */}
-      <motion.div
-        initial={{ opacity: 0, scale: 1.04 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.7 }}
-        className="relative overflow-hidden order-1 lg:order-1 h-72 lg:h-auto"
-      >
-        <img src={imageUrl} alt={imageAlt} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-cream-50/30 via-transparent to-cream-50/20" />
-      </motion.div>
+  const reduce = useReducedMotion();
 
-      {/* Copy */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.15 }}
-        className="flex items-center px-6 sm:px-10 lg:px-16 py-16 bg-cream-50"
-      >
-        <div className="max-w-lg">
-          <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-kcc-rose-dark mb-5">
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [stepKey]);
+
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
+        {/* Copy first in the DOM so it reads first on a phone. */}
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="order-2 lg:order-1"
+        >
+          <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.3em] text-kcc-rose-dark">
             {eyebrow}
           </p>
-          <h2 className="font-serif text-4xl sm:text-5xl lg:text-6xl leading-[1.05] text-ink-800 mb-6">
+          <h2 className="font-serif text-3xl leading-[1.08] text-ink-800 sm:text-4xl lg:text-5xl">
             {headline}
           </h2>
-          <p className="text-base sm:text-lg text-cream-800 leading-relaxed mb-10">
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-cream-800 sm:text-lg">
             {description}
           </p>
-          <CTAButton label={ctaLabel} onClick={onNext} />
-        </div>
-      </motion.div>
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            <CTAButton label={ctaLabel} onClick={onNext} />
+            {onBack && backLabel && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="text-xs uppercase tracking-[0.2em] text-cream-700 transition-colors hover:text-ink-700"
+              >
+                {backLabel}
+              </button>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Image panel — capped height so it never dominates the screen. */}
+        <motion.div
+          initial={reduce ? false : { opacity: 0, scale: 1.02 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+          className="order-1 lg:order-2"
+        >
+          <div className="relative overflow-hidden rounded-3xl border border-cream-300 shadow-soft-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUrl}
+              alt={imageAlt}
+              loading="eager"
+              className="h-48 w-full object-cover sm:h-64 lg:h-[26rem]"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-cream-50/25 via-transparent to-transparent" />
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }

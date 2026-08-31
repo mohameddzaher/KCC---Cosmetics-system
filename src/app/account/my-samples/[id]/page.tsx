@@ -8,10 +8,12 @@ import {
   ArrowLeft, Package, Calendar, Truck, ArrowRight, Beaker, FlaskConical,
   Shield, FileText, Factory, Palette, User, CreditCard, Hash,
   MapPin, Phone, Mail, Building2, CheckCircle, XCircle, Send, Loader2,
-  AlertCircle, MessageSquare, Droplets
+  AlertCircle, MessageSquare, Droplets, RefreshCw
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import OrderProgressTracker from '@/components/account/OrderProgressTracker';
+import OrderFeedbackCard from '@/components/account/OrderFeedbackCard';
+import { statusLabel } from '@/lib/orderWorkflow';
 
 const statusColors: Record<string, string> = {
   Submitted: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
@@ -22,7 +24,7 @@ const statusColors: Record<string, string> = {
   'In Production': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
   Shipped: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
   Delivered: 'bg-kcc-green/10 text-kcc-green border-kcc-green/20',
-  Closed: 'bg-dark-600/10 text-dark-400 border-dark-600/20',
+  Closed: 'bg-surface-3/10 text-fg-muted border-line-strong/20',
 };
 
 function formatDate(dateStr: string | undefined, dateLocale: string = 'en-US') {
@@ -46,7 +48,7 @@ function BoolBadge({ value }: { value: boolean | undefined }) {
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 text-dark-500 text-sm">
+    <span className="inline-flex items-center gap-1 text-fg-subtle text-sm">
       <XCircle size={14} />
       No
     </span>
@@ -55,9 +57,9 @@ function BoolBadge({ value }: { value: boolean | undefined }) {
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex justify-between items-start py-2.5 border-b border-dark-800/30 last:border-b-0">
-      <span className="text-sm text-dark-400 shrink-0 pr-4">{label}</span>
-      <span className="text-sm text-dark-100 font-medium text-end">{value || '-'}</span>
+    <div className="flex justify-between items-start py-2.5 border-b border-line/30 last:border-b-0">
+      <span className="text-sm text-fg-muted shrink-0 pr-4">{label}</span>
+      <span className="text-sm text-fg font-medium text-end">{value || '-'}</span>
     </div>
   );
 }
@@ -71,11 +73,11 @@ function SectionCard({ title, icon: Icon, children }: {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-dark-900/50 border border-dark-800 rounded-2xl overflow-hidden"
+      className="bg-surface/50 border border-line rounded-2xl overflow-hidden"
     >
-      <div className="flex items-center gap-2 px-5 py-3.5 border-b border-dark-800 bg-dark-800/20">
+      <div className="flex items-center gap-2 px-5 py-3.5 border-b border-line bg-surface-2/20">
         <Icon size={16} className="text-kcc-green shrink-0" />
-        <h3 className="text-sm font-semibold text-dark-200 uppercase tracking-wider">{title}</h3>
+        <h3 className="text-sm font-semibold text-fg uppercase tracking-wider">{title}</h3>
       </div>
       <div className="px-5 py-4">
         {children}
@@ -211,14 +213,14 @@ export default function SampleDetailPage() {
       <div className="space-y-4">
         <Link
           href="/account/my-samples"
-          className="inline-flex items-center gap-2 text-sm text-dark-400 hover:text-kcc-green transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-fg-muted hover:text-kcc-green transition-colors"
         >
           <ArrowLeft size={16} />
           {t('samples.backToSamples')}
         </Link>
         <div className="flex flex-col items-center justify-center py-20">
-          <AlertCircle size={48} className="text-dark-600 mb-4" />
-          <p className="text-dark-400 mb-4">{error}</p>
+          <AlertCircle size={48} className="text-fg-subtle mb-4" />
+          <p className="text-fg-muted mb-4">{error}</p>
           <button
             onClick={() => loadOrder()}
             className="text-kcc-green hover:text-kcc-green-light text-sm font-medium transition-colors"
@@ -234,7 +236,6 @@ export default function SampleDetailPage() {
 
   const survey = order.surveyData || {};
   const customerInfo = order.customerInfo || {};
-  const isDelivered = order.status === 'Delivered';
   const productType = survey.productType || '';
   const size = survey.size || '';
   const containerType = survey.containerType || '';
@@ -255,7 +256,7 @@ export default function SampleDetailPage() {
       {/* Back link */}
       <Link
         href="/account/my-samples"
-        className="inline-flex items-center gap-2 text-sm text-dark-400 hover:text-kcc-green transition-colors"
+        className="inline-flex items-center gap-2 text-sm text-fg-muted hover:text-kcc-green transition-colors"
       >
         <ArrowLeft size={16} />
         {t('samples.backToSamples')}
@@ -265,7 +266,7 @@ export default function SampleDetailPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-dark-900/50 border border-dark-800 rounded-2xl p-6"
+        className="bg-surface/50 border border-line rounded-2xl p-6"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
@@ -274,19 +275,19 @@ export default function SampleDetailPage() {
             </div>
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-xl font-bold text-dark-50">
+                <h1 className="text-xl font-bold text-fg">
                   {productType || t('samples.sample')}
                 </h1>
-                <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border ${statusColors[order.status] || 'bg-dark-700 text-dark-400 border-dark-600'}`}>
-                  {t(`statuses.${order.status}`)}
+                <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border ${statusColors[order.status] || 'bg-surface-3 text-fg-muted border-line-strong'}`}>
+                  {statusLabel(order.status, locale)}
                 </span>
               </div>
-              <p className="text-sm text-dark-400">
+              <p className="text-sm text-fg-muted">
                 {containerType && size ? `${containerType} - ${size}` : ''}
                 {survey.skinType ? ` | ${survey.skinType}` : ''}
                 {survey.primaryGoal ? ` | ${survey.primaryGoal}` : ''}
               </p>
-              <div className="flex items-center gap-4 mt-2 text-xs text-dark-500">
+              <div className="flex items-center gap-4 mt-2 text-xs text-fg-subtle">
                 <span className="font-mono flex items-center gap-1">
                   <Hash size={10} />
                   {order.orderNumber}
@@ -299,30 +300,37 @@ export default function SampleDetailPage() {
             </div>
           </div>
 
-          {/* Reorder as Bulk - prominent for delivered */}
-          {isDelivered && (
-            <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-              <Link
-                href={`/order/bulk?fromSample=${sampleId}`}
-                className="flex items-center justify-center gap-2 px-5 py-3 bg-kcc-beige text-dark-950 font-semibold rounded-xl hover:bg-kcc-beige/90 transition-colors"
-              >
-                <Truck size={16} />
-                {t('order.orderThisSample')}
-                <ArrowRight size={16} />
-              </Link>
-              <Link
-                href={`/order/bulk?fromSample=${sampleId}`}
-                className="flex items-center justify-center gap-2 px-5 py-3 bg-kcc-beige/10 border border-kcc-beige/30 text-kcc-beige font-semibold rounded-xl hover:bg-kcc-beige/20 transition-colors"
-              >
-                <Truck size={16} />
-                {t('order.reorderAsBulk')}
-              </Link>
-            </div>
-          )}
+          {/*
+            Two genuinely different actions, and available from the moment the
+            order exists — not only once it has been delivered, and never taken
+            away when an admin closes the order. Wanting the same product again
+            is not something the internal workflow should be able to switch off.
+          */}
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+            <Link
+              href={`/order/sample?from=${sampleId}`}
+              title={t('order.orderAgainHint')}
+              className="flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 font-semibold text-brand-fg transition-colors hover:bg-brand-hover"
+            >
+              <RefreshCw size={16} />
+              {t('order.orderAgainEditable')}
+              <ArrowRight size={16} className="rtl-flip" />
+            </Link>
+            <Link
+              href={`/order/bulk?fromSample=${sampleId}`}
+              className="flex items-center justify-center gap-2 rounded-xl border border-line bg-surface px-5 py-3 font-semibold text-fg transition-colors hover:bg-surface-2"
+            >
+              <Truck size={16} />
+              {t('order.reorderAsBulk')}
+            </Link>
+          </div>
         </div>
       </motion.div>
 
       <OrderProgressTracker status={order.status} updatedAt={order.updatedAt} />
+
+      {/* Once it is delivered, ask how it went — and show any reply from KCC. */}
+      <OrderFeedbackCard orderId={order._id} />
 
       {/* Detail sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -335,8 +343,8 @@ export default function SampleDetailPage() {
             </span>
           } />
           <DetailRow label={t('samples.status')} value={
-            <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full border ${statusColors[order.status] || 'bg-dark-700 text-dark-400 border-dark-600'}`}>
-              {t(`statuses.${order.status}`)}
+            <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full border ${statusColors[order.status] || 'bg-surface-3 text-fg-muted border-line-strong'}`}>
+              {statusLabel(order.status, locale)}
             </span>
           } />
           <DetailRow label={t('samples.created')} value={formatDate(order.createdAt, dateLocale)} />
@@ -434,7 +442,7 @@ export default function SampleDetailPage() {
         {/* Brand Vision */}
         {survey.brandVision && (
           <SectionCard title={t('samples.brandVisionSection')} icon={Palette}>
-            <p className="text-sm text-dark-200 leading-relaxed">{survey.brandVision}</p>
+            <p className="text-sm text-fg leading-relaxed">{survey.brandVision}</p>
           </SectionCard>
         )}
 
@@ -442,20 +450,20 @@ export default function SampleDetailPage() {
         <SectionCard title={t('samples.customerInfoSection')} icon={User}>
           <DetailRow label={t('samples.customerName')} value={
             <span className="flex items-center gap-1.5">
-              <User size={12} className="text-dark-500" />
+              <User size={12} className="text-fg-subtle" />
               {customerInfo.personName || order.userId?.name}
             </span>
           } />
           <DetailRow label={t('samples.customerEmail')} value={
             <span className="flex items-center gap-1.5">
-              <Mail size={12} className="text-dark-500" />
+              <Mail size={12} className="text-fg-subtle" />
               {customerInfo.email || order.userId?.email}
             </span>
           } />
           {(customerInfo.phone || order.userId?.phone) && (
             <DetailRow label={t('samples.customerPhone')} value={
               <span className="flex items-center gap-1.5">
-                <Phone size={12} className="text-dark-500" />
+                <Phone size={12} className="text-fg-subtle" />
                 {customerInfo.phone || order.userId?.phone}
               </span>
             } />
@@ -463,7 +471,7 @@ export default function SampleDetailPage() {
           {(customerInfo.companyName || order.userId?.company) && (
             <DetailRow label={t('samples.customerCompany')} value={
               <span className="flex items-center gap-1.5">
-                <Building2 size={12} className="text-dark-500" />
+                <Building2 size={12} className="text-fg-subtle" />
                 {customerInfo.companyName || order.userId?.company}
               </span>
             } />
@@ -471,7 +479,7 @@ export default function SampleDetailPage() {
           {(customerInfo.country || customerInfo.city) && (
             <DetailRow label={t('samples.customerLocation')} value={
               <span className="flex items-center gap-1.5">
-                <MapPin size={12} className="text-dark-500" />
+                <MapPin size={12} className="text-fg-subtle" />
                 {[customerInfo.city, customerInfo.country].filter(Boolean).join(', ')}
               </span>
             } />
@@ -517,11 +525,11 @@ export default function SampleDetailPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="bg-dark-900/50 border border-dark-800 rounded-2xl overflow-hidden"
+        className="bg-surface/50 border border-line rounded-2xl overflow-hidden"
       >
-        <div className="flex items-center gap-2 px-5 py-3.5 border-b border-dark-800 bg-dark-800/20">
+        <div className="flex items-center gap-2 px-5 py-3.5 border-b border-line bg-surface-2/20">
           <MessageSquare size={16} className="text-kcc-green shrink-0" />
-          <h3 className="text-sm font-semibold text-dark-200 uppercase tracking-wider">
+          <h3 className="text-sm font-semibold text-fg uppercase tracking-wider">
             {t('samples.addNotes')}
           </h3>
         </div>
@@ -531,7 +539,7 @@ export default function SampleDetailPage() {
             onChange={(e) => setNotes(e.target.value)}
             placeholder={t('samples.notesPlaceholder')}
             rows={4}
-            className="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-xl text-dark-50 placeholder:text-dark-500 focus:outline-none focus:border-kcc-green transition-colors resize-none text-sm"
+            className="w-full px-4 py-3 bg-surface-2 border border-line rounded-xl text-fg placeholder:text-fg-subtle focus:outline-none focus:border-kcc-green transition-colors resize-none text-sm"
           />
 
           {notesError && (
@@ -549,7 +557,7 @@ export default function SampleDetailPage() {
           )}
 
           <div className="flex items-center justify-between mt-3">
-            <p className="text-xs text-dark-500">
+            <p className="text-xs text-fg-subtle">
               {order.status === 'Submitted'
                 ? t('samples.modifiableStatus')
                 : t('samples.notesAttached')}
@@ -557,7 +565,7 @@ export default function SampleDetailPage() {
             <button
               onClick={handleSendNotes}
               disabled={sendingNotes || !notes.trim()}
-              className="flex items-center gap-2 px-4 py-2 bg-kcc-green hover:bg-kcc-green-light text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand-hover text-brand-fg text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {sendingNotes ? (
                 <Loader2 size={14} className="animate-spin" />
@@ -570,31 +578,34 @@ export default function SampleDetailPage() {
         </div>
       </motion.div>
 
-      {/* Reorder as Bulk - bottom CTA for delivered samples */}
-      {isDelivered && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-gradient-to-r from-kcc-beige/5 to-kcc-green/5 border border-kcc-beige/20 rounded-2xl p-6 text-center"
-        >
-          <Droplets size={32} className="text-kcc-beige mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-dark-50 mb-2">
-            {t('samples.happyWithSample')}
-          </h3>
-          <p className="text-sm text-dark-400 mb-4 max-w-md mx-auto">
-            {t('samples.convertToBulk')}
-          </p>
+      {/* Closing CTA — offers both routes, in the palette rather than beige-on-beige. */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="rounded-2xl border border-line bg-surface-2 p-6 text-center"
+      >
+        <Droplets size={30} className="mx-auto mb-3 text-brand" />
+        <h3 className="mb-2 text-lg font-semibold text-fg">{t('samples.happyWithSample')}</h3>
+        <p className="mx-auto mb-5 max-w-md text-sm text-fg-muted">{t('samples.convertToBulk')}</p>
+        <div className="flex flex-col items-center justify-center gap-2.5 sm:flex-row">
           <Link
             href={`/order/bulk?fromSample=${sampleId}`}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-kcc-beige hover:bg-kcc-beige/90 text-dark-950 font-semibold rounded-xl transition-colors shadow-lg"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3 font-semibold text-brand-fg transition-colors hover:bg-brand-hover"
           >
             <Truck size={18} />
-            {t('order.orderThisSample')}
-            <ArrowRight size={18} />
+            {t('order.reorderAsBulk')}
+            <ArrowRight size={18} className="rtl-flip" />
           </Link>
-        </motion.div>
-      )}
+          <Link
+            href={`/order/sample?from=${sampleId}`}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-surface px-6 py-3 font-semibold text-fg transition-colors hover:bg-surface-2"
+          >
+            <RefreshCw size={18} />
+            {t('order.orderAgainEditable')}
+          </Link>
+        </div>
+      </motion.div>
     </div>
   );
 }

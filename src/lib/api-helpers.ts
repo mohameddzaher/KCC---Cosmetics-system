@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, isAdmin, isStaff, SessionUser } from './auth';
+import { can, type Permission } from './roles';
 import connectDB from './db';
 
 export function jsonResponse(data: any, status = 200) {
@@ -20,6 +21,28 @@ export async function withAuth(
       const user = await getSession();
       if (!user) return errorResponse('Unauthorized', 401);
       if (roles && !roles.includes(user.role)) return errorResponse('Forbidden', 403);
+      return handler(req, user);
+    } catch (error: any) {
+      console.error('API Error:', error);
+      return errorResponse(error.message || 'Internal server error', 500);
+    }
+  };
+}
+
+/**
+ * Permission-gated route wrapper. Prefer this over hardcoding role lists so a
+ * new role automatically inherits the right access from src/lib/roles.ts.
+ */
+export function withPermission(
+  permission: Permission,
+  handler: (req: NextRequest, user: SessionUser) => Promise<NextResponse>
+) {
+  return async (req: NextRequest) => {
+    try {
+      await connectDB();
+      const user = await getSession();
+      if (!user) return errorResponse('Unauthorized', 401);
+      if (!can(user.role, permission)) return errorResponse('Forbidden', 403);
       return handler(req, user);
     } catch (error: any) {
       console.error('API Error:', error);

@@ -3,17 +3,17 @@ import mongoose from 'mongoose';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
 import { getSession, hashPassword } from '@/lib/auth';
+import { can, ROLES } from '@/lib/roles';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-const MANAGE_ROLES = ['SUPER_ADMIN', 'ADMIN'];
-const ALL_ROLES = ['SUPER_ADMIN', 'ADMIN', 'STAFF', 'CUSTOMER'];
+const ALL_ROLES: string[] = [...ROLES];
 const PRIVILEGED_ROLES = ['SUPER_ADMIN', 'ADMIN'];
 
 export async function GET(req: NextRequest, context: RouteContext) {
   try {
     const session = await getSession();
-    if (!session || !MANAGE_ROLES.includes(session.role)) {
+    if (!session || !can(session.role, 'users.view')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 export async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const session = await getSession();
-    if (!session || !MANAGE_ROLES.includes(session.role)) {
+    if (!session || !can(session.role, 'users.manage')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -50,6 +50,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       'name', 'email', 'company', 'phone', 'whatsapp', 'website',
       'country', 'city', 'address', 'isActive', 'languagePref',
       'stage', 'tags', 'source', 'accountManagerId',
+      'jobTitle', 'department',
     ];
     for (const f of editableFields) {
       if (body[f] !== undefined) update[f] = body[f];
@@ -61,6 +62,9 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     // Role changes — guarded
     if (body.role !== undefined && body.role !== target.role) {
+      if (String(target._id) === session.id) {
+        return NextResponse.json({ error: 'You cannot change your own role.' }, { status: 400 });
+      }
       if (!ALL_ROLES.includes(body.role)) {
         return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
       }
@@ -107,7 +111,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const session = await getSession();
-    if (!session || !MANAGE_ROLES.includes(session.role)) {
+    if (!session || !can(session.role, 'users.manage')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

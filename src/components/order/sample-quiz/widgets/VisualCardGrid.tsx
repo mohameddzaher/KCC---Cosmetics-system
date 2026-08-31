@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
+import OptionGrid from './OptionGrid';
 
 interface VisualCardGridProps {
   options: Array<{ value: string; label: string; meta?: { description?: string } }>;
@@ -22,7 +23,7 @@ export default function VisualCardGrid({ options, selected, onChange, maxSelect 
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <OptionGrid min="15rem" gap="1rem">
       {options.map((opt) => {
         const active = selected.includes(opt.value);
         const opacity =
@@ -35,15 +36,16 @@ export default function VisualCardGrid({ options, selected, onChange, maxSelect 
             type="button"
             whileHover={{ y: -2 }}
             whileTap={{ scale: 0.98 }}
+            aria-pressed={active}
             onClick={() => toggle(opt.value)}
             className={`group relative p-6 rounded-2xl border-2 transition-all duration-300 text-start ${
               active
-                ? 'border-espresso-900 bg-cream-50 shadow-soft-lg'
-                : 'border-cream-300 bg-white hover:border-ink-700 shadow-soft'
+                ? 'border-fg bg-cream-100 shadow-soft-lg'
+                : 'border-cream-300 bg-surface hover:border-ink-700 shadow-soft'
             }`}
           >
             {active && (
-              <span className="absolute top-3 end-3 w-7 h-7 rounded-full bg-espresso-900 text-cream-50 flex items-center justify-center">
+              <span className="absolute top-3 end-3 w-7 h-7 rounded-full bg-surface-inverse text-fg-inverse flex items-center justify-center">
                 <Check size={14} strokeWidth={3} />
               </span>
             )}
@@ -73,6 +75,6 @@ export default function VisualCardGrid({ options, selected, onChange, maxSelect 
           </motion.button>
         );
       })}
-    </div>
+    </OptionGrid>
   );
 }

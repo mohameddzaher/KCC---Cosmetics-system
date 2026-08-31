@@ -10,11 +10,11 @@ export default function RegisterPage() {
   const ar = locale === 'ar';
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
+    <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full text-center bg-white border border-cream-300 shadow-soft rounded-2xl p-8"
+        className="max-w-md w-full text-center bg-surface border border-cream-300 shadow-soft rounded-2xl p-8"
       >
         <div className="w-14 h-14 rounded-2xl bg-kcc-green/10 text-kcc-green flex items-center justify-center mx-auto mb-4">
           <Lock size={26} />

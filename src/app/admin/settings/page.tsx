@@ -5,6 +5,7 @@ import {
   Settings, Globe, Bell, Share2, Save, Loader2,
   CheckCircle, Mail, Phone, MapPin, Building2
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const defaultSettings = {
   general: {
@@ -46,9 +47,49 @@ const defaultSettings = {
 };
 
 export default function SettingsPage() {
+  const { tx } = useLanguage();
   const [settings, setSettings] = useState(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+
+  /**
+   * Whether the server can send mail at all. Every toggle below is inert
+   * without SMTP credentials, so this is checked and stated outright rather
+   * than left for someone to discover when an email never arrives.
+   */
+  const [mail, setMail] = useState<{ configured: boolean; from?: string; missing: string[] } | null>(null);
+  const [testTo, setTestTo] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/settings/mail', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setMail(d))
+      .catch(() => {});
+  }, []);
+
+  const sendTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const res = await fetch('/api/settings/mail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: testTo }),
+      });
+      const data = await res.json();
+      setTestResult(
+        res.ok
+          ? { ok: true, text: `Sent to ${data.to}. Check the inbox (and the spam folder).` }
+          : { ok: false, text: data.error || 'Send failed' }
+      );
+    } catch (e) {
+      setTestResult({ ok: false, text: e instanceof Error ? e.message : 'Send failed' });
+    } finally {
+      setTesting(false);
+    }
+  };
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<'general' | 'referral' | 'notifications'>('general');
@@ -135,9 +176,7 @@ export default function SettingsPage() {
       {/* Success Message */}
       {saveSuccess && (
         <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-sm">
-          <CheckCircle size={16} />
-          Settings saved successfully!
-        </div>
+          <CheckCircle size={16} />{tx('Settings saved successfully!')}</div>
       )}
 
       {/* Error Message */}
@@ -148,7 +187,7 @@ export default function SettingsPage() {
       )}
 
       {/* Section Navigation */}
-      <div className="flex flex-wrap gap-2 p-1 bg-dark-900 border border-dark-800 rounded-xl w-fit">
+      <div className="tab-bar">
         {sections.map((section) => {
           const Icon = section.icon;
           return (
@@ -159,7 +198,7 @@ export default function SettingsPage() {
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
                 activeSection === section.key
                   ? 'bg-kcc-green/10 text-kcc-green'
-                  : 'text-dark-400 hover:text-dark-50 hover:bg-dark-800'
+                  : 'text-fg-muted hover:text-fg hover:bg-surface-2'
               }`}
             >
               <Icon size={16} />
@@ -171,17 +210,17 @@ export default function SettingsPage() {
 
       {/* General Settings */}
       {activeSection === 'general' && (
-        <div className="bg-dark-900 border border-dark-800 rounded-xl">
-          <div className="flex items-center justify-between p-5 border-b border-dark-800">
+        <div className="bg-surface border border-line rounded-xl">
+          <div className="flex items-center justify-between p-5 border-b border-line">
             <div className="flex items-center gap-2">
               <Settings size={18} className="text-kcc-green" />
-              <h2 className="text-base font-semibold text-dark-50">General Settings</h2>
+              <h2 className="text-base font-semibold text-fg">{tx('General Settings')}</h2>
             </div>
             <button
               type="button"
               onClick={() => handleSave('general')}
               disabled={saving === 'general'}
-              className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors disabled:opacity-50"
             >
               {saving === 'general' ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               Save Changes
@@ -191,25 +230,23 @@ export default function SettingsPage() {
             {/* Site Name */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-dark-400 mb-1.5">
-                  <Globe size={12} /> Site Name (EN)
-                </label>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-fg-muted mb-1.5">
+                  <Globe size={12} />{tx('Site Name (EN)')}</label>
                 <input
                   type="text"
                   value={settings.general.siteName.en}
                   onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, siteName: { ...prev.general.siteName, en: e.target.value } } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                 />
               </div>
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-dark-400 mb-1.5">
-                  <Globe size={12} /> Site Name (AR)
-                </label>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-fg-muted mb-1.5">
+                  <Globe size={12} />{tx('Site Name (AR)')}</label>
                 <input
                   type="text"
                   value={settings.general.siteName.ar}
                   onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, siteName: { ...prev.general.siteName, ar: e.target.value } } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                   dir="rtl"
                 />
               </div>
@@ -218,25 +255,23 @@ export default function SettingsPage() {
             {/* Company Name */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-dark-400 mb-1.5">
-                  <Building2 size={12} /> Company Name (EN)
-                </label>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-fg-muted mb-1.5">
+                  <Building2 size={12} />{tx('Company Name (EN)')}</label>
                 <input
                   type="text"
                   value={settings.general.companyName.en}
                   onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, companyName: { ...prev.general.companyName, en: e.target.value } } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                 />
               </div>
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-dark-400 mb-1.5">
-                  <Building2 size={12} /> Company Name (AR)
-                </label>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-fg-muted mb-1.5">
+                  <Building2 size={12} />{tx('Company Name (AR)')}</label>
                 <input
                   type="text"
                   value={settings.general.companyName.ar}
                   onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, companyName: { ...prev.general.companyName, ar: e.target.value } } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                   dir="rtl"
                 />
               </div>
@@ -245,59 +280,55 @@ export default function SettingsPage() {
             {/* Contact Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-dark-400 mb-1.5">
-                  <Mail size={12} /> Contact Email
-                </label>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-fg-muted mb-1.5">
+                  <Mail size={12} />{tx('Contact Email')}</label>
                 <input
                   type="email"
                   value={settings.general.contactEmail}
                   onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, contactEmail: e.target.value } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                 />
               </div>
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-dark-400 mb-1.5">
-                  <Phone size={12} /> Contact Phone
-                </label>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-fg-muted mb-1.5">
+                  <Phone size={12} />{tx('Contact Phone')}</label>
                 <input
                   type="text"
                   value={settings.general.contactPhone}
                   onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, contactPhone: e.target.value } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                 />
               </div>
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-dark-400 mb-1.5">
-                  <Phone size={12} /> WhatsApp
-                </label>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-fg-muted mb-1.5">
+                  <Phone size={12} />{tx('WhatsApp')}</label>
                 <input
                   type="text"
                   value={settings.general.whatsapp}
                   onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, whatsapp: e.target.value } }))}
-                  placeholder="+20 1xx xxx xxxx"
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  placeholder="+966 5x xxx xxxx"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                 />
               </div>
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-dark-400 mb-1.5">
-                  <Phone size={12} /> Secondary Phone
-                </label>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-fg-muted mb-1.5">
+                  <Phone size={12} />{tx('Secondary Phone')}</label>
                 <input
                   type="text"
                   value={settings.general.phones.secondary}
                   onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, phones: { ...prev.general.phones, secondary: e.target.value } } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                 />
               </div>
             </div>
 
             {/* Department Emails */}
             <div>
-              <h3 className="text-sm font-medium text-dark-200 mb-3">Department Emails</h3>
+              <h3 className="text-sm font-medium text-fg mb-3">{tx('Department Emails')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {(['info', 'sales', 'support', 'hr', 'careers'] as const).map((dept) => (
                   <div key={dept}>
-                    <label className="flex items-center gap-1.5 text-xs font-medium text-dark-400 mb-1.5 capitalize">
+                    <label className="flex items-center gap-1.5 text-xs font-medium text-fg-muted mb-1.5 capitalize">
                       <Mail size={12} /> {dept}
                     </label>
                     <input
@@ -305,7 +336,7 @@ export default function SettingsPage() {
                       value={settings.general.emails[dept]}
                       onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, emails: { ...prev.general.emails, [dept]: e.target.value } } }))}
                       placeholder={`${dept}@kcc-bv.com`}
-                      className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                      className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                     />
                   </div>
                 ))}
@@ -315,25 +346,23 @@ export default function SettingsPage() {
             {/* Address */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-dark-400 mb-1.5">
-                  <MapPin size={12} /> Address (EN)
-                </label>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-fg-muted mb-1.5">
+                  <MapPin size={12} />{tx('Address (EN)')}</label>
                 <input
                   type="text"
                   value={settings.general.contactAddress.en}
                   onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, contactAddress: { ...prev.general.contactAddress, en: e.target.value } } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                 />
               </div>
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-dark-400 mb-1.5">
-                  <MapPin size={12} /> Address (AR)
-                </label>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-fg-muted mb-1.5">
+                  <MapPin size={12} />{tx('Address (AR)')}</label>
                 <input
                   type="text"
                   value={settings.general.contactAddress.ar}
                   onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, contactAddress: { ...prev.general.contactAddress, ar: e.target.value } } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                   dir="rtl"
                 />
               </div>
@@ -341,11 +370,11 @@ export default function SettingsPage() {
 
             {/* Social Media */}
             <div>
-              <h3 className="text-sm font-medium text-dark-200 mb-3">Social Media Links</h3>
+              <h3 className="text-sm font-medium text-fg mb-3">{tx('Social Media Links')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Object.entries(settings.general.socialMedia).map(([platform, url]) => (
                   <div key={platform}>
-                    <label className="block text-xs font-medium text-dark-400 mb-1.5 capitalize">{platform}</label>
+                    <label className="block text-xs font-medium text-fg-muted mb-1.5 capitalize">{platform}</label>
                     <input
                       type="url"
                       value={url}
@@ -356,7 +385,7 @@ export default function SettingsPage() {
                           socialMedia: { ...prev.general.socialMedia, [platform]: e.target.value }
                         }
                       }))}
-                      className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                      className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                       placeholder={`https://${platform}.com/...`}
                     />
                   </div>
@@ -369,17 +398,17 @@ export default function SettingsPage() {
 
       {/* Referral Program Settings */}
       {activeSection === 'referral' && (
-        <div className="bg-dark-900 border border-dark-800 rounded-xl">
-          <div className="flex items-center justify-between p-5 border-b border-dark-800">
+        <div className="bg-surface border border-line rounded-xl">
+          <div className="flex items-center justify-between p-5 border-b border-line">
             <div className="flex items-center gap-2">
               <Share2 size={18} className="text-kcc-beige" />
-              <h2 className="text-base font-semibold text-dark-50">Referral Program Configuration</h2>
+              <h2 className="text-base font-semibold text-fg">{tx('Referral Program Configuration')}</h2>
             </div>
             <button
               type="button"
               onClick={() => handleSave('referral')}
               disabled={saving === 'referral'}
-              className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors disabled:opacity-50"
             >
               {saving === 'referral' ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               Save Changes
@@ -392,53 +421,53 @@ export default function SettingsPage() {
                   type="checkbox"
                   checked={settings.referral.enabled}
                   onChange={(e) => setSettings(prev => ({ ...prev, referral: { ...prev.referral, enabled: e.target.checked } }))}
-                  className="w-4 h-4 rounded border-dark-700 bg-dark-950 text-kcc-green focus:ring-kcc-green"
+                  className="w-4 h-4 rounded border-line bg-bg text-kcc-green focus:ring-kcc-green"
                 />
-                <span className="text-sm font-medium text-dark-200">Enable Referral Program</span>
+                <span className="text-sm font-medium text-fg">{tx('Enable Referral Program')}</span>
               </label>
-              <p className="text-xs text-dark-500 mt-1 ms-6">When enabled, customers can share referral codes and earn credits.</p>
+              <p className="text-xs text-fg-subtle mt-1 ms-6">{tx('When enabled, customers can share referral codes and earn credits.')}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Credit Amount ($)</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Credit Amount ($)')}</label>
                 <input
                   type="number"
                   value={settings.referral.creditAmount}
                   onChange={(e) => setSettings(prev => ({ ...prev, referral: { ...prev.referral, creditAmount: Number(e.target.value) } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                 />
-                <p className="text-xs text-dark-500 mt-1">Amount credited per successful referral</p>
+                <p className="text-xs text-fg-subtle mt-1">{tx('Amount credited per successful referral')}</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Min Order for Credit ($)</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Min Order for Credit ($)')}</label>
                 <input
                   type="number"
                   value={settings.referral.minOrderForCredit}
                   onChange={(e) => setSettings(prev => ({ ...prev, referral: { ...prev.referral, minOrderForCredit: Number(e.target.value) } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                 />
-                <p className="text-xs text-dark-500 mt-1">Referred user must place an order above this amount</p>
+                <p className="text-xs text-fg-subtle mt-1">{tx('Referred user must place an order above this amount')}</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Max Credits Per User ($)</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Max Credits Per User ($)')}</label>
                 <input
                   type="number"
                   value={settings.referral.maxCreditsPerUser}
                   onChange={(e) => setSettings(prev => ({ ...prev, referral: { ...prev.referral, maxCreditsPerUser: Number(e.target.value) } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                 />
-                <p className="text-xs text-dark-500 mt-1">Maximum total credits a single user can earn</p>
+                <p className="text-xs text-fg-subtle mt-1">{tx('Maximum total credits a single user can earn')}</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Credit Expiration (days)</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Credit Expiration (days)')}</label>
                 <input
                   type="number"
                   value={settings.referral.expirationDays}
                   onChange={(e) => setSettings(prev => ({ ...prev, referral: { ...prev.referral, expirationDays: Number(e.target.value) } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                 />
-                <p className="text-xs text-dark-500 mt-1">Number of days before credits expire (0 = never)</p>
+                <p className="text-xs text-fg-subtle mt-1">{tx('Number of days before credits expire (0 = never)')}</p>
               </div>
             </div>
           </div>
@@ -447,39 +476,79 @@ export default function SettingsPage() {
 
       {/* Notification Settings */}
       {activeSection === 'notifications' && (
-        <div className="bg-dark-900 border border-dark-800 rounded-xl">
-          <div className="flex items-center justify-between p-5 border-b border-dark-800">
+        <div className="bg-surface border border-line rounded-xl">
+          <div className="flex items-center justify-between p-5 border-b border-line">
             <div className="flex items-center gap-2">
               <Bell size={18} className="text-yellow-400" />
-              <h2 className="text-base font-semibold text-dark-50">Notification Preferences</h2>
+              <h2 className="text-base font-semibold text-fg">{tx('Notification Preferences')}</h2>
             </div>
             <button
               type="button"
               onClick={() => handleSave('notifications')}
               disabled={saving === 'notifications'}
-              className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors disabled:opacity-50"
             >
               {saving === 'notifications' ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               Save Changes
             </button>
           </div>
           <div className="p-5 space-y-5">
+            {mail && !mail.configured && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
+                <p className="text-sm font-semibold text-fg">{tx('Email sending is not configured')}</p>
+                <p className="mt-1 text-xs text-fg-muted">
+                  {tx('These preferences are saved, but no mail can leave the server until SMTP credentials are set. Missing:')}{' '}
+                  <span className="font-mono">{mail.missing.join(', ')}</span>
+                </p>
+              </div>
+            )}
+            {mail?.configured && (
+              <div className="rounded-lg border border-line bg-surface-2 p-4">
+                <p className="text-sm font-medium text-fg">
+                  {tx('Sending from')} <span className="font-mono text-xs">{mail.from}</span>
+                </p>
+                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                  <input
+                    type="email"
+                    value={testTo}
+                    onChange={(e) => setTestTo(e.target.value)}
+                    placeholder={tx('you@example.com')}
+                    aria-label={tx('Send a test email')}
+                    className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2 text-sm text-fg focus:border-kcc-green focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={sendTest}
+                    disabled={testing || !testTo.includes('@')}
+                    className="shrink-0 rounded-lg border border-line px-3.5 py-2 text-sm font-medium text-fg transition-colors hover:bg-surface-3 disabled:opacity-50"
+                  >
+                    {testing ? <Loader2 size={14} className="animate-spin" /> : tx('Send a test email')}
+                  </button>
+                </div>
+                {testResult && (
+                  <p className={`mt-2 text-xs ${testResult.ok ? 'text-kcc-green' : 'text-red-500'}`}>
+                    {testResult.text}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Recipient Emails */}
             <div>
-              <label className="block text-xs font-medium text-dark-400 mb-1.5">Notification Recipients</label>
+              <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Notification Recipients')}</label>
               <input
                 type="text"
                 value={settings.notifications.recipientEmails}
                 onChange={(e) => setSettings(prev => ({ ...prev, notifications: { ...prev.notifications, recipientEmails: e.target.value } }))}
-                className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
-                placeholder="email1@kcc.com, email2@kcc.com"
+                className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
+                placeholder={tx('email1@kcc.com, email2@kcc.com')}
               />
-              <p className="text-xs text-dark-500 mt-1">Comma-separated list of email addresses</p>
+              <p className="text-xs text-fg-subtle mt-1">{tx('Comma-separated list of email addresses')}</p>
             </div>
 
             {/* Email Notifications */}
             <div>
-              <h3 className="text-sm font-medium text-dark-200 mb-3">Email Notifications</h3>
+              <h3 className="text-sm font-medium text-fg mb-3">{tx('Email Notifications')}</h3>
               <div className="space-y-3">
                 {[
                   { key: 'emailNewOrder', label: 'New Order Placed', desc: 'Receive email when a new order is submitted' },
@@ -487,13 +556,13 @@ export default function SettingsPage() {
                   { key: 'emailLowStock', label: 'Low Stock Alert', desc: 'Receive email when inventory falls below threshold' },
                   { key: 'emailNewCustomer', label: 'New Customer Registration', desc: 'Receive email when a new customer registers' },
                   { key: 'emailPaymentReceived', label: 'Payment Received', desc: 'Receive email when a payment is recorded' },
-                  { key: 'emailDailyReport', label: 'Daily Summary Report', desc: 'Receive a daily summary of orders and activity' },
-                  { key: 'emailWeeklyReport', label: 'Weekly Summary Report', desc: 'Receive a weekly summary with analytics' },
+                  { key: 'emailDailyReport', label: 'Daily Summary Report', desc: 'Requires a scheduled job on the server — not sent yet' },
+                  { key: 'emailWeeklyReport', label: 'Weekly Summary Report', desc: 'Requires a scheduled job on the server — not sent yet' },
                 ].map((item) => (
-                  <div key={item.key} className="flex items-start justify-between p-3 bg-dark-950 border border-dark-800 rounded-lg">
+                  <div key={item.key} className="flex items-start justify-between p-3 bg-bg border border-line rounded-lg">
                     <div>
-                      <p className="text-sm font-medium text-dark-200">{item.label}</p>
-                      <p className="text-xs text-dark-500 mt-0.5">{item.desc}</p>
+                      <p className="text-sm font-medium text-fg">{item.label}</p>
+                      <p className="text-xs text-fg-subtle mt-0.5">{item.desc}</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer shrink-0 ms-4">
                       <input
@@ -505,7 +574,7 @@ export default function SettingsPage() {
                         }))}
                         className="sr-only peer"
                       />
-                      <div className="w-9 h-5 bg-dark-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-dark-400 peer-checked:after:bg-dark-50 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-kcc-green"></div>
+                      <div className="w-9 h-5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-fg-subtle peer-checked:after:bg-surface after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-kcc-green"></div>
                     </label>
                   </div>
                 ))}

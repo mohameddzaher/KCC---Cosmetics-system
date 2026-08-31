@@ -1,108 +1,214 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Pencil, Loader2, Mail, Phone, Building2 } from 'lucide-react';
-import StepShell from '../StepShell';
-import CTAButton from '../CTAButton';
-import BottlePreview from '../BottlePreview';
+import { useEffect, useMemo, useState } from 'react';
+import { Building2, Loader2, Mail, Pencil, Phone } from 'lucide-react';
+import QuizShell from '../QuizShell';
+import StepFooter from '../StepFooter';
+import PackageThumb from '../widgets/packaging/PackageThumb';
 import { useQuiz } from '@/lib/sample-quiz/QuizContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { buildOrderPayload } from '@/lib/sample-quiz/payload';
-import type { HeroIngredientAnswer } from '@/lib/sample-quiz/types';
+import { PACKAGING_PART_KEYS } from '@/lib/sample-quiz/flow';
+import type { QuestionDoc, SpecMasterDoc, Step } from '@/lib/sample-quiz/flow';
+import type {
+  AnswerValue, CheckListAnswer, HeroIngredientAnswer, UploadAnswer,
+} from '@/lib/sample-quiz/types';
+import {
+  findBottle, findCap, findColor, findFinish, findLabel,
+} from '../widgets/packaging/shapes';
 
-interface SpecMaster {
-  categoryKey: string;
-  defaultTitleEn: string;
-  options: Array<{ value: string; labelEn: string }>;
-}
-interface BriefQ {
-  questionKey: string;
-  titleEn: string;
-  options?: Array<{ value: string; labelEn: string }>;
+interface Row {
+  key: string;
+  title: string;
+  display: string;
+  note?: string;
+  stepId?: string;
 }
 
-interface Props {
-  onEditPersonalization: () => void;
-  onEditBrief: () => void;
-  onEditCategory: () => void;
-  onEditSpecs: () => void;
+/**
+ * Final review.
+ *
+ * Two structural fixes over the old screen:
+ *   • the summary is a multi-column card grid, so it uses the width of the
+ *     display instead of one endless vertical ribbon;
+ *   • every single row has its own Edit link that jumps to exactly that step
+ *     and returns straight here — no walking the rest of the survey again.
+ */
+export default function ReviewStep({
+  steps,
+  onEditStep,
+  onBack,
+}: {
+  steps: Step[];
+  onEditStep: (stepId: string) => void;
   onBack: () => void;
-}
-
-export default function ReviewStep({ onEditPersonalization, onEditBrief, onEditCategory, onEditSpecs, onBack }: Props) {
+}) {
   const { state, dispatch } = useQuiz();
   const { user } = useAuth();
+  const { t, pick } = useLanguage();
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phone, setPhone] = useState('');
   const [company, setCompany] = useState('');
   const [emailLocal, setEmailLocal] = useState(user?.email || '');
-  const [briefQs, setBriefQs] = useState<BriefQ[]>([]);
-  const [masters, setMasters] = useState<SpecMaster[]>([]);
+  const [masters, setMasters] = useState<SpecMasterDoc[]>([]);
 
   useEffect(() => {
-    fetch('/api/sample-quiz/brief-questions', { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((d) => setBriefQs(Array.isArray(d) ? d : []));
+    if (user?.email) setEmailLocal(user.email);
+  }, [user?.email]);
+
+  useEffect(() => {
     fetch('/api/sample-quiz/spec-options', { cache: 'no-store' })
       .then((r) => r.json())
-      .then((d) => setMasters(Array.isArray(d.categories) ? d.categories : []));
+      .then((d) => setMasters(Array.isArray(d.categories) ? d.categories : []))
+      .catch(() => setMasters([]));
   }, []);
 
-  const briefSummary = useMemo(() => {
-    return briefQs
-      .map((q) => {
-        const ans = state.briefAnswers[q.questionKey];
-        if (!ans || (Array.isArray(ans) && ans.length === 0)) return null;
-        let display = '';
-        if (typeof ans === 'string') {
-          display = q.options?.find((o) => o.value === ans)?.labelEn || ans;
-        } else if (Array.isArray(ans)) {
-          display = ans.map((v) => q.options?.find((o) => o.value === v)?.labelEn || v).join(', ');
-        } else {
-          // hero-ingredient
-          const h = ans as HeroIngredientAnswer;
-          if (!h.enabled) display = 'No (let R&D suggest)';
-          else display = `${h.ingredients.join(', ')}${h.needsRDHelp ? ' • R&D help requested' : ''}${h.excludedIngredients ? ` • avoid: ${h.excludedIngredients}` : ''}`;
-        }
-        return { key: q.questionKey, title: q.titleEn, display, note: state.questionNotes[q.questionKey] };
-      })
-      .filter(Boolean) as Array<{ key: string; title: string; display: string; note?: string }>;
-  }, [briefQs, state.briefAnswers, state.questionNotes]);
-
-  const specsSummary = useMemo(() => {
-    return Object.entries(state.specs)
-      .filter(([, v]) => v && v.selected.length > 0)
-      .map(([key, val]) => {
-        const master = masters.find((m) => m.categoryKey === key);
-        const labels = val!.selected.map((sv) => master?.options.find((o) => o.value === sv)?.labelEn || sv);
-        return {
-          key,
-          title: master?.defaultTitleEn || key,
-          display: labels.join(', '),
-          note: state.questionNotes[`spec_${key}`],
+  /** Render any answer value into a human string, using the question's own labels. */
+  const describe = useMemo(
+    () =>
+      (q: QuestionDoc, ans: AnswerValue | undefined): string => {
+        if (ans == null) return '';
+        const labelOf = (v: string) => {
+          const o = q.options.find((x) => x.value === v);
+          return o ? pick(o.labelEn, o.labelAr) : v;
         };
-      });
-  }, [state.specs, state.questionNotes, masters]);
 
-  const fragranceSummary = useMemo(() => {
+        if (typeof ans === 'string') return ans ? labelOf(ans) : '';
+        if (Array.isArray(ans)) return ans.map(labelOf).join('، ');
+
+        if ('enabled' in ans) {
+          const h = ans as HeroIngredientAnswer;
+          if (!h.enabled) return t('quiz.hero.no');
+          const parts = [h.ingredients.join('، ')];
+          if (h.needsRDHelp) parts.push(t('quiz.hero.needHelp'));
+          if (h.excludedIngredients) parts.push(`${t('quiz.hero.excludeLabel')} ${h.excludedIngredients}`);
+          return parts.filter(Boolean).join(' · ');
+        }
+
+        if ('selected' in ans) {
+          const c = ans as CheckListAnswer;
+          return c.selected
+            .map((v) => (c.notes[v] ? `${labelOf(v)} (${c.notes[v]})` : labelOf(v)))
+            .join('، ');
+        }
+
+        // upload
+        const files = ans as UploadAnswer;
+        return Object.entries(files)
+          .filter(([, list]) => list?.length)
+          .map(([slot, list]) => `${labelOf(slot)}: ${list.length}`)
+          .join('، ');
+      },
+    [pick, t]
+  );
+
+  const questionSteps = useMemo(
+    () => steps.filter((s): s is Extract<Step, { kind: 'question' }> => s.kind === 'question'),
+    [steps]
+  );
+
+  const briefRows: Row[] = useMemo(
+    () =>
+      questionSteps
+        .filter((s) => s.question.scope === 'general')
+        .map((s) => {
+          const q = s.question;
+          const display = describe(q, state.briefAnswers[q.questionKey]);
+          if (!display) return null;
+          return {
+            key: q.questionKey,
+            title: pick(q.titleEn, q.titleAr),
+            display,
+            note: state.questionNotes[q.questionKey],
+            stepId: s.id,
+          };
+        })
+        .filter(Boolean) as Row[],
+    [questionSteps, state.briefAnswers, state.questionNotes, describe, pick]
+  );
+
+  const categoryRows: Row[] = useMemo(
+    () =>
+      questionSteps
+        .filter((s) => s.question.scope !== 'general')
+        .map((s) => {
+          const q = s.question;
+          const answerKey = `${q.scope}:${q.questionKey}`;
+          const display = describe(q, state.categoryAnswers[answerKey]);
+          if (!display) return null;
+          return {
+            key: answerKey,
+            title: pick(q.titleEn, q.titleAr),
+            display,
+            note: state.questionNotes[answerKey],
+            stepId: s.id,
+          };
+        })
+        .filter(Boolean) as Row[],
+    [questionSteps, state.categoryAnswers, state.questionNotes, describe, pick]
+  );
+
+  const specRows: Row[] = useMemo(() => {
+    const rows: Row[] = [];
+    for (const [key, val] of Object.entries(state.specs)) {
+      if (!val || val.selected.length === 0) continue;
+      // The whole pack — bottle, cap, label, finish, colour — gets its own card.
+      if (key === 'product-packaging' || PACKAGING_PART_KEYS[key]) continue;
+      const master = masters.find((m) => m.categoryKey === key);
+      const labels = val.selected.map(
+        (sv) => {
+          const o = master?.options.find((x) => x.value === sv);
+          return o ? pick(o.labelEn, o.labelAr) : sv;
+        }
+      );
+      rows.push({
+        key,
+        title: master ? pick(master.defaultTitleEn, master.defaultTitleAr) : key,
+        display: labels.join('، '),
+        note: state.questionNotes[`spec_${key}`],
+        stepId: `spec:${key}`,
+      });
+    }
+    return rows;
+  }, [state.specs, state.questionNotes, masters, pick]);
+
+  const fragranceRow: Row | null = useMemo(() => {
     if (!state.fragrance.family) return null;
     const fragMaster = masters.find((m) => m.categoryKey === 'fragrances');
     const fam = fragMaster?.options.find((o) => o.value === state.fragrance.family);
-    const famMeta = (fam as unknown as { meta?: { subNotes?: Array<{ value: string; labelEn: string }> } } | undefined)?.meta;
-    const subNotes = famMeta?.subNotes || [];
-    const noteLabels = state.fragrance.notes.map((n) => subNotes.find((s) => s.value === n)?.labelEn || n);
+    const meta = fam?.meta as { subNotes?: Array<{ value: string; labelEn: string; labelAr?: string }> } | undefined;
+    const noteLabels = state.fragrance.notes.map((n) => {
+      const s = meta?.subNotes?.find((x) => x.value === n);
+      return s ? pick(s.labelEn, s.labelAr) : n;
+    });
     return {
-      family: fam?.labelEn || state.fragrance.family,
-      notes: noteLabels.join(', '),
-      intensity: state.fragrance.intensity,
+      key: 'fragrance',
+      title: t('quiz.reviewFragrance'),
+      display: [fam ? pick(fam.labelEn, fam.labelAr) : state.fragrance.family, noteLabels.join('، '), state.fragrance.intensity]
+        .filter(Boolean)
+        .join(' · '),
+      stepId: 'spec:fragrances',
     };
-  }, [state.fragrance, masters]);
+  }, [state.fragrance, masters, pick, t]);
+
+  const packagingRows: Row[] = useMemo(() => {
+    if (!state.packaging.bottle) return [];
+    const p = state.packaging;
+    return [
+      { key: 'bottle', title: t('quiz.packaging.bottle'), display: pick(findBottle(p.bottle).labelEn, findBottle(p.bottle).labelAr), stepId: 'spec:product-packaging' },
+      { key: 'cap', title: t('quiz.packaging.cap'), display: pick(findCap(p.cap).labelEn, findCap(p.cap).labelAr), stepId: 'spec:product-packaging' },
+      { key: 'label', title: t('quiz.packaging.label'), display: pick(findLabel(p.label).labelEn, findLabel(p.label).labelAr), stepId: 'spec:product-packaging' },
+      { key: 'finish', title: t('quiz.packaging.finish'), display: pick(findFinish(p.finish).labelEn, findFinish(p.finish).labelAr), stepId: 'spec:product-packaging' },
+      { key: 'color', title: t('quiz.packaging.color'), display: pick(findColor(p.color).labelEn, findColor(p.color).labelAr), stepId: 'spec:product-packaging' },
+    ];
+  }, [state.packaging, t, pick]);
 
   async function handleSubmit() {
     if (!emailLocal && !user) {
-      setError('Please enter your email so we can send confirmation.');
+      setError(t('quiz.emailRequired'));
       return;
     }
     setSubmitting(true);
@@ -120,148 +226,99 @@ export default function ReviewStep({ onEditPersonalization, onEditBrief, onEditC
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Could not submit your sample request.');
-      }
+      if (!res.ok) throw new Error(data.error || t('quiz.submitFailed'));
       dispatch({ type: 'SET_SUBMITTED', payload: { orderNumber: data.orderNumber, id: data.id } });
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Submission failed.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('quiz.submitFailed'));
     } finally {
       setSubmitting(false);
     }
   }
 
+  const categoryLine = [state.category.mainName, state.category.subName, state.category.itemName]
+    .filter(Boolean)
+    .join(' → ');
+
   return (
-    <StepShell
+    <QuizShell
       stepKey="review"
-      eyebrow="One last look"
-      title={`${state.customerName}, your custom sample brief is ready.`}
-      subtitle="Review every detail. Edit anything that needs a tweak — submit when it feels right."
+      eyebrow={t('quiz.reviewEyebrow')}
+      title={t('quiz.reviewTitle', { name: state.customerName || '' })}
+      subtitle={t('quiz.reviewSubtitle')}
+      width="full"
       footer={
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <CTAButton
-            label={submitting ? 'Submitting…' : 'Submit Sample Request'}
-            onClick={handleSubmit}
-            disabled={submitting}
-          />
-          <button
-            type="button"
-            onClick={onBack}
-            className="text-xs uppercase tracking-[0.22em] text-cream-700 hover:text-ink-700"
-          >
-            Back
-          </button>
-        </div>
+        <StepFooter
+          nextLabel={submitting ? t('quiz.submitting') : t('quiz.submit')}
+          nextDisabled={submitting}
+          onNext={handleSubmit}
+          onBack={onBack}
+        />
       }
     >
-      <div className="grid lg:grid-cols-[1fr_2fr] gap-10">
-        {/* Bottle preview */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="lg:sticky lg:top-24 self-start"
-        >
-          <BottlePreview name={state.customerName} size="md" />
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={onEditPersonalization}
-              className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.2em] text-cream-700 hover:text-kcc-rose-dark"
-            >
-              <Pencil size={12} />
-              <span>Edit name</span>
-            </button>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] xl:gap-8">
+        {/* ---------------- Sticky preview ---------------- */}
+        <aside className="xl:sticky xl:top-44 xl:self-start">
+          <div className="rounded-3xl border border-cream-300 bg-cream-100 p-5 shadow-soft">
+            <PackageThumb
+              value={state.packaging}
+              name={state.customerName}
+              alt=""
+              className="mx-auto h-56 w-auto object-contain"
+            />
           </div>
-        </motion.div>
+          <button
+            type="button"
+            onClick={() => onEditStep('personalization')}
+            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 text-xs uppercase tracking-[0.18em] text-cream-700 hover:text-kcc-rose-dark"
+          >
+            <Pencil size={12} />
+            {t('quiz.editName')}
+          </button>
 
-        {/* Summary */}
-        <div className="space-y-8">
-          <ReviewBlock title="Category" onEdit={onEditCategory}>
-            <p className="text-ink-800">
-              {state.category.mainName}
-              {state.category.subName && <span className="text-cream-700"> → </span>}
-              <span>{state.category.subName}</span>
-              {state.category.itemName && (
-                <>
-                  <span className="text-cream-700"> → </span>
-                  <span className="font-serif italic">{state.category.itemName}</span>
-                </>
-              )}
-            </p>
-          </ReviewBlock>
+          <div className="mt-5 rounded-2xl border border-cream-300 bg-surface p-4 shadow-soft">
+            <SectionLabel>{t('quiz.reviewCategory')}</SectionLabel>
+            <p className="mt-1.5 text-sm leading-relaxed text-ink-800">{categoryLine || '—'}</p>
+            <EditLink onClick={() => onEditStep('cat:1')} label={t('quiz.edit')} />
+          </div>
+        </aside>
 
-          <ReviewBlock title="Brief" onEdit={onEditBrief}>
-            <ul className="space-y-3">
-              {briefSummary.map((item) => (
-                <li key={item.key} className="border-b border-cream-300 pb-3 last:border-0">
-                  <p className="text-xs uppercase tracking-wider text-cream-700 mb-0.5">{item.title}</p>
-                  <p className="text-sm text-ink-800">{item.display}</p>
-                  {item.note && (
-                    <p className="text-xs text-cream-700 italic mt-1">Note: {item.note}</p>
-                  )}
-                </li>
-              ))}
-              {briefSummary.length === 0 && (
-                <li className="text-sm text-cream-700">No brief answers captured yet.</li>
-              )}
-            </ul>
-          </ReviewBlock>
+        {/* ---------------- Multi-column summary ---------------- */}
+        <div
+          className="grid items-start gap-4"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(22rem, 100%), 1fr))' }}
+        >
+          <SummaryCard title={t('quiz.reviewBrief')} rows={briefRows} onEditStep={onEditStep} />
 
-          <ReviewBlock title="Specs" onEdit={onEditSpecs}>
-            <ul className="space-y-3">
-              {specsSummary.map((s) => (
-                <li key={s.key} className="border-b border-cream-300 pb-3 last:border-0">
-                  <p className="text-xs uppercase tracking-wider text-cream-700 mb-0.5">{s.title}</p>
-                  <p className="text-sm text-ink-800">{s.display}</p>
-                  {s.note && (
-                    <p className="text-xs text-cream-700 italic mt-1">Note: {s.note}</p>
-                  )}
-                </li>
-              ))}
-              {fragranceSummary && (
-                <li className="border-b border-cream-300 pb-3 last:border-0">
-                  <p className="text-xs uppercase tracking-wider text-cream-700 mb-0.5">Fragrance</p>
-                  <p className="text-sm text-ink-800">
-                    {fragranceSummary.family}
-                    {fragranceSummary.notes && <span className="text-cream-700"> · {fragranceSummary.notes}</span>}
-                    {fragranceSummary.intensity && <span className="text-cream-700"> · {fragranceSummary.intensity}</span>}
-                  </p>
-                </li>
-              )}
-              {specsSummary.length === 0 && !fragranceSummary && (
-                <li className="text-sm text-cream-700">No specs configured for this product.</li>
-              )}
-            </ul>
-          </ReviewBlock>
+          {categoryRows.length > 0 && (
+            <SummaryCard
+              title={t('quiz.reviewCategoryQuestions')}
+              rows={categoryRows}
+              onEditStep={onEditStep}
+            />
+          )}
 
-          <ReviewBlock title="Your Details">
-            <div className="grid sm:grid-cols-2 gap-3">
+          {(specRows.length > 0 || fragranceRow) && (
+            <SummaryCard
+              title={t('quiz.reviewSpecs')}
+              rows={fragranceRow ? [...specRows, fragranceRow] : specRows}
+              onEditStep={onEditStep}
+            />
+          )}
+
+          {packagingRows.length > 0 && (
+            <SummaryCard title={t('quiz.reviewPackaging')} rows={packagingRows} onEditStep={onEditStep} />
+          )}
+
+          <div className="rounded-2xl border border-cream-300 bg-surface p-5 shadow-soft">
+            <SectionLabel>{t('quiz.reviewDetails')}</SectionLabel>
+            <div className="mt-4 grid gap-2.5">
               {!user && (
-                <Field
-                  icon={Mail}
-                  type="email"
-                  value={emailLocal}
-                  onChange={setEmailLocal}
-                  placeholder="Email address *"
-                />
+                <Field icon={Mail} type="email" value={emailLocal} onChange={setEmailLocal} placeholder={`${t('quiz.emailPlaceholder')} *`} />
               )}
-              <Field
-                icon={Phone}
-                type="tel"
-                value={phone}
-                onChange={setPhone}
-                placeholder="Phone (optional)"
-              />
-              <Field
-                icon={Building2}
-                type="text"
-                value={company}
-                onChange={setCompany}
-                placeholder="Company / Brand (optional)"
-              />
+              <Field icon={Phone} type="tel" value={phone} onChange={setPhone} placeholder={t('quiz.phonePlaceholder')} />
+              <Field icon={Building2} type="text" value={company} onChange={setCompany} placeholder={t('quiz.companyPlaceholder')} />
             </div>
-          </ReviewBlock>
+          </div>
 
           {error && (
             <div className="rounded-2xl border border-blush-300 bg-blush-50 px-4 py-3 text-sm text-blush-800">
@@ -272,33 +329,80 @@ export default function ReviewStep({ onEditPersonalization, onEditBrief, onEditC
           {submitting && (
             <div className="flex items-center gap-2 text-cream-700">
               <Loader2 size={14} className="animate-spin" />
-              <span className="text-sm">Sending your brief to KCC…</span>
+              <span className="text-sm">{t('quiz.sending')}</span>
             </div>
           )}
         </div>
       </div>
-    </StepShell>
+    </QuizShell>
   );
 }
 
-function ReviewBlock({ title, onEdit, children }: { title: string; onEdit?: () => void; children: React.ReactNode }) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl bg-white border border-cream-300 p-6 shadow-soft">
-      <div className="flex items-center justify-between gap-4 mb-4">
-        <h3 className="text-[11px] font-semibold uppercase tracking-[0.28em] text-kcc-rose-dark">{title}</h3>
-        {onEdit && (
-          <button
-            type="button"
-            onClick={onEdit}
-            className="inline-flex items-center gap-1 text-xs uppercase tracking-wider text-cream-700 hover:text-ink-700 transition-colors"
-          >
-            <Pencil size={11} />
-            Edit
-          </button>
-        )}
-      </div>
+    <h3 className="text-[11px] font-semibold uppercase tracking-[0.24em] text-kcc-rose-dark">
       {children}
-    </div>
+    </h3>
+  );
+}
+
+function EditLink({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mt-2 inline-flex items-center gap-1 text-[11px] uppercase tracking-wider text-cream-700 transition-colors hover:text-ink-800"
+    >
+      <Pencil size={10} />
+      {label}
+    </button>
+  );
+}
+
+function SummaryCard({
+  title,
+  rows,
+  onEditStep,
+}: {
+  title: string;
+  rows: Row[];
+  onEditStep: (id: string) => void;
+}) {
+  const { t } = useLanguage();
+  return (
+    <section className="rounded-2xl border border-cream-300 bg-surface p-5 shadow-soft">
+      <SectionLabel>{title}</SectionLabel>
+      {rows.length === 0 ? (
+        <p className="mt-3 text-sm text-cream-700">{t('quiz.reviewEmpty')}</p>
+      ) : (
+        <ul className="mt-3 divide-y divide-cream-300">
+          {rows.map((r) => (
+            <li key={r.key} className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+              <div className="min-w-0">
+                <p className="text-[11px] uppercase tracking-wider text-cream-700">{r.title}</p>
+                <p className="mt-0.5 text-sm leading-snug text-ink-800">{r.display}</p>
+                {r.note && (
+                  <p className="mt-1 text-xs italic text-cream-700">
+                    {t('quiz.note')}: {r.note}
+                  </p>
+                )}
+              </div>
+              {r.stepId && (
+                <button
+                  type="button"
+                  onClick={() => onEditStep(r.stepId!)}
+                  aria-label={`${t('quiz.edit')} — ${r.title}`}
+                  title={t('quiz.edit')}
+                  className="mt-0.5 shrink-0 rounded-lg p-1.5 text-cream-600 transition-colors hover:bg-cream-100 hover:text-ink-800"
+                >
+                  <Pencil size={13} />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 
@@ -321,7 +425,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full ps-11 pe-4 py-3 bg-white border border-cream-300 rounded-2xl text-sm text-ink-800 placeholder:text-cream-700 focus:outline-none focus:border-ink-700 transition-colors"
+        className="w-full rounded-2xl border border-cream-300 bg-surface py-3 pe-4 ps-11 text-sm text-ink-800 transition-colors placeholder:text-cream-700 focus:border-ink-700 focus:outline-none"
       />
     </label>
   );

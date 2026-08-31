@@ -4,11 +4,12 @@ import Invoice from '@/models/Invoice';
 import Payment from '@/models/Payment';
 import Expense from '@/models/Expense';
 import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
 
 export async function GET(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+    if (!user || !can(user.role, 'accounting.manage')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

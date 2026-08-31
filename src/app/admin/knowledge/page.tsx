@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Brain, Plus, Edit2, Trash2, Loader2, Search,
-  X, ToggleLeft, ToggleRight, Tag
+  X, ToggleLeft, ToggleRight, Tag, ExternalLink
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function KnowledgePage() {
-  const { locale } = useLanguage();
+  const { locale, tx } = useLanguage();
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -194,39 +194,60 @@ export default function KnowledgePage() {
 
   return (
     <div className="space-y-6">
+      {/*
+        The page opened straight onto a search box with no title, so it was not
+        obvious that this is where the AI assistant's answers live. It is worth
+        saying outright, with a link to go and hear the result.
+      */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-fg">{tx('AI Assistant Knowledge Base')}</h1>
+          <p className="mt-1 max-w-2xl text-sm text-fg-muted">
+            {tx('Every answer the assistant gives comes from here. Edit one and the change is live immediately.')}
+          </p>
+        </div>
+        <a
+          href="/ai-assistant"
+          target="_blank"
+          rel="noreferrer"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+        >
+          <ExternalLink size={14} />
+          {tx('Open the assistant')}
+        </a>
+      </div>
+
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-dark-500" />
+          <Search size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search questions, categories, keywords..."
-            className="w-full ps-9 pe-3 py-2.5 text-sm bg-dark-900 border border-dark-800 rounded-xl text-dark-100 placeholder:text-dark-500 focus:border-kcc-green focus:outline-none"
+            placeholder={tx('Search questions, categories, keywords...')}
+            className="w-full ps-9 pe-3 py-2.5 text-sm bg-surface border border-line rounded-xl text-fg placeholder:text-fg-subtle focus:border-kcc-green focus:outline-none"
           />
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-dark-400">{filteredArticles.length} articles</span>
+          <span className="text-sm text-fg-muted">{filteredArticles.length} articles</span>
           <button
             type="button"
             onClick={handleOpenCreate}
-            className="flex items-center gap-2 px-3.5 py-2.5 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3.5 py-2.5 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors"
           >
-            <Plus size={16} />
-            Add Article
-          </button>
+            <Plus size={16} />{tx('Add Article')}</button>
         </div>
       </div>
 
       {/* Add/Edit Form */}
       {showForm && (
-        <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
+        <div className="bg-surface border border-line rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-dark-100">
+            <h3 className="text-sm font-semibold text-fg">
               {editingArticle ? 'Edit Knowledge Article' : 'Add New Knowledge Article'}
             </h3>
-            <button type="button" onClick={() => { setShowForm(false); setEditingArticle(null); }} className="text-dark-400 hover:text-dark-50" aria-label="Close form">
+            <button type="button" onClick={() => { setShowForm(false); setEditingArticle(null); }} className="text-fg-muted hover:text-fg" aria-label={tx('Close form')}>
               <X size={18} />
             </button>
           </div>
@@ -234,22 +255,22 @@ export default function KnowledgePage() {
             {/* Question fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Question (EN)</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Question (EN)')}</label>
                 <input
                   type="text"
                   value={formData.question.en}
                   onChange={(e) => setFormData(prev => ({ ...prev, question: { ...prev.question, en: e.target.value } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
-                  placeholder="What is the minimum order?"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
+                  placeholder={tx('What is the minimum order?')}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Question (AR)</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Question (AR)')}</label>
                 <input
                   type="text"
                   value={formData.question.ar}
                   onChange={(e) => setFormData(prev => ({ ...prev, question: { ...prev.question, ar: e.target.value } }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                   dir="rtl"
                   placeholder="\u0645\u0627 \u0647\u0648 \u0627\u0644\u062d\u062f \u0627\u0644\u0623\u062f\u0646\u0649 \u0644\u0644\u0637\u0644\u0628\u061f"
                 />
@@ -259,24 +280,24 @@ export default function KnowledgePage() {
             {/* Answer fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Answer (EN)</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Answer (EN)')}</label>
                 <textarea
                   value={formData.answer.en}
                   onChange={(e) => setFormData(prev => ({ ...prev, answer: { ...prev.answer, en: e.target.value } }))}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none resize-none"
-                  placeholder="Enter the answer..."
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none resize-none"
+                  placeholder={tx('Enter the answer...')}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Answer (AR)</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Answer (AR)')}</label>
                 <textarea
                   value={formData.answer.ar}
                   onChange={(e) => setFormData(prev => ({ ...prev, answer: { ...prev.answer, ar: e.target.value } }))}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none resize-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none resize-none"
                   dir="rtl"
-                  placeholder="\u0623\u062f\u062e\u0644 \u0627\u0644\u0625\u062c\u0627\u0628\u0629..."
+                  placeholder={'\\u0623\\u062f\\u062e\\u0644 \\u0627\\u0644\\u0625\\u062c\\u0627\\u0628\\u0629...'}
                 />
               </div>
             </div>
@@ -284,13 +305,13 @@ export default function KnowledgePage() {
             {/* Category & Keywords */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Category</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Category')}</label>
                 <input
                   type="text"
                   value={formData.category}
                   onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm bg-dark-950 border border-dark-700 rounded-lg text-dark-100 focus:border-kcc-green focus:outline-none"
-                  placeholder="e.g., Orders, Products, Shipping"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
+                  placeholder={tx('e.g., Orders, Products, Shipping')}
                   list="category-suggestions"
                 />
                 <datalist id="category-suggestions">
@@ -300,8 +321,8 @@ export default function KnowledgePage() {
                 </datalist>
               </div>
               <div>
-                <label className="block text-xs font-medium text-dark-400 mb-1.5">Keywords (press Enter or comma to add)</label>
-                <div className="flex flex-wrap gap-1.5 p-2 bg-dark-950 border border-dark-700 rounded-lg min-h-[38px]">
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Keywords (press Enter or comma to add)')}</label>
+                <div className="flex flex-wrap gap-1.5 p-2 bg-bg border border-line rounded-lg min-h-[38px]">
                   {formData.keywords.map((kw) => (
                     <span key={kw} className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-kcc-green/10 text-kcc-green rounded-full">
                       {kw}
@@ -316,7 +337,7 @@ export default function KnowledgePage() {
                     onChange={(e) => setFormData(prev => ({ ...prev, keywordInput: e.target.value }))}
                     onKeyDown={handleKeywordKeyDown}
                     onBlur={handleAddKeyword}
-                    className="flex-1 min-w-[80px] text-sm bg-transparent text-dark-100 focus:outline-none"
+                    className="flex-1 min-w-[80px] text-sm bg-transparent text-fg focus:outline-none"
                     placeholder={formData.keywords.length === 0 ? 'Add keywords...' : ''}
                   />
                 </div>
@@ -330,18 +351,16 @@ export default function KnowledgePage() {
                   type="checkbox"
                   checked={formData.enabled}
                   onChange={(e) => setFormData(prev => ({ ...prev, enabled: e.target.checked }))}
-                  className="w-4 h-4 rounded border-dark-700 bg-dark-950 text-kcc-green focus:ring-kcc-green"
+                  className="w-4 h-4 rounded border-line bg-bg text-kcc-green focus:ring-kcc-green"
                 />
-                <span className="text-sm text-dark-300">Enabled (visible to users)</span>
+                <span className="text-sm text-fg-muted">{tx('Enabled (visible to users)')}</span>
               </label>
             </div>
           </div>
 
           <div className="flex justify-end gap-3 mt-5">
-            <button type="button" onClick={() => { setShowForm(false); setEditingArticle(null); }} className="px-4 py-2 text-sm text-dark-400 border border-dark-700 rounded-lg hover:text-dark-50">
-              Cancel
-            </button>
-            <button type="button" onClick={handleSubmit} disabled={saving} className="px-4 py-2 text-sm font-medium text-dark-950 bg-kcc-green hover:bg-kcc-green-light rounded-lg transition-colors disabled:opacity-50">
+            <button type="button" onClick={() => { setShowForm(false); setEditingArticle(null); }} className="px-4 py-2 text-sm text-fg-muted border border-line rounded-lg hover:text-fg">{tx('Cancel')}</button>
+            <button type="button" onClick={handleSubmit} disabled={saving} className="px-4 py-2 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors disabled:opacity-50">
               {saving ? <Loader2 size={14} className="animate-spin inline mr-1" /> : null}
               {editingArticle ? 'Update' : 'Create'}
             </button>
@@ -350,33 +369,33 @@ export default function KnowledgePage() {
       )}
 
       {/* Articles Table */}
-      <div className="bg-dark-900 border border-dark-800 rounded-xl overflow-hidden">
+      <div className="bg-surface border border-line rounded-xl overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-48">
             <Loader2 className="animate-spin text-kcc-green" size={24} />
           </div>
         ) : filteredArticles.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-dark-400">
+          <div className="flex flex-col items-center justify-center h-48 text-fg-muted">
             <Brain size={32} className="mb-2" />
-            <p>No knowledge articles found</p>
+            <p>{tx('No knowledge articles found')}</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="scroll-thin w-full min-w-0 overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-dark-800">
-                  <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Question (EN)</th>
-                  <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Category</th>
-                  <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Keywords</th>
-                  <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Enabled</th>
-                  <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">Actions</th>
+                <tr className="border-b border-line">
+                  <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Question (EN)')}</th>
+                  <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Category')}</th>
+                  <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Keywords')}</th>
+                  <th className="text-center text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Enabled')}</th>
+                  <th className="text-center text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Actions')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-dark-800">
+              <tbody className="divide-y divide-line">
                 {filteredArticles.map((article) => (
-                  <tr key={article._id} className="hover:bg-dark-800/50 transition-colors">
+                  <tr key={article._id} className="hover:bg-surface-2/50 transition-colors">
                     <td className="px-5 py-3.5">
-                      <p className="text-sm font-medium text-dark-100 max-w-sm">{(article.question && article.question[locale]) || article.question?.en || ''}</p>
+                      <p className="text-sm font-medium text-fg max-w-sm">{(article.question && article.question[locale]) || article.question?.en || ''}</p>
                     </td>
                     <td className="px-5 py-3.5">
                       <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-kcc-beige/10 text-kcc-beige">
@@ -386,13 +405,13 @@ export default function KnowledgePage() {
                     <td className="px-5 py-3.5">
                       <div className="flex flex-wrap gap-1 max-w-xs">
                         {(article.keywords || []).slice(0, 3).map((kw: string) => (
-                          <span key={kw} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-dark-800 text-dark-300 rounded">
+                          <span key={kw} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-surface-2 text-fg-muted rounded">
                             <Tag size={9} />
                             {kw}
                           </span>
                         ))}
                         {(article.keywords || []).length > 3 && (
-                          <span className="text-xs text-dark-500">+{article.keywords.length - 3}</span>
+                          <span className="text-xs text-fg-subtle">+{article.keywords.length - 3}</span>
                         )}
                       </div>
                     </td>
@@ -400,7 +419,7 @@ export default function KnowledgePage() {
                       <button
                         type="button"
                         onClick={() => handleToggleEnabled(article._id, article.enabled)}
-                        className={`p-1 rounded-lg transition-colors ${article.enabled ? 'text-green-400' : 'text-dark-500'}`}
+                        className={`p-1 rounded-lg transition-colors ${article.enabled ? 'text-green-400' : 'text-fg-subtle'}`}
                         title={article.enabled ? 'Disable' : 'Enable'}
                       >
                         {article.enabled ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
@@ -411,16 +430,16 @@ export default function KnowledgePage() {
                         <button
                           type="button"
                           onClick={() => handleOpenEdit(article)}
-                          className="p-1.5 text-dark-400 hover:text-kcc-green hover:bg-dark-800 rounded-lg transition-colors"
-                          title="Edit"
+                          className="p-1.5 text-fg-muted hover:text-kcc-green hover:bg-surface-2 rounded-lg transition-colors"
+                          title={tx('Edit')}
                         >
                           <Edit2 size={15} />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(article._id)}
-                          className="p-1.5 text-dark-400 hover:text-red-400 hover:bg-dark-800 rounded-lg transition-colors"
-                          title="Delete"
+                          className="p-1.5 text-fg-muted hover:text-red-400 hover:bg-surface-2 rounded-lg transition-colors"
+                          title={tx('Delete')}
                         >
                           <Trash2 size={15} />
                         </button>

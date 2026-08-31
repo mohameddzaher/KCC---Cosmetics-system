@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import OrderProgressTracker from '@/components/account/OrderProgressTracker';
+import OrderFeedbackCard from '@/components/account/OrderFeedbackCard';
+import { statusLabel } from '@/lib/orderWorkflow';
 
 const statusColors: Record<string, string> = {
   Submitted: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
@@ -22,7 +24,7 @@ const statusColors: Record<string, string> = {
   'In Production': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
   Shipped: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
   Delivered: 'bg-kcc-green/10 text-kcc-green border-kcc-green/20',
-  Closed: 'bg-dark-600/10 text-dark-400 border-dark-600/20',
+  Closed: 'bg-surface-3/10 text-fg-muted border-line-strong/20',
 };
 
 function formatDate(dateStr: string | undefined, dateLocale: string = 'en-US') {
@@ -42,9 +44,9 @@ function formatCurrency(amount: number) {
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex justify-between items-start py-2.5 border-b border-dark-800/30 last:border-b-0">
-      <span className="text-sm text-dark-400 shrink-0 pr-4">{label}</span>
-      <span className="text-sm text-dark-100 font-medium text-end">{value || '-'}</span>
+    <div className="flex justify-between items-start py-2.5 border-b border-line/30 last:border-b-0">
+      <span className="text-sm text-fg-muted shrink-0 pr-4">{label}</span>
+      <span className="text-sm text-fg font-medium text-end">{value || '-'}</span>
     </div>
   );
 }
@@ -58,11 +60,11 @@ function SectionCard({ title, icon: Icon, children }: {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-dark-900/50 border border-dark-800 rounded-2xl overflow-hidden"
+      className="bg-surface/50 border border-line rounded-2xl overflow-hidden"
     >
-      <div className="flex items-center gap-2 px-5 py-3.5 border-b border-dark-800 bg-dark-800/20">
+      <div className="flex items-center gap-2 px-5 py-3.5 border-b border-line bg-surface-2/20">
         <Icon size={16} className="text-kcc-green shrink-0" />
-        <h3 className="text-sm font-semibold text-dark-200 uppercase tracking-wider">{title}</h3>
+        <h3 className="text-sm font-semibold text-fg uppercase tracking-wider">{title}</h3>
       </div>
       <div className="px-5 py-4">
         {children}
@@ -153,14 +155,14 @@ export default function OrderDetailPage() {
       <div className="space-y-4">
         <Link
           href="/account/my-orders"
-          className="inline-flex items-center gap-2 text-sm text-dark-400 hover:text-kcc-green transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-fg-muted hover:text-kcc-green transition-colors"
         >
           <ArrowLeft size={16} />
           {t('orders.backToOrders')}
         </Link>
         <div className="flex flex-col items-center justify-center py-20">
-          <AlertCircle size={48} className="text-dark-600 mb-4" />
-          <p className="text-dark-400 mb-4">{error}</p>
+          <AlertCircle size={48} className="text-fg-subtle mb-4" />
+          <p className="text-fg-muted mb-4">{error}</p>
           <button
             type="button"
             onClick={() => loadOrder()}
@@ -181,17 +183,17 @@ export default function OrderDetailPage() {
       <div className="space-y-4">
         <Link
           href="/account/my-orders"
-          className="inline-flex items-center gap-2 text-sm text-dark-400 hover:text-kcc-green transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-fg-muted hover:text-kcc-green transition-colors"
         >
           <ArrowLeft size={16} />
           {t('orders.backToOrders')}
         </Link>
         <div className="flex flex-col items-center justify-center py-20">
           <Package size={48} className="text-kcc-green mb-4" />
-          <p className="text-dark-300 mb-4">{t('samples.sample')}</p>
+          <p className="text-fg-muted mb-4">{t('samples.sample')}</p>
           <Link
             href={`/account/my-samples/${orderId}`}
-            className="flex items-center gap-2 px-5 py-2.5 bg-kcc-green hover:bg-kcc-green-light text-white font-medium rounded-xl transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-brand-fg font-medium rounded-xl transition-colors"
           >
             <Eye size={16} />
             {t('samples.viewDetails')}
@@ -214,7 +216,7 @@ export default function OrderDetailPage() {
       {/* Back link */}
       <Link
         href="/account/my-orders"
-        className="inline-flex items-center gap-2 text-sm text-dark-400 hover:text-kcc-green transition-colors"
+        className="inline-flex items-center gap-2 text-sm text-fg-muted hover:text-kcc-green transition-colors"
       >
         <ArrowLeft size={16} />
         {t('orders.backToOrders')}
@@ -224,7 +226,7 @@ export default function OrderDetailPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-dark-900/50 border border-dark-800 rounded-2xl p-6"
+        className="bg-surface/50 border border-line rounded-2xl p-6"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
@@ -233,21 +235,21 @@ export default function OrderDetailPage() {
             </div>
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-xl font-bold text-dark-50">
+                <h1 className="text-xl font-bold text-fg">
                   {productType || t('admin.bulk')}
                 </h1>
                 <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-kcc-beige/10 text-kcc-beige">
                   {t('admin.bulk')}
                 </span>
-                <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border ${statusColors[order.status] || 'bg-dark-700 text-dark-400 border-dark-600'}`}>
-                  {t(`statuses.${order.status}`)}
+                <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border ${statusColors[order.status] || 'bg-surface-3 text-fg-muted border-line-strong'}`}>
+                  {statusLabel(order.status, locale)}
                 </span>
               </div>
-              <p className="text-sm text-dark-400">
+              <p className="text-sm text-fg-muted">
                 {containerType && size ? `${containerType} - ${size}` : ''}
                 {bulkDetails.quantity ? ` | ${bulkDetails.quantity.toLocaleString()} units` : ''}
               </p>
-              <div className="flex items-center gap-4 mt-2 text-xs text-dark-500">
+              <div className="flex items-center gap-4 mt-2 text-xs text-fg-subtle">
                 <span className="font-mono flex items-center gap-1">
                   <Hash size={10} />
                   {order.orderNumber}
@@ -264,6 +266,9 @@ export default function OrderDetailPage() {
 
       <OrderProgressTracker status={order.status} updatedAt={order.updatedAt} />
 
+      {/* Once it is delivered, ask how it went — and show any reply from KCC. */}
+      <OrderFeedbackCard orderId={order._id} />
+
       {/* Detail sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Order Info */}
@@ -275,8 +280,8 @@ export default function OrderDetailPage() {
             </span>
           } />
           <DetailRow label={t('samples.status')} value={
-            <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full border ${statusColors[order.status] || 'bg-dark-700 text-dark-400 border-dark-600'}`}>
-              {t(`statuses.${order.status}`)}
+            <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full border ${statusColors[order.status] || 'bg-surface-3 text-fg-muted border-line-strong'}`}>
+              {statusLabel(order.status, locale)}
             </span>
           } />
           <DetailRow label={t('samples.created')} value={formatDate(order.createdAt, dateLocale)} />
@@ -305,20 +310,20 @@ export default function OrderDetailPage() {
         <SectionCard title={t('samples.customerInfoSection')} icon={User}>
           <DetailRow label={t('samples.customerName')} value={
             <span className="flex items-center gap-1.5">
-              <User size={12} className="text-dark-500" />
+              <User size={12} className="text-fg-subtle" />
               {customerInfo.personName || order.userId?.name}
             </span>
           } />
           <DetailRow label={t('samples.customerEmail')} value={
             <span className="flex items-center gap-1.5">
-              <Mail size={12} className="text-dark-500" />
+              <Mail size={12} className="text-fg-subtle" />
               {customerInfo.email || order.userId?.email}
             </span>
           } />
           {(customerInfo.phone || order.userId?.phone) && (
             <DetailRow label={t('samples.customerPhone')} value={
               <span className="flex items-center gap-1.5">
-                <Phone size={12} className="text-dark-500" />
+                <Phone size={12} className="text-fg-subtle" />
                 {customerInfo.phone || order.userId?.phone}
               </span>
             } />
@@ -326,7 +331,7 @@ export default function OrderDetailPage() {
           {(customerInfo.companyName || order.userId?.company) && (
             <DetailRow label={t('samples.customerCompany')} value={
               <span className="flex items-center gap-1.5">
-                <Building2 size={12} className="text-dark-500" />
+                <Building2 size={12} className="text-fg-subtle" />
                 {customerInfo.companyName || order.userId?.company}
               </span>
             } />
@@ -334,7 +339,7 @@ export default function OrderDetailPage() {
           {(customerInfo.country || customerInfo.city) && (
             <DetailRow label={t('samples.customerLocation')} value={
               <span className="flex items-center gap-1.5">
-                <MapPin size={12} className="text-dark-500" />
+                <MapPin size={12} className="text-fg-subtle" />
                 {[customerInfo.city, customerInfo.country].filter(Boolean).join(', ')}
               </span>
             } />
@@ -364,8 +369,8 @@ export default function OrderDetailPage() {
           } />}
           {totals.tax > 0 && <DetailRow label={t('orders.tax')} value={formatCurrency(totals.tax)} />}
           {totals.total > 0 && (
-            <div className="flex justify-between items-center pt-3 mt-1 border-t border-dark-700">
-              <span className="text-sm font-medium text-dark-200">{t('orders.total')}</span>
+            <div className="flex justify-between items-center pt-3 mt-1 border-t border-line">
+              <span className="text-sm font-medium text-fg">{t('orders.total')}</span>
               <span className="text-lg font-bold text-kcc-green">{formatCurrency(totals.total)}</span>
             </div>
           )}
@@ -390,12 +395,12 @@ export default function OrderDetailPage() {
           <SectionCard title={t('samples.sample')} icon={Package}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-dark-200 font-medium">
+                <p className="text-sm text-fg font-medium">
                   {order.convertedFromSample.orderNumber || t('samples.sample')}
                 </p>
                 {order.convertedFromSample.status && (
-                  <span className={`inline-flex mt-1 px-2 py-0.5 text-xs font-medium rounded-full border ${statusColors[order.convertedFromSample.status] || 'bg-dark-700 text-dark-400 border-dark-600'}`}>
-                    {t(`statuses.${order.convertedFromSample.status}`)}
+                  <span className={`inline-flex mt-1 px-2 py-0.5 text-xs font-medium rounded-full border ${statusColors[order.convertedFromSample.status] || 'bg-surface-3 text-fg-muted border-line-strong'}`}>
+                    {statusLabel(order.convertedFromSample.status, locale)}
                   </span>
                 )}
               </div>

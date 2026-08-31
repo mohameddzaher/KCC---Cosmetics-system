@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { ORDER_STATUSES } from '@/lib/orderWorkflow';
 
 interface IAttachment {
   name: string;
@@ -28,10 +29,36 @@ interface IBulkDetails {
   deliveryTimeline?: string;
 }
 
+/** Who is responsible for each leg of the order. */
+export interface IOrderAssignments {
+  accountManagerId?: Types.ObjectId;
+  factoryUserId?: Types.ObjectId;
+  logisticsUserId?: Types.ObjectId;
+  /** Delivery rep / courier — free text so third-party couriers work too. */
+  courierName?: string;
+  courierPhone?: string;
+  trackingNumber?: string;
+}
+
+/** Append-only audit trail of every status change. */
+export interface IOrderEvent {
+  from?: string;
+  to: string;
+  byId?: Types.ObjectId;
+  byName?: string;
+  byRole?: string;
+  note?: string;
+  at: Date;
+}
+
 export interface IOrder extends Document {
   orderNumber: string;
   type: 'sample' | 'bulk';
   status: string;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  dueDate?: Date;
+  assignments: IOrderAssignments;
+  timeline: IOrderEvent[];
   userId: Types.ObjectId;
   surveyResponseId: Types.ObjectId;
   customerInfo: ICustomerInfo;
@@ -55,18 +82,39 @@ const OrderSchema = new Schema<IOrder>(
     type: { type: String, enum: ['sample', 'bulk'], required: true },
     status: {
       type: String,
-      enum: [
-        'Submitted',
-        'Under Review',
-        'Approved',
-        'Quotation Sent',
-        'Awaiting Payment',
-        'In Production',
-        'Shipped',
-        'Delivered',
-        'Closed',
-      ],
+      enum: ORDER_STATUSES as unknown as string[],
       default: 'Submitted',
+    },
+    priority: {
+      type: String,
+      enum: ['low', 'normal', 'high', 'urgent'],
+      default: 'normal',
+    },
+    dueDate: { type: Date },
+    assignments: {
+      accountManagerId: { type: Schema.Types.ObjectId, ref: 'User' },
+      factoryUserId: { type: Schema.Types.ObjectId, ref: 'User' },
+      logisticsUserId: { type: Schema.Types.ObjectId, ref: 'User' },
+      courierName: { type: String, trim: true },
+      courierPhone: { type: String, trim: true },
+      trackingNumber: { type: String, trim: true },
+    },
+    timeline: {
+      type: [
+        new Schema<IOrderEvent>(
+          {
+            from: { type: String },
+            to: { type: String, required: true },
+            byId: { type: Schema.Types.ObjectId, ref: 'User' },
+            byName: { type: String },
+            byRole: { type: String },
+            note: { type: String },
+            at: { type: Date, default: Date.now },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
     },
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     surveyResponseId: { type: Schema.Types.ObjectId, ref: 'SurveyResponse' },
@@ -111,6 +159,10 @@ OrderSchema.index({ orderNumber: 1 }, { unique: true });
 OrderSchema.index({ type: 1 });
 OrderSchema.index({ status: 1 });
 OrderSchema.index({ userId: 1 });
+OrderSchema.index({ 'assignments.accountManagerId': 1 });
+OrderSchema.index({ 'assignments.factoryUserId': 1 });
+OrderSchema.index({ 'assignments.logisticsUserId': 1 });
+OrderSchema.index({ status: 1, createdAt: -1 });
 
 const Order = mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);
 export default Order;

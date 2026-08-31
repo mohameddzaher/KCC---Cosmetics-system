@@ -180,18 +180,45 @@ function BulkOrderContent() {
     const fromSample = searchParams.get('fromSample');
     if (!fromSample || fromSample !== selectedSampleId) return;
 
-    const fallbackSurvey = {
-      productType: searchParams.get('productType') || '',
-      size: searchParams.get('size') || '',
-      containerType: searchParams.get('containerType') || '',
+    /*
+     * The list above only holds this customer's samples, so two perfectly
+     * ordinary cases used to fall through to a near-empty form: an older sample
+     * beyond the first 30, and a bulk order being reordered as bulk. Fetch the
+     * order by id instead, and keep the query-string values as the last resort.
+     */
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/orders/${fromSample}`, { cache: 'no-store' });
+        if (res.ok && alive) {
+          const order = await res.json();
+          if (order?.surveyData) {
+            applySample(order);
+            return;
+          }
+        }
+      } catch {
+        /* fall through to the query-string values below */
+      }
+      if (!alive) return;
+
+      const fallbackSurvey = {
+        productType: searchParams.get('productType') || '',
+        size: searchParams.get('size') || '',
+        containerType: searchParams.get('containerType') || '',
+      };
+      setSelectedSampleSurveyData(fallbackSurvey);
+      setData((prev) => ({
+        ...prev,
+        productType: fallbackSurvey.productType || prev.productType,
+        size: fallbackSurvey.size || prev.size,
+        containerType: fallbackSurvey.containerType || prev.containerType,
+      }));
+    })();
+
+    return () => {
+      alive = false;
     };
-    setSelectedSampleSurveyData(fallbackSurvey);
-    setData((prev) => ({
-      ...prev,
-      productType: fallbackSurvey.productType || prev.productType,
-      size: fallbackSurvey.size || prev.size,
-      containerType: fallbackSurvey.containerType || prev.containerType,
-    }));
   }, [selectedSampleId, samples, searchParams]);
 
   useEffect(() => {
@@ -471,13 +498,13 @@ function BulkOrderContent() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          className="bg-white border border-cream-300 shadow-soft rounded-2xl p-6 sm:p-8 mb-6"
+          className="bg-surface border border-cream-300 shadow-soft rounded-2xl p-6 sm:p-8 mb-6"
         >
           {step === 1 && (
             <div className="space-y-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-semibold text-ink-700 mb-1">Pick the sample you want to scale up</h2>
+                  <h2 className="text-xl font-semibold text-ink-700 mb-1">{t('bulk.pickSampleTitle')}</h2>
                   <p className="text-sm text-cream-700">Bulk production runs from a sample you&apos;ve already requested. Pick one of your samples to continue with the same exact specs.</p>
                 </div>
                 <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-kcc-rose-dark/40 bg-kcc-rose-light/55 text-kcc-rose-dark">
@@ -507,14 +534,14 @@ function BulkOrderContent() {
                   </div>
                 </div>
               ) : samplesLoading ? (
-                <div className="py-10 text-center text-cream-700">Loading your previous sample orders…</div>
+                <div className="py-10 text-center text-cream-700">{t('bulk.loadingSamples')}</div>
               ) : samples.length === 0 ? (
                 /* Empty state — no samples yet */
                 <div className="rounded-2xl border border-cream-400 bg-gradient-to-br from-blush-50 to-cream-100 p-8 text-center">
-                  <div className="inline-flex w-14 h-14 rounded-2xl bg-white items-center justify-center mb-4 shadow-soft">
+                  <div className="inline-flex w-14 h-14 rounded-2xl bg-surface items-center justify-center mb-4 shadow-soft">
                     <Wand2 size={22} className="text-kcc-rose-dark" />
                   </div>
-                  <h3 className="text-lg font-semibold text-ink-700 mb-2">You don&apos;t have any samples yet</h3>
+                  <h3 className="text-lg font-semibold text-ink-700 mb-2">{t('bulk.noSamplesYet')}</h3>
                   <p className="text-sm text-cream-800 max-w-md mx-auto mb-6 leading-relaxed">
                     Bulk orders are based on a sample you&apos;ve already approved. Start with our 5-minute Sample Quiz —
                     once your sample is reviewed, you can come back and scale it to bulk.
@@ -543,7 +570,7 @@ function BulkOrderContent() {
                   <div className="rounded-xl border border-cream-400 bg-cream-100 p-4 flex items-start gap-3">
                     <Sparkles size={16} className="text-kcc-rose-dark mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm text-ink-700 font-medium mb-0.5">Pick the sample to scale</p>
+                      <p className="text-sm text-ink-700 font-medium mb-0.5">{t('bulk.pickSampleShort')}</p>
                       <p className="text-xs text-cream-700">All product specs (oils, actives, packaging, fragrance, etc.) carry over automatically. You only set quantity & delivery.</p>
                     </div>
                   </div>
@@ -567,7 +594,7 @@ function BulkOrderContent() {
                           className={`text-start rounded-xl border p-4 transition-all duration-200 ${
                             active
                               ? 'bg-blush-50 border-kcc-rose-dark/50 shadow-soft-lg ring-1 ring-kcc-rose-dark/20'
-                              : 'bg-white border-cream-300 hover:border-kcc-rose-dark/40'
+                              : 'bg-surface border-cream-300 hover:border-kcc-rose-dark/40'
                           }`}
                         >
                           <div className="flex items-center justify-between gap-2 mb-2">
@@ -612,98 +639,98 @@ function BulkOrderContent() {
           {isNewSpecsStep && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-semibold text-ink-700 mb-1">New Product Specs Survey</h2>
-                <p className="text-sm text-cream-700">Complete the full specifications wizard for this new bulk requirement before checkout.</p>
+                <h2 className="text-xl font-semibold text-ink-700 mb-1">{t('bulk.newSpecsTitle')}</h2>
+                <p className="text-sm text-cream-700">{t('bulk.newSpecsSubtitle')}</p>
               </div>
 
               <div className="rounded-xl border border-cream-400 bg-cream-100 p-4 space-y-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-cream-600">1. Product Basics</p>
+                <p className="text-xs uppercase tracking-[0.16em] text-cream-600">{t('bulk.section1')}</p>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <SelectField label="Product Type" required value={data.productType} onChange={(v) => update('productType', v)} options={productTypes} />
-                  <SelectField label="Skin Type" value={data.skinType} onChange={(v) => update('skinType', v)} options={skinTypes} />
-                  <SelectField label="Primary Goal" value={data.primaryGoal} onChange={(v) => update('primaryGoal', v)} options={primaryGoals} />
-                  <SelectField label="Texture Preference" value={data.texturePreference} onChange={(v) => update('texturePreference', v)} options={texturePreferences} />
+                  <SelectField label={t('bulk.productType')} required value={data.productType} onChange={(v) => update('productType', v)} options={productTypes} />
+                  <SelectField label={t('bulk.skinType')} value={data.skinType} onChange={(v) => update('skinType', v)} options={skinTypes} />
+                  <SelectField label={t('bulk.primaryGoal')} value={data.primaryGoal} onChange={(v) => update('primaryGoal', v)} options={primaryGoals} />
+                  <SelectField label={t('bulk.texturePreference')} value={data.texturePreference} onChange={(v) => update('texturePreference', v)} options={texturePreferences} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-cream-800 mb-2">Reference Products / Notes</label>
+                  <label className="block text-sm font-medium text-cream-800 mb-2">{t('bulk.referenceProducts')}</label>
                   <textarea
                     value={data.referenceProducts}
                     onChange={(e) => update('referenceProducts', e.target.value)}
                     rows={3}
-                    className="w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-beige transition-colors resize-none"
-                    placeholder="Mention existing products or desired benchmark..."
+                    className="w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-beige transition-colors resize-none"
+                    placeholder={t('bulk.referencePlaceholder')}
                   />
                 </div>
               </div>
 
               <div className="rounded-xl border border-cream-400 bg-cream-100 p-4 space-y-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-cream-600">2. Ingredients</p>
+                <p className="text-xs uppercase tracking-[0.16em] text-cream-600">{t('bulk.section2')}</p>
                 <MultiSelectChips
-                  label="Must-have ingredients"
+                  label={t('bulk.mustHave')}
                   options={mustHaveOptions}
                   values={data.mustHaveIngredients}
                   onChange={(v) => update('mustHaveIngredients', v)}
                 />
                 <MultiSelectChips
-                  label="Must-avoid ingredients"
+                  label={t('bulk.mustAvoid')}
                   options={mustAvoidOptions}
                   values={data.mustAvoidIngredients}
                   onChange={(v) => update('mustAvoidIngredients', v)}
                 />
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <ToggleField label="Paraben Free" checked={data.parabenFree} onChange={(v) => update('parabenFree', v)} />
-                  <ToggleField label="Sulfate Free" checked={data.sulfateFree} onChange={(v) => update('sulfateFree', v)} />
-                  <ToggleField label="Silicone Free" checked={data.siliconeFree} onChange={(v) => update('siliconeFree', v)} />
-                  <ToggleField label="Fragrance Free" checked={data.fragranceFree} onChange={(v) => update('fragranceFree', v)} />
-                  <ToggleField label="Natural / Organic" checked={data.naturalOrganic} onChange={(v) => update('naturalOrganic', v)} />
-                  <ToggleField label="Vegan / Cruelty Free" checked={data.vegan || data.crueltyFree} onChange={(v) => { update('vegan', v); update('crueltyFree', v); }} />
+                  <ToggleField label={t('bulk.parabenFree')} checked={data.parabenFree} onChange={(v) => update('parabenFree', v)} />
+                  <ToggleField label={t('bulk.sulfateFree')} checked={data.sulfateFree} onChange={(v) => update('sulfateFree', v)} />
+                  <ToggleField label={t('bulk.siliconeFree')} checked={data.siliconeFree} onChange={(v) => update('siliconeFree', v)} />
+                  <ToggleField label={t('bulk.fragranceFree')} checked={data.fragranceFree} onChange={(v) => update('fragranceFree', v)} />
+                  <ToggleField label={t('bulk.naturalOrganic')} checked={data.naturalOrganic} onChange={(v) => update('naturalOrganic', v)} />
+                  <ToggleField label={t('bulk.veganCrueltyFree')} checked={data.vegan || data.crueltyFree} onChange={(v) => { update('vegan', v); update('crueltyFree', v); }} />
                 </div>
               </div>
 
               <div className="rounded-xl border border-cream-400 bg-cream-100 p-4 space-y-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-cream-600">3. Quality, Regulatory & Technical</p>
+                <p className="text-xs uppercase tracking-[0.16em] text-cream-600">{t('bulk.section3')}</p>
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <ToggleField label="Stability Test" checked={data.stabilityTest} onChange={(v) => update('stabilityTest', v)} />
-                  <ToggleField label="Microbiological Test" checked={data.microbiologicalTest} onChange={(v) => update('microbiologicalTest', v)} />
-                  <ToggleField label="Dermatologically Tested" checked={data.dermatologicallyTested} onChange={(v) => update('dermatologicallyTested', v)} />
-                  <ToggleField label="COA Certificate" checked={data.coaCertificate} onChange={(v) => update('coaCertificate', v)} />
-                  <ToggleField label="GMP Certificate" checked={data.gmpCertificate} onChange={(v) => update('gmpCertificate', v)} />
-                  <ToggleField label="Official Registration Needed" checked={data.officialRegistration} onChange={(v) => update('officialRegistration', v)} />
-                  <ToggleField label="Withstand Gulf Heat" checked={data.withstandGulfHeat} onChange={(v) => update('withstandGulfHeat', v)} />
-                  <ToggleField label="Batch Tracking Required" checked={data.batchTrackingRequired} onChange={(v) => update('batchTrackingRequired', v)} />
+                  <ToggleField label={t('bulk.stabilityTest')} checked={data.stabilityTest} onChange={(v) => update('stabilityTest', v)} />
+                  <ToggleField label={t('bulk.microbiologicalTest')} checked={data.microbiologicalTest} onChange={(v) => update('microbiologicalTest', v)} />
+                  <ToggleField label={t('bulk.dermatologicallyTested')} checked={data.dermatologicallyTested} onChange={(v) => update('dermatologicallyTested', v)} />
+                  <ToggleField label={t('bulk.coaCertificate')} checked={data.coaCertificate} onChange={(v) => update('coaCertificate', v)} />
+                  <ToggleField label={t('bulk.gmpCertificate')} checked={data.gmpCertificate} onChange={(v) => update('gmpCertificate', v)} />
+                  <ToggleField label={t('bulk.officialRegistration')} checked={data.officialRegistration} onChange={(v) => update('officialRegistration', v)} />
+                  <ToggleField label={t('bulk.withstandGulfHeat')} checked={data.withstandGulfHeat} onChange={(v) => update('withstandGulfHeat', v)} />
+                  <ToggleField label={t('bulk.batchTracking')} checked={data.batchTrackingRequired} onChange={(v) => update('batchTrackingRequired', v)} />
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <SelectField label="Target Country" required value={data.targetCountry} onChange={(v) => update('targetCountry', v)} options={targetCountries} />
-                  <SelectField label="Ingredients List Format" required value={data.ingredientsListFormat} onChange={(v) => update('ingredientsListFormat', v)} options={ingredientsListFormats} />
-                  <SelectField label="Shelf Life Target" value={data.shelfLifeTarget} onChange={(v) => update('shelfLifeTarget', v)} options={shelfLifeTargets} />
-                  <SelectField label="Storage Conditions" value={data.storageConditions} onChange={(v) => update('storageConditions', v)} options={storageConditionsOptions} />
+                  <SelectField label={t('bulk.targetCountry')} required value={data.targetCountry} onChange={(v) => update('targetCountry', v)} options={targetCountries} />
+                  <SelectField label={t('bulk.ingredientsListFormat')} required value={data.ingredientsListFormat} onChange={(v) => update('ingredientsListFormat', v)} options={ingredientsListFormats} />
+                  <SelectField label={t('bulk.shelfLifeTarget')} value={data.shelfLifeTarget} onChange={(v) => update('shelfLifeTarget', v)} options={shelfLifeTargets} />
+                  <SelectField label={t('bulk.storageConditions')} value={data.storageConditions} onChange={(v) => update('storageConditions', v)} options={storageConditionsOptions} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-cream-800 mb-2">Final Product Name</label>
+                  <label className="block text-sm font-medium text-cream-800 mb-2">{t('bulk.finalProductName')}</label>
                   <input
                     type="text"
                     value={data.finalProductName}
                     onChange={(e) => update('finalProductName', e.target.value)}
-                    className="w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 focus:outline-none focus:border-kcc-beige transition-colors"
-                    placeholder="Optional product name"
+                    className="w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 focus:outline-none focus:border-kcc-beige transition-colors"
+                    placeholder={t('bulk.finalProductNamePlaceholder')}
                   />
                 </div>
               </div>
 
               <div className="rounded-xl border border-cream-400 bg-cream-100 p-4 space-y-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-cream-600">4. Packaging & Brand Vision</p>
+                <p className="text-xs uppercase tracking-[0.16em] text-cream-600">{t('bulk.section4')}</p>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <SelectField label="Size" required value={data.size} onChange={(v) => update('size', v)} options={sizes} />
-                  <SelectField label="Container Type" required value={data.containerType} onChange={(v) => update('containerType', v)} options={containerTypes} />
+                  <SelectField label={t('bulk.size')} required value={data.size} onChange={(v) => update('size', v)} options={sizes} />
+                  <SelectField label={t('bulk.containerType')} required value={data.containerType} onChange={(v) => update('containerType', v)} options={containerTypes} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-cream-800 mb-2">Brand Vision</label>
+                  <label className="block text-sm font-medium text-cream-800 mb-2">{t('bulk.brandVision')}</label>
                   <textarea
                     value={data.brandVision}
                     onChange={(e) => update('brandVision', e.target.value)}
                     rows={3}
-                    className="w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-beige transition-colors resize-none"
-                    placeholder="Describe product direction, audience, and look & feel..."
+                    className="w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-beige transition-colors resize-none"
+                    placeholder={t('bulk.brandVisionPlaceholder')}
                   />
                 </div>
               </div>
@@ -713,26 +740,26 @@ function BulkOrderContent() {
           {isDetailsStep && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-semibold text-ink-700 mb-1">Quantity & Customer Details</h2>
-                <p className="text-sm text-cream-700">Complete operational details to move quickly into payment and final review.</p>
+                <h2 className="text-xl font-semibold text-ink-700 mb-1">{t('bulk.quantityTitle')}</h2>
+                <p className="text-sm text-cream-700">{t('bulk.quantitySubtitle')}</p>
               </div>
 
               {mode === 'reuse' && selectedSample && (
                 <div className="rounded-xl border border-kcc-beige/30 bg-kcc-beige/10 p-4">
-                  <p className="text-sm text-kcc-beige-dark font-medium mb-1">Using previous sample specs</p>
+                  <p className="text-sm text-kcc-beige-dark font-medium mb-1">{t('bulk.usingPreviousSpecs')}</p>
                   <p className="text-xs text-cream-800">{selectedSample.orderNumber} • {data.productType || 'Custom Product'} {data.size ? `(${data.size})` : ''}</p>
                 </div>
               )}
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-cream-800 mb-2">Quantity (units) <span className="text-red-400">*</span></label>
+                  <label className="block text-sm font-medium text-cream-800 mb-2">{t('bulk.quantityUnits')} <span className="text-red-400">*</span></label>
                   <input
                     type="number"
                     min={1}
                     value={data.quantity}
                     onChange={(e) => update('quantity', Math.max(1, parseInt(e.target.value, 10) || 0))}
-                    className="w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 focus:outline-none focus:border-kcc-beige transition-colors"
+                    className="w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 focus:outline-none focus:border-kcc-beige transition-colors"
                   />
                 </div>
                 <SelectField
@@ -744,13 +771,13 @@ function BulkOrderContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-cream-800 mb-2">Pricing Notes / Budget</label>
+                <label className="block text-sm font-medium text-cream-800 mb-2">{t('bulk.pricingNotes')}</label>
                 <textarea
                   value={data.pricingNotes}
                   onChange={(e) => update('pricingNotes', e.target.value)}
                   rows={3}
-                  placeholder="Any constraints, target margin, or launch timeline notes..."
-                  className="w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-beige transition-colors resize-none"
+                  placeholder={t('bulk.pricingNotesPlaceholder')}
+                  className="w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-beige transition-colors resize-none"
                 />
               </div>
 
@@ -771,20 +798,20 @@ function BulkOrderContent() {
                       type={field.type || 'text'}
                       value={data[field.key] as string}
                       onChange={(e) => update(field.key, e.target.value)}
-                      className="w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 focus:outline-none focus:border-kcc-beige transition-colors"
+                      className="w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 focus:outline-none focus:border-kcc-beige transition-colors"
                     />
                   </div>
                 ))}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-cream-800 mb-2">Address</label>
+                <label className="block text-sm font-medium text-cream-800 mb-2">{t('bulk.address')}</label>
                 <textarea
                   value={data.address}
                   onChange={(e) => update('address', e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-beige transition-colors resize-none"
-                  placeholder="Full address (optional)"
+                  className="w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-beige transition-colors resize-none"
+                  placeholder={t('bulk.addressPlaceholder')}
                 />
               </div>
             </div>
@@ -793,12 +820,12 @@ function BulkOrderContent() {
           {isPaymentStep && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-semibold text-ink-700 mb-1">Payment, Promo & Final Review</h2>
-                <p className="text-sm text-cream-700">Finish checkout with promo/referral and submit your bulk order.</p>
+                <h2 className="text-xl font-semibold text-ink-700 mb-1">{t('bulk.checkoutTitle')}</h2>
+                <p className="text-sm text-cream-700">{t('bulk.checkoutSubtitle')}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-cream-800 mb-3">Payment Method</label>
+                <label className="block text-sm font-medium text-cream-800 mb-3">{t('bulk.paymentMethod')}</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -806,7 +833,7 @@ function BulkOrderContent() {
                     className={`flex items-center gap-3 px-4 py-4 rounded-xl border transition-all ${
                       data.paymentMethod === 'cash'
                         ? 'bg-kcc-beige/10 border-kcc-beige/50 text-kcc-beige-dark'
-                        : 'bg-white border-cream-400 text-cream-700 hover:border-cream-500'
+                        : 'bg-surface border-cream-400 text-cream-700 hover:border-cream-500'
                     }`}
                   >
                     <Banknote size={22} />
@@ -818,7 +845,7 @@ function BulkOrderContent() {
                     className={`flex items-center gap-3 px-4 py-4 rounded-xl border transition-all ${
                       data.paymentMethod === 'card'
                         ? 'bg-kcc-beige/10 border-kcc-beige/50 text-kcc-beige-dark'
-                        : 'bg-white border-cream-400 text-cream-700 hover:border-cream-500'
+                        : 'bg-surface border-cream-400 text-cream-700 hover:border-cream-500'
                     }`}
                   >
                     <CreditCard size={22} />
@@ -834,7 +861,7 @@ function BulkOrderContent() {
                     value={data.promoCode}
                     onChange={(e) => { update('promoCode', e.target.value); setPromoValid(null); }}
                     placeholder={t('order.promoPlaceholder')}
-                    className="flex-1 px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-beige transition-colors"
+                    className="flex-1 px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-beige transition-colors"
                   />
                   <button type="button" onClick={validatePromo} className="px-5 py-3 bg-cream-300 hover:bg-cream-400 text-ink-600 rounded-xl transition-colors font-medium">
                     {t('order.applyPromo')}
@@ -849,21 +876,21 @@ function BulkOrderContent() {
                   value={data.referralCode}
                   onChange={(e) => update('referralCode', e.target.value)}
                   placeholder={t('order.referralPlaceholder')}
-                  className="w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-beige transition-colors"
+                  className="w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 placeholder:text-cream-700 focus:outline-none focus:border-kcc-beige transition-colors"
                 />
               </div>
 
-              <div className="p-5 bg-white border border-cream-300 rounded-xl">
-                <h3 className="text-sm font-semibold text-ink-600 uppercase tracking-wider mb-4">Order Summary</h3>
+              <div className="p-5 bg-surface border border-cream-300 rounded-xl">
+                <h3 className="text-sm font-semibold text-ink-600 uppercase tracking-wider mb-4">{t('bulk.orderSummary')}</h3>
                 <div className="grid sm:grid-cols-2 gap-2 text-sm">
-                  <SummaryRow label="Order Path" value={mode === 'reuse' ? 'Use previous sample specs' : 'New specs'} />
-                  {mode === 'reuse' && <SummaryRow label="Sample Reference" value={selectedSample?.orderNumber || '-'} />}
-                  <SummaryRow label="Product Type" value={data.productType || '-'} />
-                  <SummaryRow label="Size" value={data.size || '-'} />
-                  <SummaryRow label="Container" value={data.containerType || '-'} />
-                  <SummaryRow label="Quantity" value={`${data.quantity} units`} />
-                  <SummaryRow label="Delivery" value={data.deliveryTimeline || '-'} />
-                  <SummaryRow label="Payment" value={data.paymentMethod} />
+                  <SummaryRow label={t('bulk.orderPath')} value={mode === 'reuse' ? 'Use previous sample specs' : 'New specs'} />
+                  {mode === 'reuse' && <SummaryRow label={t('bulk.sampleReference')} value={selectedSample?.orderNumber || '-'} />}
+                  <SummaryRow label={t('bulk.productType')} value={data.productType || '-'} />
+                  <SummaryRow label={t('bulk.size')} value={data.size || '-'} />
+                  <SummaryRow label={t('bulk.container')} value={data.containerType || '-'} />
+                  <SummaryRow label={t('bulk.quantity')} value={`${data.quantity} units`} />
+                  <SummaryRow label={t('bulk.delivery')} value={data.deliveryTimeline || '-'} />
+                  <SummaryRow label={t('bulk.payment')} value={data.paymentMethod} />
                 </div>
                 <div className="mt-4 pt-4 border-t border-cream-400 text-xs text-cream-600">
                   {mode === 'reuse'
@@ -941,7 +968,7 @@ function SelectField({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 focus:outline-none focus:border-kcc-beige transition-colors appearance-none"
+        className="w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 focus:outline-none focus:border-kcc-beige transition-colors appearance-none"
       >
         <option value="">-- Select --</option>
         {options.map((option) => (
@@ -982,12 +1009,12 @@ function ToggleField({ label, checked, onChange }: { label: string; checked: boo
       type="button"
       onClick={() => onChange(!checked)}
       className={`flex items-center justify-between w-full px-4 py-3 rounded-xl border transition-colors ${
-        checked ? 'bg-kcc-green/10 border-kcc-green/40 text-kcc-green' : 'bg-white border-cream-300 text-cream-800 hover:border-cream-400'
+        checked ? 'bg-kcc-green/10 border-kcc-green/40 text-kcc-green' : 'bg-surface border-cream-300 text-cream-800 hover:border-cream-400'
       }`}
     >
       <span className="text-sm">{label}</span>
       <span className={`w-10 h-5 rounded-full relative ${checked ? 'bg-kcc-green' : 'bg-cream-400'}`}>
-        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${checked ? 'right-0.5' : 'left-0.5'}`} />
+        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-surface transition-all ${checked ? 'right-0.5' : 'left-0.5'}`} />
       </span>
     </button>
   );
@@ -1024,7 +1051,7 @@ function MultiSelectChips({
               type="button"
               onClick={() => toggleValue(option)}
               className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
-                active ? 'bg-kcc-green/10 border-kcc-green/40 text-kcc-green' : 'bg-white border-cream-300 text-cream-800 hover:border-cream-400'
+                active ? 'bg-kcc-green/10 border-kcc-green/40 text-kcc-green' : 'bg-surface border-cream-300 text-cream-800 hover:border-cream-400'
               }`}
             >
               {option}

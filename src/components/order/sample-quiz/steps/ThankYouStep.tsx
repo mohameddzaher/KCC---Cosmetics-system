@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import BottlePreview from '../BottlePreview';
 import { useQuiz } from '@/lib/sample-quiz/QuizContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Confetto {
   id: number;
@@ -19,6 +20,7 @@ const confettiColors = ['#D89BA3', '#E8B4BC', '#D4A574', '#C9A84C', '#FFF6F1', '
 
 export default function ThankYouStep() {
   const { state } = useQuiz();
+  const { t } = useLanguage();
   const [confetti, setConfetti] = useState<Confetto[]>([]);
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export default function ThankYouStep() {
   }, []);
 
   return (
-    <div className="min-h-[calc(100vh-220px)] flex items-center justify-center px-6 py-16 bg-gradient-to-br from-cream-100 via-blush-50 to-cream-50 overflow-hidden relative">
+    <div className="relative flex min-h-[60vh] items-center justify-center overflow-hidden bg-cream-100 px-4 py-14 sm:px-6 sm:py-16">
       {/* Confetti */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {confetti.map((c) => (
@@ -58,7 +60,7 @@ export default function ThankYouStep() {
         ))}
       </div>
 
-      <div className="relative z-10 w-full max-w-3xl text-center">
+      <div className="relative z-10 mx-auto w-full max-w-3xl text-center">
         <motion.div
           initial={{ scale: 0.6, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -73,16 +75,16 @@ export default function ThankYouStep() {
           transition={{ delay: 0.4 }}
           className="mt-10 text-[11px] font-medium uppercase tracking-[0.32em] text-kcc-rose-dark"
         >
-          Sample request submitted
+          {t('quiz.thankYouTitle')}
         </motion.p>
 
         <motion.h1
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.55 }}
-          className="mt-4 font-serif text-4xl sm:text-5xl lg:text-6xl text-ink-800 leading-[1.05]"
+          className="mt-4 font-serif text-3xl leading-[1.08] text-ink-800 sm:text-4xl lg:text-5xl"
         >
-          You&apos;re officially in motion, {state.customerName}.
+          {t('quiz.thankYouHeadline', { name: state.customerName })}
         </motion.h1>
 
         <motion.p
@@ -91,7 +93,7 @@ export default function ThankYouStep() {
           transition={{ delay: 0.7 }}
           className="mt-5 text-cream-800 text-base sm:text-lg max-w-xl mx-auto"
         >
-          Our R&amp;D team will start crafting your sample. You&apos;ll hear from us within 2–4 weeks.
+          {t('quiz.thankYouBody')}
         </motion.p>
 
         {state.submitted && (
@@ -99,10 +101,10 @@ export default function ThankYouStep() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.85 }}
-            className="mt-8 inline-flex flex-col items-center gap-1.5 px-6 py-4 rounded-2xl bg-white shadow-soft border border-cream-300"
+            className="mt-8 inline-flex flex-col items-center gap-1.5 px-6 py-4 rounded-2xl bg-surface shadow-soft border border-cream-300"
           >
             <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-cream-700">
-              Reference number
+              {t('quiz.referenceNumber')}
             </span>
             <span className="font-mono text-2xl text-ink-800 tracking-wider">
               {state.submitted.orderNumber}
@@ -118,15 +120,15 @@ export default function ThankYouStep() {
         >
           <Link
             href="/account/my-samples"
-            className="inline-flex items-center justify-center gap-3 px-8 py-3.5 text-[13px] font-semibold uppercase tracking-[0.22em] rounded-full bg-espresso-900 text-cream-50 hover:bg-espresso-700 transition-all shadow-soft-lg"
+            className="inline-flex items-center justify-center gap-3 px-8 py-3.5 text-[13px] font-semibold uppercase tracking-[0.22em] rounded-full bg-surface-inverse text-fg-inverse hover:opacity-90 transition-all shadow-soft-lg"
           >
-            View My Samples
+            {t('quiz.viewMySamples')}
           </Link>
           <Link
             href="/"
             className="inline-flex items-center justify-center px-8 py-3.5 text-[13px] font-semibold uppercase tracking-[0.22em] rounded-full bg-transparent border border-cream-400 text-ink-700 hover:border-ink-700 transition-all"
           >
-            Back to Home
+            {t('quiz.backToHome')}
           </Link>
         </motion.div>
       </div>

@@ -2,17 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
 import { getSession, hashPassword } from '@/lib/auth';
+import { can, ROLES, STAFF_ROLES } from '@/lib/roles';
 import { generateReferralCode } from '@/lib/api-helpers';
 
-const MANAGE_ROLES = ['SUPER_ADMIN', 'ADMIN'];
-const ALL_ROLES = ['SUPER_ADMIN', 'ADMIN', 'STAFF', 'CUSTOMER'];
+const ALL_ROLES: string[] = [...ROLES];
 const PRIVILEGED_ROLES = ['SUPER_ADMIN', 'ADMIN'];
 
 // GET /api/users?role=&search=  -> list users (admin/super-admin only)
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !MANAGE_ROLES.includes(session.role)) {
+    if (!session || !can(session.role, 'users.view')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -25,8 +25,8 @@ export async function GET(req: NextRequest) {
     if (role && ALL_ROLES.includes(role)) {
       query.role = role;
     } else {
-      // The Users page manages staff/admins by default, not customers
-      query.role = { $in: ['SUPER_ADMIN', 'ADMIN', 'STAFF'] };
+      // The Users page manages staff accounts by default, not customers.
+      query.role = { $in: STAFF_ROLES };
     }
 
     if (search) {
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !MANAGE_ROLES.includes(session.role)) {
+    if (!session || !can(session.role, 'users.manage')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -83,6 +83,8 @@ export async function POST(req: NextRequest) {
       country: body.country,
       city: body.city,
       isActive: body.isActive ?? true,
+      jobTitle: body.jobTitle,
+      department: body.department,
       languagePref: body.languagePref || 'en',
       referralCode: generateReferralCode(name),
     });

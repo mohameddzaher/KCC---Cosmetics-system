@@ -108,7 +108,7 @@ export default function NewsPage() {
       />
 
       {/* News Grid */}
-      <section className="py-16 px-4">
+      <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {news.map((item, i) => (
@@ -121,7 +121,7 @@ export default function NewsPage() {
               >
                 <Link
                   href={`/news/${item.slug}`}
-                  className="group block bg-white border border-cream-300 shadow-soft rounded-2xl overflow-hidden hover:border-cream-400 transition-all duration-300"
+                  className="group block bg-surface border border-cream-300 shadow-soft rounded-2xl overflow-hidden hover:border-cream-400 transition-all duration-300"
                 >
                   {/* News image */}
                   <div className="aspect-video overflow-hidden relative">

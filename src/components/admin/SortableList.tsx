@@ -3,6 +3,7 @@
 import { Reorder, useDragControls } from 'framer-motion';
 import { GripVertical } from 'lucide-react';
 import type { ReactNode, PointerEvent as ReactPointerEvent } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 /**
  * Drag-and-drop reorderable list, used wherever the admin needs to
@@ -51,15 +52,16 @@ function SortableRow<T>({
   value: T;
   children: (handle: ReactNode) => ReactNode;
 }) {
+  const { tx } = useLanguage();
   const controls = useDragControls();
 
   const handle = (
     <button
       type="button"
       onPointerDown={(e: ReactPointerEvent<HTMLButtonElement>) => controls.start(e)}
-      className="touch-none cursor-grab active:cursor-grabbing p-2 text-dark-500 hover:text-dark-200 transition-colors flex items-center justify-center"
-      aria-label="Drag to reorder"
-      title="Drag to reorder"
+      className="touch-none cursor-grab active:cursor-grabbing p-2 text-fg-subtle hover:text-fg transition-colors flex items-center justify-center"
+      aria-label={tx('Drag to reorder')}
+      title={tx('Drag to reorder')}
     >
       <GripVertical size={16} />
     </button>

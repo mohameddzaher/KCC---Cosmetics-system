@@ -22,7 +22,7 @@ export default function StepIndicator({ phases, currentIndex, className = '' }: 
   if (phases.length === 0) return null;
 
   return (
-    <div className={`max-w-2xl mx-auto px-4 ${className}`}>
+    <div className={`mx-auto max-w-3xl px-4 sm:px-6 ${className}`}>
       <div className="relative flex items-center justify-between">
         {/* Connecting line (background) */}
         <div className="absolute top-3 start-[12px] end-[12px] h-px bg-cream-300 -z-0" />
@@ -44,25 +44,22 @@ export default function StepIndicator({ phases, currentIndex, className = '' }: 
           return (
             <div key={p.key} className="relative z-10 flex flex-col items-center gap-1.5">
               <motion.div
-                animate={{
-                  scale: isCurrent ? 1.15 : 1,
-                  backgroundColor: isDone || isCurrent ? '#160E07' : '#FFFFFF',
-                }}
+                animate={{ scale: isCurrent ? 1.15 : 1 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 18 }}
                 className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${
                   isCurrent
-                    ? 'border-espresso-900 shadow-soft-lg ring-4 ring-kcc-rose-light/40'
+                    ? 'border-fg shadow-soft-lg ring-4 ring-kcc-rose-light/40'
                     : isDone
-                    ? 'border-espresso-900'
+                    ? 'border-fg'
                     : 'border-cream-400'
                 }`}
               >
                 {isDone ? (
-                  <Check size={11} strokeWidth={3} className="text-cream-50" />
+                  <Check size={11} strokeWidth={3} className="text-fg-inverse" />
                 ) : (
                   <span
-                    className={`text-[10px] font-mono font-semibold ${
-                      isCurrent ? 'text-cream-50' : 'text-cream-700'
+                    className={`font-mono text-[10px] font-semibold ${
+                      isCurrent ? 'text-fg-inverse' : 'text-cream-700'
                     }`}
                   >
                     {idx + 1}

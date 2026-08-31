@@ -1,18 +1,19 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import StepShell from '../StepShell';
-import CTAButton from '../CTAButton';
-import { useQuiz } from '@/lib/sample-quiz/QuizContext';
-import { makeProductKey } from '@/lib/categories';
+import { useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
-  Sparkles, Sun, Baby, Brush, FlaskConical, Hand, Heart, Smile, Scissors, Droplets,
+  Baby, Brush, Droplets, FlaskConical, Hand, Heart, Scissors, Smile, Sparkles, Sun, Search,
 } from 'lucide-react';
+import QuizShell from '../QuizShell';
+import StepFooter from '../StepFooter';
+import OptionGrid from '../widgets/OptionGrid';
+import { useQuiz } from '@/lib/sample-quiz/QuizContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { makeProductKey } from '@/lib/categories';
 
-interface SubCat { name: string; slug: string; level: 2; items: string[]; }
-interface MainCat { id: number; name: string; slug: string; level: 1; subcategories: SubCat[]; }
+interface SubCat { name: string; nameAr?: string; slug: string; items: string[]; itemsAr?: string[] }
+interface MainCat { id: number; name: string; nameAr?: string; slug: string; subcategories: SubCat[] }
 
 const mainIcons: Record<string, LucideIcon> = {
   'hair-care': Scissors,
@@ -20,32 +21,44 @@ const mainIcons: Record<string, LucideIcon> = {
   'body-care': Hand,
   'sun-care': Sun,
   'baby-care': Baby,
-  'makeup': Brush,
-  'fragrance': FlaskConical,
-  'hygiene': Droplets,
-  'massage': Heart,
+  makeup: Brush,
+  fragrance: FlaskConical,
+  hygiene: Droplets,
+  massage: Heart,
   'oral-care': Smile,
 };
 
-interface Props {
+/**
+ * One level of the product tree per step (category → family → product).
+ * Selecting a value auto-advances, so the customer never has to hunt for a
+ * "Continue" button below a long grid.
+ */
+export default function CategoryStep({
+  level,
+  onNext,
+  onBack,
+  busy = false,
+  editingFromReview,
+}: {
   level: 1 | 2 | 3;
-  setLevel: (n: 1 | 2 | 3) => void;
-  onComplete: () => void;
+  onNext: () => void;
   onBack: () => void;
-}
-
-export default function CategoryStep({ level, setLevel, onComplete, onBack }: Props) {
+  /** This level's own questions are still loading — hold Continue. */
+  busy?: boolean;
+  editingFromReview: boolean;
+}) {
   const { state, dispatch } = useQuiz();
+  const { t, pick } = useLanguage();
   const [cats, setCats] = useState<MainCat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     fetch('/api/sample-quiz/categories', { cache: 'no-store' })
       .then((r) => r.json())
-      .then((d) => {
-        setCats(Array.isArray(d.categories) ? d.categories : []);
-        setLoading(false);
-      });
+      .then((d) => setCats(Array.isArray(d.categories) ? d.categories : []))
+      .catch(() => setCats([]))
+      .finally(() => setLoading(false));
   }, []);
 
   const currentMain = useMemo(
@@ -58,50 +71,53 @@ export default function CategoryStep({ level, setLevel, onComplete, onBack }: Pr
   );
 
   if (loading) {
-    return <div className="min-h-[60vh] flex items-center justify-center text-cream-700 text-sm uppercase tracking-widest">Loading…</div>;
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center text-sm uppercase tracking-widest text-cream-700">
+        {t('quiz.loading')}
+      </div>
+    );
   }
 
-  // ── Level 1: Main category ──
+  const nextLabel = editingFromReview ? t('quiz.saveAndReturn') : t('quiz.continue');
+
+  const footer = (disabled: boolean, onContinue: () => void) => (
+    <StepFooter
+      nextLabel={nextLabel}
+      nextDisabled={disabled || busy}
+      onNext={onContinue}
+      onBack={onBack}
+    />
+  );
+
+  /* ---------------- Level 1 — main category ---------------- */
   if (level === 1) {
     return (
-      <StepShell
-        stepKey="cat-l1"
-        eyebrow="Step 2 — Pick your category"
-        title="What are we creating today?"
-        subtitle="Pick the family that best fits your vision. We'll narrow it down from there."
-        footer={
-          <div className="flex items-center justify-between gap-4">
-            <CTAButton
-              label="Continue"
-              disabled={!state.category.mainSlug}
-              onClick={() => setLevel(2)}
-            />
-            <button
-              type="button"
-              onClick={onBack}
-              className="text-xs uppercase tracking-[0.22em] text-cream-700 hover:text-ink-700"
-            >
-              Back
-            </button>
-          </div>
-        }
+      <QuizShell
+        stepKey="cat-1"
+        eyebrow={t('quiz.categoryEyebrow')}
+        title={t('quiz.pickCategory')}
+        subtitle={t('quiz.categoryBody')}
+        width="wide"
+        footer={footer(!state.category.mainSlug, onNext)}
       >
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <OptionGrid min="10rem" gap="0.75rem">
           {cats.map((c) => {
             const active = state.category.mainSlug === c.slug;
             const Icon = mainIcons[c.slug] || Sparkles;
             return (
-              <motion.button
+              <button
                 key={c.slug}
                 type="button"
-                whileHover={{ y: -3 }}
-                whileTap={{ scale: 0.97 }}
+                aria-pressed={active}
                 onClick={() => {
+                  if (state.category.mainSlug !== c.slug) {
+                    dispatch({ type: 'RESET_CATEGORY_ANSWERS' });
+                  }
                   dispatch({
                     type: 'SET_CATEGORY',
                     payload: {
                       mainSlug: c.slug,
-                      mainName: c.name,
+                      mainName: pick(c.name, c.nameAr),
                       subSlug: undefined,
                       subName: undefined,
                       itemName: undefined,
@@ -109,171 +125,172 @@ export default function CategoryStep({ level, setLevel, onComplete, onBack }: Pr
                     },
                   });
                 }}
-                className={`relative aspect-[4/5] rounded-2xl border-2 flex flex-col items-center justify-center gap-3 p-4 transition-all duration-300 ${
+                className={`flex min-h-[8.5rem] flex-col items-center justify-center gap-3 rounded-2xl border-2 p-4 transition-all duration-200 hover:-translate-y-0.5 ${
                   active
-                    ? 'bg-espresso-900 border-espresso-900 text-cream-50 shadow-soft-lg'
-                    : 'bg-white border-cream-300 text-ink-700 hover:border-ink-700 shadow-soft'
+                    ? 'border-fg bg-surface-inverse text-fg-inverse shadow-soft-lg'
+                    : 'border-cream-300 bg-surface text-ink-700 shadow-soft hover:border-ink-700'
                 }`}
               >
                 <Icon
-                  size={32}
+                  size={30}
                   strokeWidth={1.4}
                   className={active ? 'text-kcc-rose-light' : 'text-kcc-rose-dark'}
                 />
-                <span className="text-sm font-medium tracking-wide text-center leading-tight">
-                  {c.name}
+                <span className="text-center text-sm font-medium leading-tight">
+                  {pick(c.name, c.nameAr)}
                 </span>
-              </motion.button>
+              </button>
             );
           })}
-        </div>
-      </StepShell>
+        </OptionGrid>
+      </QuizShell>
     );
   }
 
-  // ── Level 2: Sub-category ──
+  /* ---------------- Level 2 — family ---------------- */
   if (level === 2) {
     if (!currentMain) {
-      setLevel(1);
-      return null;
+      return (
+        <QuizShell stepKey="cat-2-empty" title={t('quiz.pickSubCategory')} footer={footer(true, onNext)}>
+          <p className="text-cream-700">{t('quiz.noMatches')}</p>
+        </QuizShell>
+      );
     }
     return (
-      <StepShell
-        stepKey="cat-l2"
-        eyebrow={currentMain.name}
-        title="Choose a sub-category"
-        subtitle={`Within ${currentMain.name}, pick the family of products you're after.`}
-        footer={
-          <div className="flex items-center justify-between gap-4">
-            <CTAButton
-              label="Continue"
-              disabled={!state.category.subSlug}
-              onClick={() => {
-                if (!currentSub) return;
-                if (currentSub.items.length === 0) {
-                  // No level-3 — synthesize a productKey and skip ahead
-                  dispatch({
-                    type: 'SET_CATEGORY',
-                    payload: {
-                      itemName: currentSub.name,
-                      productKey: makeProductKey(currentMain.slug, currentSub.slug, currentSub.name),
-                    },
-                  });
-                  onComplete();
-                } else {
-                  setLevel(3);
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => setLevel(1)}
-              className="text-xs uppercase tracking-[0.22em] text-cream-700 hover:text-ink-700"
-            >
-              Back
-            </button>
-          </div>
-        }
+      <QuizShell
+        stepKey="cat-2"
+        eyebrow={pick(currentMain.name, currentMain.nameAr)}
+        title={t('quiz.pickSubCategory')}
+        width="wide"
+        footer={footer(!state.category.subSlug, () => {
+          if (!currentSub) return;
+          if (currentSub.items.length === 0) {
+            // No level-3 list — synthesise the product key and move on.
+            dispatch({
+              type: 'SET_CATEGORY',
+              payload: {
+                itemName: pick(currentSub.name, currentSub.nameAr),
+                productKey: makeProductKey(currentMain.slug, currentSub.slug, currentSub.name),
+              },
+            });
+          }
+          onNext();
+        })}
       >
-        <div className="flex flex-wrap gap-2.5">
+        <OptionGrid min="12rem" gap="0.625rem">
           {currentMain.subcategories.map((s) => {
             const active = state.category.subSlug === s.slug;
             return (
-              <motion.button
+              <button
                 key={s.slug}
                 type="button"
-                whileTap={{ scale: 0.97 }}
+                aria-pressed={active}
                 onClick={() =>
                   dispatch({
                     type: 'SET_CATEGORY',
                     payload: {
                       subSlug: s.slug,
-                      subName: s.name,
+                      subName: pick(s.name, s.nameAr),
                       itemName: undefined,
                       productKey: undefined,
                     },
                   })
                 }
-                className={`px-5 py-2.5 rounded-full border text-sm font-medium transition-all ${
+                className={`flex min-h-[3.75rem] items-center justify-between gap-2 rounded-xl border-2 px-4 py-3 text-start text-sm font-medium transition-all ${
                   active
-                    ? 'bg-espresso-900 text-cream-50 border-espresso-900'
-                    : 'bg-white text-ink-700 border-cream-400 hover:border-ink-700'
+                    ? 'border-fg bg-surface-inverse text-fg-inverse'
+                    : 'border-cream-300 bg-surface text-ink-700 hover:border-ink-700'
                 }`}
               >
-                {s.name}
+                <span className="min-w-0 leading-snug">{pick(s.name, s.nameAr)}</span>
                 {s.items.length > 0 && (
                   <span
-                    className={`ms-2 inline-flex items-center justify-center min-w-[20px] px-1.5 h-5 rounded-full text-[10px] ${
+                    className={`inline-flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] ${
                       active ? 'bg-cream-50/20 text-cream-50' : 'bg-cream-200 text-cream-700'
                     }`}
                   >
                     {s.items.length}
                   </span>
                 )}
-              </motion.button>
+              </button>
             );
           })}
-        </div>
-      </StepShell>
+        </OptionGrid>
+      </QuizShell>
     );
   }
 
-  // ── Level 3: Product item ──
+  /* ---------------- Level 3 — exact product ---------------- */
   if (!currentMain || !currentSub) {
-    setLevel(2);
-    return null;
+    return (
+      <QuizShell stepKey="cat-3-empty" title={t('quiz.pickProduct')} footer={footer(true, onNext)}>
+        <p className="text-cream-700">{t('quiz.noMatches')}</p>
+      </QuizShell>
+    );
   }
 
+  const items = currentSub.items
+    .map((name, i) => ({ name, nameAr: currentSub.itemsAr?.[i] }))
+    .filter((it) => {
+      if (!search.trim()) return true;
+      const q = search.toLowerCase();
+      return it.name.toLowerCase().includes(q) || (it.nameAr || '').includes(search);
+    });
+
   return (
-    <StepShell
-      stepKey="cat-l3"
-      eyebrow={`${currentMain.name} → ${currentSub.name}`}
-      title="Pick your product"
-      subtitle="The exact formula you'd like us to develop. This unlocks tailored questions next."
-      footer={
-        <div className="flex items-center justify-between gap-4">
-          <CTAButton
-            label="Continue"
-            disabled={!state.category.itemName}
-            onClick={onComplete}
-          />
-          <button
-            type="button"
-            onClick={() => setLevel(2)}
-            className="text-xs uppercase tracking-[0.22em] text-cream-700 hover:text-ink-700"
-          >
-            Back
-          </button>
-        </div>
-      }
+    <QuizShell
+      stepKey="cat-3"
+      eyebrow={`${pick(currentMain.name, currentMain.nameAr)} → ${pick(currentSub.name, currentSub.nameAr)}`}
+      title={t('quiz.pickProduct')}
+      width="wide"
+      footer={footer(!state.category.itemName, onNext)}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {currentSub.items.map((it) => {
-          const productKey = makeProductKey(currentMain.slug, currentSub.slug, it);
-          const active = state.category.productKey === productKey;
-          return (
-            <motion.button
-              key={it}
-              type="button"
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() =>
-                dispatch({
-                  type: 'SET_CATEGORY',
-                  payload: { itemName: it, productKey },
-                })
-              }
-              className={`text-start p-4 rounded-2xl border-2 transition-all ${
-                active
-                  ? 'bg-espresso-900 border-espresso-900 text-cream-50 shadow-soft-lg'
-                  : 'bg-white border-cream-300 text-ink-700 hover:border-ink-700 shadow-soft'
-              }`}
-            >
-              <span className="font-serif text-base leading-snug">{it}</span>
-            </motion.button>
-          );
-        })}
-      </div>
-    </StepShell>
+      {currentSub.items.length > 8 && (
+        <div className="relative mb-5 max-w-md">
+          <Search size={15} className="absolute start-4 top-1/2 -translate-y-1/2 text-cream-600" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('quiz.searchProducts')}
+            className="w-full rounded-full border border-cream-300 bg-surface py-2.5 pe-4 ps-11 text-sm text-ink-800 placeholder:text-cream-600 focus:border-ink-700 focus:outline-none"
+          />
+        </div>
+      )}
+
+      {items.length === 0 ? (
+        <p className="text-cream-700">{t('quiz.noMatches')}</p>
+      ) : (
+        <OptionGrid min="14rem" gap="0.625rem">
+          {items.map((it) => {
+            const productKey = makeProductKey(currentMain.slug, currentSub.slug, it.name);
+            const active = state.category.productKey === productKey;
+            return (
+              <button
+                key={it.name}
+                type="button"
+                aria-pressed={active}
+                onClick={() => {
+                  if (state.category.productKey !== productKey) {
+                    dispatch({ type: 'RESET_CATEGORY_ANSWERS' });
+                  }
+                  dispatch({
+                    type: 'SET_CATEGORY',
+                    payload: { itemName: pick(it.name, it.nameAr), productKey },
+                  });
+                }}
+                className={`min-h-[4.5rem] rounded-2xl border-2 p-4 text-start transition-all hover:-translate-y-0.5 ${
+                  active
+                    ? 'border-fg bg-surface-inverse text-fg-inverse shadow-soft-lg'
+                    : 'border-cream-300 bg-surface text-ink-700 shadow-soft hover:border-ink-700'
+                }`}
+              >
+                <span className="font-serif text-base leading-snug">{pick(it.name, it.nameAr)}</span>
+              </button>
+            );
+          })}
+        </OptionGrid>
+      )}
+    </QuizShell>
   );
 }

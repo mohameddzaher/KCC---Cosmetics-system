@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Package, Calendar, ArrowRight, Truck, Beaker, Eye, Hash } from 'lucide-react';
+import { Package, Calendar, Truck, Beaker, Eye, Hash, RefreshCw, Search } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { statusLabel, trackerIndex, TRACKER_STAGES } from '@/lib/orderWorkflow';
 
 interface SampleOrder {
   _id?: string;
@@ -30,52 +31,6 @@ interface SampleOrder {
   };
 }
 
-const demoSamples: SampleOrder[] = [
-  {
-    id: '1',
-    orderNumber: 'KCC-S-001',
-    productType: 'Serum',
-    size: '30ml',
-    containerType: 'Dropper Bottle',
-    status: 'In Production',
-    date: '2024-12-10',
-    skinType: 'Combination',
-    primaryGoal: 'Brightening',
-  },
-  {
-    id: '2',
-    orderNumber: 'KCC-S-002',
-    productType: 'Cream',
-    size: '50ml',
-    containerType: 'Jar',
-    status: 'Delivered',
-    date: '2024-11-15',
-    skinType: 'Dry',
-    primaryGoal: 'Hydration',
-  },
-  {
-    id: '3',
-    orderNumber: 'KCC-S-003',
-    productType: 'Cleanser',
-    size: '100ml',
-    containerType: 'Pump Bottle',
-    status: 'Under Review',
-    date: '2024-12-20',
-    skinType: 'Oily',
-    primaryGoal: 'Acne Control',
-  },
-  {
-    id: '4',
-    orderNumber: 'KCC-S-004',
-    productType: 'Sunscreen',
-    size: '50ml',
-    containerType: 'Tube',
-    status: 'Submitted',
-    date: '2024-12-22',
-    skinType: 'Normal',
-    primaryGoal: 'Sun Protection',
-  },
-];
 
 const statusColors: Record<string, string> = {
   Submitted: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
@@ -86,7 +41,7 @@ const statusColors: Record<string, string> = {
   'In Production': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
   Shipped: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
   Delivered: 'bg-kcc-green/10 text-kcc-green border-kcc-green/20',
-  Closed: 'bg-dark-600/10 text-dark-400 border-dark-600/20',
+  Closed: 'bg-surface-3/10 text-fg-muted border-line-strong/20',
 };
 
 function getSampleId(sample: SampleOrder): string {
@@ -117,10 +72,27 @@ function getDate(sample: SampleOrder): string {
   return sample.createdAt || sample.date || '';
 }
 
+/** Which of the six customer-facing stages a status falls into. */
+function trackerKey(status: string): string {
+  const i = trackerIndex(status);
+  return i < 0 ? 'stopped' : TRACKER_STAGES[i].key;
+}
+
+const STAGE_FILTERS: Array<{ key: string; label: (l: string) => string }> = [
+  { key: 'all', label: (l) => (l === 'ar' ? 'الكل' : 'All') },
+  ...TRACKER_STAGES.map((s) => ({
+    key: s.key,
+    label: (l: string) => (l === 'ar' ? s.labelAr : s.labelEn),
+  })),
+  { key: 'stopped', label: (l: string) => (l === 'ar' ? 'متوقف' : 'On hold') },
+];
+
 export default function MySamplesPage() {
-  const { t, locale } = useLanguage();
+  const { t, tx, locale } = useLanguage();
   const { user } = useAuth();
-  const [samples, setSamples] = useState<SampleOrder[]>(demoSamples);
+  const [samples, setSamples] = useState<SampleOrder[]>([]);
+  const [stage, setStage] = useState<string>('all');
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -130,12 +102,13 @@ export default function MySamplesPage() {
         const res = await fetch('/api/orders?type=sample');
         if (res.ok) {
           const data = await res.json();
-          if (data.orders && data.orders.length > 0) {
-            setSamples(data.orders);
-          }
+          // Show exactly what the customer has, including nothing. This page
+          // used to fall back to four invented samples, whose links went
+          // nowhere because they were never real orders.
+          setSamples(Array.isArray(data.orders) ? data.orders : []);
         }
       } catch {
-        // Use demo data
+        setSamples([]);
       } finally {
         setLoading(false);
       }
@@ -143,117 +116,190 @@ export default function MySamplesPage() {
     fetchSamples();
   }, []);
 
+  /* Only attributes that actually say something. The old line printed
+     "| all | " for a sample whose skin type was simply "all". */
+  const attributesOf = (s: SampleOrder): string[] =>
+    [getContainerType(s), getSize(s), getSkinType(s), getPrimaryGoal(s)]
+      .map((v) => (v || '').trim())
+      .filter((v) => v && v.toLowerCase() !== 'all' && v !== '-');
+
+  const filtered = samples.filter((s) => {
+    if (stage !== 'all' && trackerKey(s.status) !== stage) return false;
+    const needle = query.trim().toLowerCase();
+    if (!needle) return true;
+    return [s.orderNumber, getProductType(s), ...attributesOf(s)]
+      .join(' ')
+      .toLowerCase()
+      .includes(needle);
+  });
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-dark-50">{t('samples.title')}</h1>
-          <p className="text-sm text-dark-400 mt-1">{t('samples.subtitle')}</p>
+          <h1 className="font-serif text-3xl text-fg">{t('samples.title')}</h1>
+          <p className="mt-1 text-sm text-fg-muted">{t('samples.subtitle')}</p>
         </div>
         <Link
           href="/order/sample"
-          className="flex items-center gap-2 px-4 py-2.5 bg-kcc-green hover:bg-kcc-green-light text-white text-sm font-semibold rounded-xl transition-colors shadow-lg shadow-kcc-green/20"
+          className="flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-brand-fg transition-colors hover:bg-brand-hover"
         >
           <Beaker size={16} />
           {t('samples.newSample')}
         </Link>
       </div>
 
+      {/* A stage filter that doubles as a count. Ten samples in one column told
+          you nothing about where any of them were. */}
+      {!loading && samples.length > 0 && (
+        <div className="mb-5 flex flex-wrap items-center gap-2">
+          <div className="scroll-thin -mx-1 flex gap-2 overflow-x-auto px-1 py-0.5">
+            {STAGE_FILTERS.map((f) => {
+              const count =
+                f.key === 'all'
+                  ? samples.length
+                  : samples.filter((s) => trackerKey(s.status) === f.key).length;
+              if (count === 0 && f.key !== 'all') return null;
+              const active = stage === f.key;
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setStage(f.key)}
+                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                    active
+                      ? 'border-brand bg-brand text-brand-fg'
+                      : 'border-line bg-surface text-fg-muted hover:text-fg'
+                  }`}
+                >
+                  {f.label(locale)} <span className="opacity-70">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="relative ms-auto min-w-[12rem] flex-1 sm:max-w-xs">
+            <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={tx('Search by product or order number')}
+              aria-label={tx('Search by product or order number')}
+              className="w-full rounded-xl border border-line bg-surface py-2 pe-3 ps-9 text-sm text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-brand"
+            />
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-kcc-green" />
+          <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-kcc-green" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-line py-20 text-center">
+          <Package size={44} className="mx-auto mb-4 text-fg-subtle" />
+          <p className="mb-4 text-fg-muted">
+            {samples.length === 0 ? t('samples.noSamples') : tx('No matches')}
+          </p>
+          {samples.length === 0 && (
+            <Link href="/order/sample" className="text-sm font-medium text-kcc-green hover:underline">
+              {t('samples.requestFirst')}
+            </Link>
+          )}
         </div>
       ) : (
-        <div className="space-y-4">
-          {samples.map((sample, i) => {
+        /* A grid, not a column. Ten samples used to be ten full-width rows and
+           a very long scroll; they now fill the width the account area has. */
+        <div
+          className="grid items-stretch gap-4"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(21rem, 100%), 1fr))' }}
+        >
+          {filtered.map((sample, i) => {
             const sampleId = getSampleId(sample);
-            const productType = getProductType(sample);
-            const skinType = getSkinType(sample);
-            const primaryGoal = getPrimaryGoal(sample);
-            const size = getSize(sample);
-            const containerType = getContainerType(sample);
             const dateStr = getDate(sample);
+            const attributes = attributesOf(sample);
 
             return (
-              <motion.div
+              <motion.article
                 key={sampleId}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="bg-dark-900/50 border border-dark-800 rounded-2xl p-5 hover:border-dark-700 transition-colors"
+                transition={{ delay: Math.min(i, 8) * 0.04 }}
+                className="flex min-w-0 flex-col rounded-2xl border border-line bg-surface p-5 transition-colors hover:border-line-strong"
               >
-                <div className="flex flex-col gap-4">
-                  {/* Top row: product info + status */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-kcc-green/10 text-kcc-green flex items-center justify-center shrink-0">
-                        <Package size={22} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-dark-50">{productType}</h3>
-                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full border ${statusColors[sample.status] || 'bg-dark-700 text-dark-400 border-dark-600'}`}>
-                            {t(`statuses.${sample.status}`)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-dark-400">
-                          {containerType && size ? `${containerType} - ${size}` : ''}
-                          {skinType ? ` | ${skinType}` : ''}
-                          {primaryGoal ? ` | ${primaryGoal}` : ''}
-                        </p>
-                        <div className="flex items-center gap-3 mt-1.5 text-xs text-dark-500">
-                          <span className="font-mono flex items-center gap-1">
-                            <Hash size={10} />
-                            {sample.orderNumber}
-                          </span>
-                          {dateStr && (
-                            <span className="flex items-center gap-1">
-                              <Calendar size={10} />
-                              {new Date(dateStr).toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bottom row: actions */}
-                  <div className="flex items-center gap-3 pt-3 border-t border-dark-800/50">
-                    {/* View Details - always visible */}
-                    <Link
-                      href={`/account/my-samples/${sampleId}`}
-                      className="flex items-center gap-2 px-4 py-2 bg-dark-800 border border-dark-700 text-dark-300 text-sm font-medium rounded-xl hover:bg-dark-700 hover:text-dark-50 transition-colors"
-                    >
-                      <Eye size={14} />
-                      {t('samples.viewDetails')}
-                    </Link>
-
-                    {/* Reorder as Bulk - only for delivered samples */}
-                    {sample.status === 'Delivered' && (
-                      <Link
-                        href={`/order/bulk?fromSample=${sampleId}`}
-                        className="flex items-center gap-2 px-4 py-2 bg-kcc-beige/10 border border-kcc-beige/30 text-kcc-beige text-sm font-medium rounded-xl hover:bg-kcc-beige/20 transition-colors"
-                      >
-                        <Truck size={14} />
-                        {t('order.reorderAsBulk')}
-                        <ArrowRight size={14} />
-                      </Link>
-                    )}
-                  </div>
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-kcc-green/10 text-kcc-green">
+                    <Package size={20} />
+                  </span>
+                  <span
+                    className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                      statusColors[sample.status] || 'border-line-strong bg-surface-3 text-fg-muted'
+                    }`}
+                  >
+                    {statusLabel(sample.status, locale)}
+                  </span>
                 </div>
-              </motion.div>
+
+                <h3 className="truncate font-semibold capitalize text-fg">{getProductType(sample)}</h3>
+
+                {attributes.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {attributes.map((a) => (
+                      <span
+                        key={a}
+                        className="rounded-md bg-surface-2 px-2 py-0.5 text-[11px] capitalize text-fg-muted"
+                      >
+                        {a}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-subtle">
+                  <span className="flex items-center gap-1 font-mono">
+                    <Hash size={10} />
+                    {sample.orderNumber}
+                  </span>
+                  {dateStr && (
+                    <span className="flex items-center gap-1">
+                      <Calendar size={10} />
+                      {new Date(dateStr).toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  )}
+                </div>
+
+                {/* mt-auto so every card's actions sit on the same line. */}
+                <div className="mt-auto grid grid-cols-3 gap-2 pt-5">
+                  <Link
+                    href={`/account/my-samples/${sampleId}`}
+                    className="flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line px-2 py-2 text-[11px] font-medium text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+                  >
+                    <Eye size={13} />
+                    {t('samples.viewDetails')}
+                  </Link>
+                  <Link
+                    href={`/order/sample?from=${sampleId}`}
+                    title={t('order.orderAgainHint')}
+                    className="flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-brand px-2 py-2 text-[11px] font-medium text-brand-fg transition-colors hover:bg-brand-hover"
+                  >
+                    <RefreshCw size={13} />
+                    {t('order.orderAgainShort')}
+                  </Link>
+                  <Link
+                    href={`/order/bulk?fromSample=${sampleId}`}
+                    className="flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line px-2 py-2 text-[11px] font-medium text-fg transition-colors hover:bg-surface-2"
+                  >
+                    <Truck size={13} />
+                    {t('order.reorderAsBulk')}
+                  </Link>
+                </div>
+              </motion.article>
             );
           })}
-
-          {samples.length === 0 && (
-            <div className="text-center py-20">
-              <Package size={48} className="text-dark-700 mx-auto mb-4" />
-              <p className="text-dark-400 mb-4">{t('samples.noSamples')}</p>
-              <Link href="/order/sample" className="text-kcc-green hover:text-kcc-green-light transition-colors text-sm font-medium">
-                {t('samples.requestFirst')}
-              </Link>
-            </div>
-          )}
         </div>
       )}
     </div>

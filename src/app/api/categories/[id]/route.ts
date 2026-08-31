@@ -5,11 +5,12 @@ import connectDB from '@/lib/db';
 import Category from '@/models/Category';
 import { getSession } from '@/lib/auth';
 import { reconcileCategoryConfigs, pruneCategoryConfigs } from '@/lib/categoryReconcile';
+import { can } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
 type RouteContext = { params: Promise<{ id: string }> };
-const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
+const REQUIRED_PERM = 'categories.manage' as const;
 
 export async function GET(req: NextRequest, context: RouteContext) {
   try {
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 export async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
-    if (!user || !ADMIN_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, REQUIRED_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -79,7 +80,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
-    if (!user || !ADMIN_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, REQUIRED_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

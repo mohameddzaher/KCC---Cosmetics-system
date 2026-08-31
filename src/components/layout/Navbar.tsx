@@ -10,6 +10,7 @@ import {
   Menu, X, Globe, ChevronDown, User, LogOut,
   LayoutDashboard, Package, ShoppingBag, Bot
 } from 'lucide-react';
+import ThemeToggle from '@/components/common/ThemeToggle';
 
 const navLinks = [
   { key: 'home', href: '/' },
@@ -72,7 +73,7 @@ export default function Navbar() {
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out will-change-transform ${
           scrolled
             ? 'bg-cream-100/85 shadow-soft border-b border-cream-300'
-            : 'bg-white/90'
+            : 'bg-surface/90'
         }`}
         style={{
           WebkitBackdropFilter: 'blur(20px) saturate(160%)',
@@ -125,6 +126,9 @@ export default function Navbar() {
                 <Bot size={15} />
               </Link>
 
+              {/* Theme toggle — light / dark for the whole site */}
+              <ThemeToggle className="border-cream-400 bg-transparent text-ink-600 hover:border-kcc-rose-dark/60 hover:text-kcc-rose-dark" />
+
               {/* Language Toggle */}
               <button
                 type="button"
@@ -165,7 +169,7 @@ export default function Navbar() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -8, scale: 0.96 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute end-0 mt-2 w-52 bg-white border border-cream-300 rounded-xl shadow-soft-lg overflow-hidden"
+                        className="absolute end-0 mt-2 w-52 bg-surface border border-cream-300 rounded-xl shadow-soft-lg overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="px-4 py-3 border-b border-cream-200 bg-gradient-to-r from-cream-50 to-blush-50">
@@ -219,7 +223,7 @@ export default function Navbar() {
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className="lg:hidden p-2 text-ink-600 hover:text-kcc-green transition-colors"
-                aria-label="Toggle menu"
+                aria-label={t('a11y.toggleMenu')}
               >
                 {isOpen ? <X size={22} /> : <Menu size={22} />}
               </button>
@@ -253,7 +257,7 @@ export default function Navbar() {
                   <span className="text-kcc-green">K</span>
                   <span className="text-ink-700">CC</span>
                 </span>
-                <button type="button" onClick={() => setIsOpen(false)} className="p-1.5 text-ink-600 hover:text-kcc-green" aria-label="Close menu">
+                <button type="button" onClick={() => setIsOpen(false)} className="p-1.5 text-ink-600 hover:text-kcc-green" aria-label={t('a11y.closeMenu')}>
                   <X size={20} />
                 </button>
               </div>

@@ -1,129 +1,156 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
-import { Award, Globe2, Package, Users, Sparkles } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { motion, useInView, useReducedMotion } from 'framer-motion';
+import { Award, Globe2, Package, Users } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCmsSection } from '@/lib/useCmsSection';
 
-interface StatItem {
-  value: number;
-  suffix: string;
-  label: { en: string; ar: string };
-  Icon: React.ComponentType<{ size?: number; className?: string }>;
+const ICONS = [Package, Users, Award, Globe2];
+
+/**
+ * Shipped defaults. The CMS Manager's "stats" section overrides them —
+ * `{ items: [{ label, value }] }`, where the value may carry its own suffix
+ * ("5000+"), which is how the CMS stores it.
+ */
+const DEFAULTS = {
+  en: {
+    items: [
+      { label: 'Products manufactured', value: '500+' },
+      { label: 'Brands served', value: '150+' },
+      { label: 'Years of excellence', value: '15+' },
+      { label: 'Countries exported to', value: '20+' },
+    ],
+  },
+  ar: {
+    items: [
+      { label: 'منتج تم تصنيعه', value: '500+' },
+      { label: 'علامة تجارية', value: '150+' },
+      { label: 'سنة خبرة', value: '15+' },
+      { label: 'دولة تم التصدير إليها', value: '20+' },
+    ],
+  },
+};
+
+/** "5000+" → 5000 and "+", so the counter can still count up to it. */
+function splitValue(raw: string): { value: number; suffix: string } {
+  const match = String(raw).match(/^\s*([\d.,]+)\s*(.*)$/);
+  if (!match) return { value: 0, suffix: String(raw) };
+  return { value: Number(match[1].replace(/,/g, '')) || 0, suffix: match[2] || '' };
 }
-
-const stats: StatItem[] = [
-  { value: 500, suffix: '+', label: { en: 'Products Manufactured', ar: 'منتج تم تصنيعه' }, Icon: Package },
-  { value: 150, suffix: '+', label: { en: 'Brands Served', ar: 'علامة تجارية' }, Icon: Users },
-  { value: 15,  suffix: '+', label: { en: 'Years of Excellence', ar: 'سنة خبرة' }, Icon: Award },
-  { value: 20,  suffix: '+', label: { en: 'Countries Exported', ar: 'دولة تم التصدير إليها' }, Icon: Globe2 },
-];
 
 function AnimatedCounter({ target, suffix, inView }: { target: number; suffix: string; inView: boolean }) {
   const [count, setCount] = useState(0);
-  const hasAnimated = useRef(false);
+  const hasAnimated = useRef<number | null>(null);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
-    if (!inView || hasAnimated.current) return;
-    hasAnimated.current = true;
-    const duration = 1800;
-    const steps = 50;
-    const stepValue = target / steps;
+    // Keyed on the target as well as visibility: the figures now come from the
+    // CMS, which lands after first paint. Without this, a number that had
+    // already counted up to its built-in default would never move to the
+    // edited one.
+    if (!inView || hasAnimated.current === target) return;
+    hasAnimated.current = target;
+    if (reduce) {
+      setCount(target);
+      return;
+    }
+    const duration = 1400;
+    const steps = 40;
     const stepTime = duration / steps;
-    let currentStep = 0;
+    let step = 0;
     const interval = setInterval(() => {
-      currentStep++;
-      if (currentStep >= steps) {
+      step += 1;
+      if (step >= steps) {
         setCount(target);
         clearInterval(interval);
       } else {
-        setCount(Math.round(stepValue * currentStep));
+        setCount(Math.round((target / steps) * step));
       }
     }, stepTime);
     return () => clearInterval(interval);
-  }, [inView, target]);
-
-  return <span>{count}{suffix}</span>;
-}
-
-export default function StatsSection() {
-  const { locale } = useLanguage();
-  const sectionRef = useRef<HTMLElement>(null);
-  const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
+  }, [inView, target, reduce]);
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative py-12 lg:py-16 overflow-hidden bg-cream-100"
-    >
-      {/* Light background to match the surrounding sections */}
-      <div className="absolute inset-0 bg-gradient-to-b from-cream-100 to-cream-50" />
+    <span>
+      {count}
+      {suffix}
+    </span>
+  );
+}
 
-      {/* Decorative soft glows */}
-      <div className="absolute top-0 -start-32 w-[420px] h-[420px] rounded-full bg-kcc-rose-light/40 blur-[140px]" />
-      <div className="absolute bottom-0 -end-32 w-[420px] h-[420px] rounded-full bg-kcc-beige-light/35 blur-[140px]" />
-      <div className="absolute inset-0 dot-pattern opacity-40 pointer-events-none" />
+/**
+ * "By the numbers".
+ *
+ * Reworked from four heavy cards to a single quiet band divided by hairlines.
+ * The figures are set in the serif at a calmer size, the labels sit under them
+ * in small caps, and colour appears exactly once — a champagne rule above each
+ * figure. Nothing here competes with the product photography around it.
+ */
+export default function StatsSection() {
+  const { locale } = useLanguage();
+  // Editable under Admin → CMS Manager → "stats".
+  const content = useCmsSection('stats', DEFAULTS);
+  const sectionRef = useRef<HTMLElement>(null);
+  const isInView = useInView(sectionRef, { once: true, margin: '-80px' });
+  const reduce = useReducedMotion();
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+  return (
+    <section ref={sectionRef} className="relative overflow-hidden bg-cream-100 py-14 lg:py-20">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-cream-100 to-cream-50" />
+
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={reduce ? false : { opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12 lg:mb-14"
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.5 }}
+          className="mb-10 text-center lg:mb-12"
         >
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 text-[10px] uppercase tracking-[0.32em] chip-rose rounded-full font-medium">
-            <Sparkles size={11} />
+          <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.32em] text-kcc-beige-dark">
             {locale === 'ar' ? 'بالأرقام' : 'By the numbers'}
-          </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3">
-            <span className="gradient-text">
-              {locale === 'ar' ? 'أثرنا في الصناعة' : 'A Legacy of Cosmetic Craft'}
-            </span>
+          </p>
+          <h2 className="font-serif text-2xl leading-tight text-ink-800 sm:text-3xl lg:text-[2.25rem]">
+            {locale === 'ar' ? 'أثرنا في الصناعة' : 'A legacy of cosmetic craft'}
           </h2>
-          <p className="text-cream-700 text-sm sm:text-base max-w-xl mx-auto">
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-cream-700">
             {locale === 'ar'
-              ? 'أرقام تروي قصة شغف بالجودة، الابتكار، وثقة عملائنا حول العالم.'
-              : 'Numbers that capture our obsession with quality, innovation, and the trust of brands across the world.'}
+              ? 'أرقام تروي قصة شغف بالجودة والابتكار وثقة عملائنا حول العالم.'
+              : 'Numbers that capture our obsession with quality, innovation and the trust of brands across the world.'}
           </p>
         </motion.div>
 
-        {/* Stats Grid — single row of refined cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-          {stats.map((stat, index) => {
-            const Icon = stat.Icon;
+        {/* One band, split by hairlines — no card chrome, no per-card colour. */}
+        <div className="grid grid-cols-2 border-y border-cream-300 lg:grid-cols-4">
+          {content.items.map((stat, i) => {
+            const Icon = ICONS[i % ICONS.length];
+            const { value, suffix } = splitValue(stat.value);
             return (
               <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
+                key={`${stat.label}-${i}`}
+                initial={reduce ? false : { opacity: 0, y: 14 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="group relative overflow-hidden rounded-2xl border border-cream-300/60 bg-white/70 backdrop-blur-sm p-5 lg:p-6 hover:border-kcc-rose/40 hover:bg-white shadow-soft hover:shadow-soft-lg transition-all duration-300"
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.45, delay: i * 0.07 }}
+                className={`px-4 py-8 text-center sm:px-6 lg:py-10 ${
+                  // two-up on mobile, four-up from lg — a hairline between every
+                  // pair, never after the last item in a row
+                  i < 2 ? 'border-b border-cream-300 lg:border-b-0' : ''
+                } ${i % 2 === 0 ? 'border-e border-cream-300' : ''} ${
+                  i === 1 ? 'lg:border-e lg:border-cream-300' : ''
+                } ${i === 3 ? 'lg:border-e-0' : ''}`}
               >
-                {/* Hover glow */}
-                <div className="absolute inset-0 bg-gradient-to-br from-kcc-rose/0 via-transparent to-kcc-beige/0 group-hover:from-kcc-rose/10 group-hover:to-kcc-beige/8 transition-all duration-500 pointer-events-none" />
+                <span className="mx-auto mb-4 block h-px w-8 bg-kcc-beige/70" />
 
-                <div className="relative z-10">
-                  {/* Icon */}
-                  <div className="inline-flex w-10 h-10 rounded-xl bg-kcc-rose/15 text-kcc-rose-dark items-center justify-center mb-4">
-                    <Icon size={18} />
-                  </div>
+                <Icon size={17} className="mx-auto mb-3 text-kcc-beige-dark" />
 
-                  {/* Number */}
-                  <div className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-2 gradient-text">
-                    <AnimatedCounter target={stat.value} suffix={stat.suffix} inView={isInView} />
-                  </div>
+                <p className="font-serif text-3xl leading-none text-ink-800 sm:text-4xl">
+                  <AnimatedCounter target={value} suffix={suffix} inView={isInView} />
+                </p>
 
-                  {/* Label */}
-                  <p className="text-xs sm:text-sm text-cream-700 font-medium leading-snug">
-                    {locale === 'ar' ? stat.label.ar : stat.label.en}
-                  </p>
-
-                  {/* Hairline divider */}
-                  <div className="absolute top-0 start-0 h-px w-12 bg-gradient-to-r from-kcc-rose-light to-transparent" />
-                </div>
+                <p className="mt-3 text-[11px] uppercase tracking-[0.16em] text-cream-700">
+                  {stat.label}
+                </p>
               </motion.div>
             );
           })}

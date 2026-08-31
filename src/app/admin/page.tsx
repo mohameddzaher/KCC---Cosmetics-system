@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { useLivePoll } from '@/lib/useLivePoll';
 import {
   ShoppingCart, Package, DollarSign, AlertTriangle,
@@ -16,6 +15,8 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar,
   AreaChart, Area, Legend
 } from 'recharts';
+import { useLanguage } from '@/contexts/LanguageContext';
+import MyQueue from '@/components/admin/MyQueue';
 
 /* ────────────────── colour palette constants ────────────────── */
 const KCC_GREEN = '#2D6A4F';
@@ -44,7 +45,7 @@ const statusBadgeClasses: Record<string, string> = {
   'Delivered': 'bg-emerald-500/10 text-emerald-400',
   'Quotation Sent': 'bg-orange-500/10 text-orange-400',
   'Awaiting Payment': 'bg-amber-500/10 text-amber-400',
-  'Closed': 'bg-dark-500/10 text-dark-400',
+  'Closed': 'bg-surface-3/10 text-fg-muted',
 };
 
 /* ────────────────── shared tooltip style ────────────────── */
@@ -90,11 +91,12 @@ function getMonthLabel(date: Date, locale: string): string {
 
 /* ────────────────── custom recharts label for donut ────────────────── */
 function DonutCenterLabel({ viewBox, value }: any) {
+  const { tx } = useLanguage();
   const { cx, cy } = viewBox;
   return (
     <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central">
-      <tspan x={cx} dy="-6" className="fill-dark-50 text-lg font-bold">{value}</tspan>
-      <tspan x={cx} dy="18" className="fill-dark-400 text-[10px]">Total</tspan>
+      <tspan x={cx} dy="-6" className="fill-fg text-lg font-bold">{value}</tspan>
+      <tspan x={cx} dy="18" className="fill-fg-muted text-[10px]">{tx('Total')}</tspan>
     </text>
   );
 }
@@ -103,7 +105,7 @@ function DonutCenterLabel({ viewBox, value }: any) {
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════ */
 export default function AdminDashboard() {
-  const { t, locale } = useLanguage();
+  const { t, locale, tx } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<any[]>([]);
@@ -399,7 +401,7 @@ export default function AdminDashboard() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
         <Loader2 className="animate-spin text-kcc-green" size={32} />
-        <p className="text-dark-400 text-sm">{t('admin.loadingDashboard')}</p>
+        <p className="text-fg-muted text-sm">{t('admin.loadingDashboard')}</p>
       </div>
     );
   }
@@ -482,18 +484,18 @@ export default function AdminDashboard() {
       {/* ── Header row with refresh ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-dark-50">{t('admin.dashboardOverview')}</h2>
-          <p className="text-sm text-dark-400 mt-0.5">{t('admin.dashboardSubtitle')}</p>
+          <h2 className="text-xl font-bold text-fg">{t('admin.dashboardOverview')}</h2>
+          <p className="text-sm text-fg-muted mt-0.5">{t('admin.dashboardSubtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5 text-xs text-dark-400" title="Auto-updates every 15s">
+          <span className="flex items-center gap-1.5 text-xs text-fg-muted" title={tx('Auto-updates every 15s')}>
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full rounded-full bg-kcc-green opacity-75 animate-ping"></span>
               <span className="relative inline-flex h-2 w-2 rounded-full bg-kcc-green"></span>
             </span>
             Live
             {lastUpdated && (
-              <span className="hidden sm:inline text-dark-500">
+              <span className="hidden sm:inline text-fg-subtle">
                 · {lastUpdated.toLocaleTimeString(locale === 'ar' ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             )}
@@ -502,7 +504,7 @@ export default function AdminDashboard() {
             type="button"
             onClick={() => fetchDashboardData(true)}
             disabled={refreshing}
-            className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-dark-300 bg-dark-900 border border-dark-800 rounded-lg hover:border-dark-700 hover:text-dark-50 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-fg-muted bg-surface border border-line rounded-lg hover:border-line hover:text-fg transition-all disabled:opacity-50"
           >
             <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
             {refreshing ? t('common.refreshing') : t('common.refresh')}
@@ -510,13 +512,16 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Whatever is waiting on the signed-in role, before the company-wide stats. */}
+      <MyQueue />
+
       {/* ═══════  STAT CARDS (2 rows of 4)  ═══════ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-4">
         {statCards.map((card, i) => {
           const Icon = card.icon;
           return (
             <Link key={i} href={card.href} className="group block">
-              <div className="relative p-5 bg-dark-900 border border-dark-800 rounded-xl hover:border-dark-700 transition-all group-hover:shadow-lg group-hover:shadow-dark-900/50 overflow-hidden">
+              <div className="relative p-5 bg-surface border border-line rounded-xl hover:border-line transition-all group-hover:shadow-lg group-hover:shadow-black/50 overflow-hidden">
                 {/* Subtle gradient accent */}
                 <div className={`absolute top-0 right-0 w-24 h-24 ${card.bg} rounded-full -translate-y-8 translate-x-8 opacity-50`} />
 
@@ -534,8 +539,8 @@ export default function AdminDashboard() {
                   )}
                 </div>
                 <div className="relative mt-3">
-                  <p className="text-2xl font-bold text-dark-50 tracking-tight">{card.value}</p>
-                  <p className="text-sm text-dark-400 mt-0.5">{card.label}</p>
+                  <p className="text-2xl font-bold text-fg tracking-tight">{card.value}</p>
+                  <p className="text-sm text-fg-muted mt-0.5">{card.label}</p>
                 </div>
               </div>
             </Link>
@@ -544,8 +549,8 @@ export default function AdminDashboard() {
       </div>
 
       {/* ═══════  QUICK ACTIONS  ═══════ */}
-      <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wider mb-3">{t('admin.quickActions')}</h3>
+      <div className="bg-surface border border-line rounded-xl p-5">
+        <h3 className="text-sm font-semibold text-fg-muted uppercase tracking-wider mb-3">{t('admin.quickActions')}</h3>
         <div className="flex flex-wrap gap-3">
           <Link
             href="/admin/orders"
@@ -567,7 +572,7 @@ export default function AdminDashboard() {
           </Link>
           <Link
             href="/admin/orders"
-            className="flex items-center gap-2 px-4 py-2.5 bg-dark-800 text-dark-200 border border-dark-700 rounded-lg text-sm font-medium hover:bg-dark-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-surface-2 text-fg border border-line rounded-lg text-sm font-medium hover:bg-surface-3 transition-colors"
           >
             <Eye size={16} /> {t('admin.viewAllOrders')}
           </Link>
@@ -575,17 +580,16 @@ export default function AdminDashboard() {
       </div>
 
       {/* ═══════  CHARTS ROW 1: Orders Trend + Order Status Donut  ═══════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 xl:gap-6">
 
         {/* Orders Trend Line Chart (30 days) */}
-        <div className="lg:col-span-2 bg-dark-900 border border-dark-800 rounded-xl p-5">
+        <div className="lg:col-span-2 bg-surface border border-line rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-base font-semibold text-dark-50">{t('admin.ordersTrend')}</h2>
-              <p className="text-xs text-dark-500 mt-0.5">{t('admin.last30Days')}</p>
+              <h2 className="text-base font-semibold text-fg">{t('admin.ordersTrend')}</h2>
+              <p className="text-xs text-fg-subtle mt-0.5">{t('admin.last30Days')}</p>
             </div>
-            <Link href="/admin/orders" className="text-xs text-kcc-green hover:text-kcc-green-light flex items-center gap-1">
-              View All <ArrowRight size={12} />
+            <Link href="/admin/orders" className="text-xs text-kcc-green hover:text-kcc-green-light flex items-center gap-1">{tx('View All')}<ArrowRight size={12} />
             </Link>
           </div>
           <div className="h-72">
@@ -647,9 +651,9 @@ export default function AdminDashboard() {
         </div>
 
         {/* Order Status Donut Chart */}
-        <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
-          <h2 className="text-base font-semibold text-dark-50 mb-1">{t('admin.orderStatus')}</h2>
-          <p className="text-xs text-dark-500 mb-4">{t('admin.statusDistribution')}</p>
+        <div className="bg-surface border border-line rounded-xl p-5">
+          <h2 className="text-base font-semibold text-fg mb-1">{t('admin.orderStatus')}</h2>
+          <p className="text-xs text-fg-subtle mb-4">{t('admin.statusDistribution')}</p>
           {analytics.statusDistribution.length > 0 ? (
             <>
               <div className="h-52">
@@ -678,11 +682,11 @@ export default function AdminDashboard() {
                   <div key={i} className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
-                      <span className="text-dark-400">{s.name}</span>
+                      <span className="text-fg-muted">{s.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-dark-300 font-medium">{s.value}</span>
-                      <span className="text-dark-500 w-8 text-right">
+                      <span className="text-fg-muted font-medium">{s.value}</span>
+                      <span className="text-fg-subtle w-8 text-right">
                         {analytics.totalOrders > 0 ? Math.round((s.value / analytics.totalOrders) * 100) : 0}%
                       </span>
                     </div>
@@ -691,7 +695,7 @@ export default function AdminDashboard() {
               </div>
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center h-52 text-dark-400">
+            <div className="flex flex-col items-center justify-center h-52 text-fg-muted">
               <ShoppingCart size={28} className="mb-2" />
               <p className="text-sm">{t('admin.noOrders')}</p>
             </div>
@@ -700,17 +704,16 @@ export default function AdminDashboard() {
       </div>
 
       {/* ═══════  CHARTS ROW 2: Revenue + Orders by Type  ═══════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:gap-6">
 
         {/* Revenue Bar Chart (6 months) */}
-        <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
+        <div className="bg-surface border border-line rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-base font-semibold text-dark-50">{t('admin.revenueChart')}</h2>
-              <p className="text-xs text-dark-500 mt-0.5">{t('admin.paidInvoices6Months')}</p>
+              <h2 className="text-base font-semibold text-fg">{t('admin.revenueChart')}</h2>
+              <p className="text-xs text-fg-subtle mt-0.5">{t('admin.paidInvoices6Months')}</p>
             </div>
-            <Link href="/admin/accounting" className="text-xs text-kcc-green hover:text-kcc-green-light flex items-center gap-1">
-              Details <ArrowRight size={12} />
+            <Link href="/admin/accounting" className="text-xs text-kcc-green hover:text-kcc-green-light flex items-center gap-1">{tx('Details')}<ArrowRight size={12} />
             </Link>
           </div>
           <div className="h-64">
@@ -729,11 +732,11 @@ export default function AdminDashboard() {
         </div>
 
         {/* Orders by Type (sample vs bulk) Bar Chart */}
-        <div className="bg-dark-900 border border-dark-800 rounded-xl p-5">
+        <div className="bg-surface border border-line rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-base font-semibold text-dark-50">{t('admin.ordersByType')}</h2>
-              <p className="text-xs text-dark-500 mt-0.5">{t('admin.sampleVsBulk')}</p>
+              <h2 className="text-base font-semibold text-fg">{t('admin.ordersByType')}</h2>
+              <p className="text-xs text-fg-subtle mt-0.5">{t('admin.sampleVsBulk')}</p>
             </div>
           </div>
           <div className="h-64">
@@ -753,17 +756,16 @@ export default function AdminDashboard() {
       </div>
 
       {/* ═══════  CHARTS ROW 3: Customer Growth + Top Products  ═══════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 xl:gap-6">
 
         {/* Customer Growth Area Chart */}
-        <div className="lg:col-span-2 bg-dark-900 border border-dark-800 rounded-xl p-5">
+        <div className="lg:col-span-2 bg-surface border border-line rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-base font-semibold text-dark-50">{t('admin.customerGrowth')}</h2>
-              <p className="text-xs text-dark-500 mt-0.5">{t('admin.newAndCumulative')}</p>
+              <h2 className="text-base font-semibold text-fg">{t('admin.customerGrowth')}</h2>
+              <p className="text-xs text-fg-subtle mt-0.5">{t('admin.newAndCumulative')}</p>
             </div>
-            <Link href="/admin/customers" className="text-xs text-kcc-green hover:text-kcc-green-light flex items-center gap-1">
-              View All <ArrowRight size={12} />
+            <Link href="/admin/customers" className="text-xs text-kcc-green hover:text-kcc-green-light flex items-center gap-1">{tx('View All')}<ArrowRight size={12} />
             </Link>
           </div>
           <div className="h-64">
@@ -806,32 +808,32 @@ export default function AdminDashboard() {
         </div>
 
         {/* Top Products Table */}
-        <div className="bg-dark-900 border border-dark-800 rounded-xl">
-          <div className="p-5 border-b border-dark-800">
-            <h2 className="text-base font-semibold text-dark-50">{t('admin.topProducts')}</h2>
-            <p className="text-xs text-dark-500 mt-0.5">{t('admin.byRevenue')}</p>
+        <div className="bg-surface border border-line rounded-xl">
+          <div className="p-5 border-b border-line">
+            <h2 className="text-base font-semibold text-fg">{t('admin.topProducts')}</h2>
+            <p className="text-xs text-fg-subtle mt-0.5">{t('admin.byRevenue')}</p>
           </div>
           {analytics.topProducts.length > 0 ? (
-            <div className="divide-y divide-dark-800">
+            <div className="divide-y divide-line">
               {analytics.topProducts.map((product, i) => (
-                <div key={i} className="flex items-center justify-between px-5 py-3.5 hover:bg-dark-800/50 transition-colors">
+                <div key={i} className="flex items-center justify-between px-5 py-3.5 hover:bg-surface-2/50 transition-colors">
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-dark-800 text-dark-400 text-xs font-bold flex-shrink-0">
+                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-surface-2 text-fg-muted text-xs font-bold flex-shrink-0">
                       {i + 1}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-dark-100 truncate">{product.name}</p>
-                      <p className="text-xs text-dark-500">{product.count} orders</p>
+                      <p className="text-sm font-medium text-fg truncate">{product.name}</p>
+                      <p className="text-xs text-fg-subtle">{product.count} orders</p>
                     </div>
                   </div>
-                  <p className="text-sm font-semibold text-dark-200 flex-shrink-0 ml-2">
+                  <p className="text-sm font-semibold text-fg flex-shrink-0 ml-2">
                     ${product.revenue.toLocaleString()}
                   </p>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-32 text-dark-400 p-5">
+            <div className="flex flex-col items-center justify-center h-32 text-fg-muted p-5">
               <BarChart3 size={28} className="mb-2" />
               <p className="text-sm">{t('admin.noProductData')}</p>
             </div>
@@ -840,38 +842,37 @@ export default function AdminDashboard() {
       </div>
 
       {/* ═══════  BOTTOM ROW: Recent Orders + Activity + Low Stock  ═══════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 xl:gap-6">
 
         {/* Recent Orders Table */}
-        <div className="lg:col-span-2 bg-dark-900 border border-dark-800 rounded-xl">
-          <div className="flex items-center justify-between p-5 border-b border-dark-800">
+        <div className="min-w-0 lg:col-span-2 bg-surface border border-line rounded-xl">
+          <div className="flex items-center justify-between p-5 border-b border-line">
             <div>
-              <h2 className="text-base font-semibold text-dark-50">{t('admin.recentOrders')}</h2>
-              <p className="text-xs text-dark-500 mt-0.5">{t('admin.latestOrders')}</p>
+              <h2 className="text-base font-semibold text-fg">{t('admin.recentOrders')}</h2>
+              <p className="text-xs text-fg-subtle mt-0.5">{t('admin.latestOrders')}</p>
             </div>
-            <Link href="/admin/orders" className="text-xs text-kcc-green hover:text-kcc-green-light flex items-center gap-1">
-              View All <ArrowRight size={12} />
+            <Link href="/admin/orders" className="text-xs text-kcc-green hover:text-kcc-green-light flex items-center gap-1">{tx('View All')}<ArrowRight size={12} />
             </Link>
           </div>
           {analytics.recentOrders.length > 0 ? (
-            <div className="overflow-x-auto">
+            <div className="scroll-thin w-full min-w-0 overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-dark-800">
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">{t('admin.order')}</th>
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">{t('admin.type')}</th>
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3 hidden sm:table-cell">{t('admin.customer')}</th>
-                    <th className="text-start text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">{t('common.status')}</th>
-                    <th className="text-end text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3">{t('admin.total')}</th>
-                    <th className="text-center text-xs font-medium text-dark-500 uppercase tracking-wider px-5 py-3 w-12"><span className="sr-only">Actions</span></th>
+                  <tr className="border-b border-line">
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{t('admin.order')}</th>
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{t('admin.type')}</th>
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3 hidden sm:table-cell">{t('admin.customer')}</th>
+                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{t('common.status')}</th>
+                    <th className="text-end text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{t('admin.total')}</th>
+                    <th className="text-center text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3 w-12"><span className="sr-only">{tx('Actions')}</span></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dark-800">
+                <tbody className="divide-y divide-line">
                   {analytics.recentOrders.map((order: any) => (
-                    <tr key={order._id} className="hover:bg-dark-800/50 transition-colors">
+                    <tr key={order._id} className="hover:bg-surface-2/50 transition-colors">
                       <td className="px-5 py-3">
-                        <span className="text-sm font-medium text-dark-100">{order.orderNumber}</span>
-                        <p className="text-xs text-dark-500 mt-0.5 sm:hidden">
+                        <span className="text-sm font-medium text-fg">{order.orderNumber}</span>
+                        <p className="text-xs text-fg-subtle mt-0.5 sm:hidden">
                           {order.customerInfo?.personName || order.userId?.name || '-'}
                         </p>
                       </td>
@@ -882,7 +883,7 @@ export default function AdminDashboard() {
                           {order.type === 'sample' ? t('admin.sample') : t('admin.bulk')}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-sm text-dark-300 hidden sm:table-cell">
+                      <td className="px-5 py-3 text-sm text-fg-muted hidden sm:table-cell">
                         {order.customerInfo?.personName || order.userId?.name || '-'}
                       </td>
                       <td className="px-5 py-3">
@@ -890,11 +891,11 @@ export default function AdminDashboard() {
                           {order.status}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-end text-sm text-dark-200 font-medium">
+                      <td className="px-5 py-3 text-end text-sm text-fg font-medium">
                         ${(order.totals?.total || 0).toLocaleString()}
                       </td>
                       <td className="px-5 py-3 text-center">
-                        <Link href={`/admin/orders/${order._id}`} className="text-dark-400 hover:text-kcc-green transition-colors">
+                        <Link href={`/admin/orders/${order._id}`} className="text-fg-muted hover:text-kcc-green transition-colors">
                           <Eye size={16} />
                         </Link>
                       </td>
@@ -904,7 +905,7 @@ export default function AdminDashboard() {
               </table>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-32 text-dark-400 p-5">
+            <div className="flex flex-col items-center justify-center h-32 text-fg-muted p-5">
               <ShoppingCart size={28} className="mb-2" />
               <p className="text-sm">{t('admin.noOrders')}</p>
             </div>
@@ -915,17 +916,17 @@ export default function AdminDashboard() {
         <div className="space-y-6">
 
           {/* Recent Activity Feed */}
-          <div className="bg-dark-900 border border-dark-800 rounded-xl">
-            <div className="flex items-center justify-between p-5 border-b border-dark-800">
+          <div className="bg-surface border border-line rounded-xl">
+            <div className="flex items-center justify-between p-5 border-b border-line">
               <div className="flex items-center gap-2">
                 <Activity size={16} className="text-kcc-green" />
-                <h2 className="text-base font-semibold text-dark-50">{t('admin.recentActivity')}</h2>
+                <h2 className="text-base font-semibold text-fg">{t('admin.recentActivity')}</h2>
               </div>
             </div>
             {analytics.recentActivity.length > 0 ? (
-              <div className="divide-y divide-dark-800 max-h-64 overflow-y-auto">
+              <div className="divide-y divide-line max-h-64 overflow-y-auto">
                 {analytics.recentActivity.map((item) => (
-                  <div key={item.id} className="px-5 py-3 hover:bg-dark-800/50 transition-colors">
+                  <div key={item.id} className="px-5 py-3 hover:bg-surface-2/50 transition-colors">
                     <div className="flex items-start gap-3">
                       <div className={`mt-0.5 flex-shrink-0 ${item.color}`}>
                         {item.icon === 'order' && <ShoppingCart size={14} />}
@@ -933,15 +934,15 @@ export default function AdminDashboard() {
                         {item.icon === 'status' && <TrendingUp size={14} />}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-dark-300 leading-relaxed line-clamp-2">{item.message}</p>
-                        <p className="text-[10px] text-dark-500 mt-0.5">{timeAgo(item.time, t, locale)}</p>
+                        <p className="text-xs text-fg-muted leading-relaxed line-clamp-2">{item.message}</p>
+                        <p className="text-[10px] text-fg-subtle mt-0.5">{timeAgo(item.time, t, locale)}</p>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-24 text-dark-400 p-5">
+              <div className="flex flex-col items-center justify-center h-24 text-fg-muted p-5">
                 <Activity size={20} className="mb-1" />
                 <p className="text-xs">{t('admin.noRecentActivity')}</p>
               </div>
@@ -949,31 +950,30 @@ export default function AdminDashboard() {
           </div>
 
           {/* Low Stock Alerts */}
-          <div className="bg-dark-900 border border-dark-800 rounded-xl">
-            <div className="flex items-center justify-between p-5 border-b border-dark-800">
+          <div className="bg-surface border border-line rounded-xl">
+            <div className="flex items-center justify-between p-5 border-b border-line">
               <div className="flex items-center gap-2">
                 <AlertTriangle size={16} className="text-red-400" />
-                <h2 className="text-base font-semibold text-dark-50">{t('admin.lowStock')}</h2>
+                <h2 className="text-base font-semibold text-fg">{t('admin.lowStock')}</h2>
               </div>
-              <Link href="/admin/inventory" className="text-xs text-kcc-green hover:text-kcc-green-light flex items-center gap-1">
-                View All <ArrowRight size={12} />
+              <Link href="/admin/inventory" className="text-xs text-kcc-green hover:text-kcc-green-light flex items-center gap-1">{tx('View All')}<ArrowRight size={12} />
               </Link>
             </div>
             {analytics.lowStockItems.length > 0 ? (
-              <div className="divide-y divide-dark-800 max-h-52 overflow-y-auto">
+              <div className="divide-y divide-line max-h-52 overflow-y-auto">
                 {analytics.lowStockItems.slice(0, 5).map((item: any) => (
-                  <div key={item._id} className="px-5 py-3 hover:bg-dark-800/50 transition-colors">
+                  <div key={item._id} className="px-5 py-3 hover:bg-surface-2/50 transition-colors">
                     <div className="flex items-start justify-between">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-dark-100 truncate">{item.name?.en || item.name}</p>
-                        <p className="text-xs text-dark-500">{item.sku}</p>
+                        <p className="text-sm font-medium text-fg truncate">{item.name?.en || item.name}</p>
+                        <p className="text-xs text-fg-subtle">{item.sku}</p>
                       </div>
                       <div className="text-end flex-shrink-0 ml-2">
                         <p className="text-sm font-bold text-red-400">{item.currentStock} {item.unit}</p>
-                        <p className="text-xs text-dark-500">Min: {item.lowStockThreshold}</p>
+                        <p className="text-xs text-fg-subtle">Min: {item.lowStockThreshold}</p>
                       </div>
                     </div>
-                    <div className="mt-2 w-full bg-dark-800 rounded-full h-1.5">
+                    <div className="mt-2 w-full bg-surface-2 rounded-full h-1.5">
                       <div
                         className="bg-red-500 h-1.5 rounded-full transition-all"
                         style={{ width: `${Math.min((item.currentStock / (item.lowStockThreshold || 1)) * 100, 100)}%` }}
@@ -983,7 +983,7 @@ export default function AdminDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-24 text-dark-400 p-5">
+              <div className="flex flex-col items-center justify-center h-24 text-fg-muted p-5">
                 <Package size={20} className="mb-1" />
                 <p className="text-xs">{t('admin.allStockHealthy')}</p>
               </div>

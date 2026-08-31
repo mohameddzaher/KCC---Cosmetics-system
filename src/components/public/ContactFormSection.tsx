@@ -124,7 +124,7 @@ export default function ContactFormSection() {
   };
 
   const inputClasses =
-    'w-full px-4 py-3 bg-white border border-cream-300 rounded-xl text-ink-700 text-sm placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark/60 focus:ring-2 focus:ring-kcc-rose/20 transition-all duration-200';
+    'w-full px-4 py-3 bg-surface border border-cream-300 rounded-xl text-ink-700 text-sm placeholder:text-cream-700 focus:outline-none focus:border-kcc-rose-dark/60 focus:ring-2 focus:ring-kcc-rose/20 transition-all duration-200';
 
   const l = (field: { en: string; ar: string }) => (locale === 'ar' ? field.ar : field.en);
 
@@ -154,8 +154,8 @@ export default function ContactFormSection() {
           <span className="inline-block px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-rose rounded-full font-medium">
             {locale === 'ar' ? 'دعنا نتعرف عليك' : "Let's Connect"}
           </span>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
-            <span className="gradient-text">{l(content.title)}</span>
+          <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] leading-tight text-ink-800 mb-3">
+            {l(content.title)}
           </h2>
           <p className="text-cream-700 text-base sm:text-lg max-w-2xl mx-auto">
             {l(content.subtitle)}
@@ -166,8 +166,8 @@ export default function ContactFormSection() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Form Column */}
           <motion.div
-            initial={{ opacity: 0, x: locale === 'ar' ? 30 : -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="lg:col-span-3"
@@ -330,8 +330,8 @@ export default function ContactFormSection() {
 
           {/* Sidebar Column */}
           <motion.div
-            initial={{ opacity: 0, x: locale === 'ar' ? -30 : 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.35 }}
             className="lg:col-span-2"

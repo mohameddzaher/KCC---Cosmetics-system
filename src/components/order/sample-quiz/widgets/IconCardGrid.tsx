@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import OptionGrid from './OptionGrid';
 import type { LucideIcon } from 'lucide-react';
 import { Check } from 'lucide-react';
 import {
@@ -43,7 +44,7 @@ export default function IconCardGrid({ options, selected, onChange, maxSelect = 
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+    <OptionGrid min="9rem">
       {options.map((opt) => {
         const active = selected.includes(opt.value);
         const Icon = iconMap[opt.meta?.icon || opt.value] || Box;
@@ -52,15 +53,16 @@ export default function IconCardGrid({ options, selected, onChange, maxSelect = 
             key={opt.value}
             type="button"
             whileTap={{ scale: 0.97 }}
+            aria-pressed={active}
             onClick={() => toggle(opt.value)}
-            className={`relative aspect-square flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border-2 transition-all duration-300 ${
+            className={`relative aspect-square min-h-[8rem] flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border-2 transition-all duration-300 ${
               active
-                ? 'bg-espresso-900 border-espresso-900 text-cream-50 shadow-soft-lg'
-                : 'bg-white border-cream-300 text-ink-700 hover:border-ink-700 shadow-soft'
+                ? 'bg-surface-inverse border-fg text-fg-inverse shadow-soft-lg'
+                : 'bg-surface border-cream-300 text-ink-700 hover:border-ink-700 shadow-soft'
             }`}
           >
             {active && (
-              <span className="absolute top-2 end-2 w-5 h-5 rounded-full bg-cream-50 text-espresso-900 flex items-center justify-center">
+              <span className="absolute top-2 end-2 w-5 h-5 rounded-full bg-cream-50 text-fg flex items-center justify-center">
                 <Check size={11} strokeWidth={3} />
               </span>
             )}
@@ -71,6 +73,6 @@ export default function IconCardGrid({ options, selected, onChange, maxSelect = 
           </motion.button>
         );
       })}
-    </div>
+    </OptionGrid>
   );
 }

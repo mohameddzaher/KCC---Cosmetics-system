@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import BriefQuestion from '@/models/BriefQuestion';
 import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,13 +11,15 @@ export const dynamic = 'force-dynamic';
  *
  * Admin only — bulk-update the `order` field on multiple questions.
  * Body: { ids: string[] }  -> position in array becomes the new order.
+ * The caller sends the ids of ONE scope only, so orders stay independent
+ * between the general brief and each category's own question set.
  *
  * Used by the drag-and-drop UI to persist a new sort in one call.
  */
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !['SUPER_ADMIN', 'ADMIN'].includes(session.role)) {
+    if (!can(session?.role, 'sampleQuiz.manage')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

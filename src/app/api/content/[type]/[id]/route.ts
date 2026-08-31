@@ -9,10 +9,11 @@ import Factory from '@/models/Factory';
 import PortfolioItem from '@/models/PortfolioItem';
 import FAQ from '@/models/FAQ';
 import NewsPost from '@/models/NewsPost';
+import { can } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
-const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
+const REQUIRED_PERM = 'cms.manage' as const;
 
 const MODELS: Record<string, any> = {
   services: Service,
@@ -29,7 +30,7 @@ type Ctx = { params: Promise<{ type: string; id: string }> };
 export async function PUT(req: NextRequest, context: Ctx) {
   try {
     const user = await getSession();
-    if (!user || !ADMIN_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, REQUIRED_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     const { type, id } = await context.params;
@@ -54,7 +55,7 @@ export async function PUT(req: NextRequest, context: Ctx) {
 export async function DELETE(req: NextRequest, context: Ctx) {
   try {
     const user = await getSession();
-    if (!user || !ADMIN_ROLES.includes(user.role)) {
+    if (!user || !can(user.role, REQUIRED_PERM)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     const { type, id } = await context.params;

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import ProductSpecConfig from '@/models/ProductSpecConfig';
 import { getSession } from '@/lib/auth';
+import { can } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const session = await getSession();
-    if (!session || !['SUPER_ADMIN', 'ADMIN'].includes(session.role)) {
+    if (!can(session?.role, 'sampleQuiz.manage')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

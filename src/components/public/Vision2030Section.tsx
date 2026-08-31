@@ -182,7 +182,7 @@ export default function Vision2030Section() {
             <Sparkles size={12} />
             {content.badge}
           </span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-ink-700 max-w-4xl leading-tight mb-4">
+          <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] text-ink-800 max-w-4xl leading-tight mb-4">
             {content.title}
           </h2>
           <p className="text-cream-800 text-base sm:text-lg max-w-3xl mb-4">{content.subtitle}</p>
@@ -200,7 +200,7 @@ export default function Vision2030Section() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.35, delay: index * 0.04 }}
-                  className="group relative overflow-hidden rounded-2xl border border-cream-300 bg-white/80 p-5 hover:border-kcc-rose-dark/40 hover:bg-white hover:-translate-y-1 hover:shadow-soft transition-all duration-300"
+                  className="group relative overflow-hidden rounded-2xl border border-cream-300 bg-surface/80 p-5 hover:border-kcc-rose-dark/40 hover:bg-surface hover:-translate-y-1 hover:shadow-soft transition-all duration-300"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-kcc-rose-light/0 via-transparent to-kcc-beige-light/0 group-hover:from-kcc-rose-light/55 group-hover:to-kcc-beige-light/55 transition-all duration-500" />
                   <div className="relative z-10">
@@ -216,8 +216,8 @@ export default function Vision2030Section() {
           </div>
 
           <motion.aside
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.45 }}
             className="rounded-3xl border border-kcc-beige/40 bg-gradient-to-br from-white to-cream-200 p-6 lg:p-7 shadow-soft"
@@ -227,7 +227,7 @@ export default function Vision2030Section() {
               {content.highlights.map((item, index) => (
                 <div key={`${item.label}-${index}`} className="flex items-end justify-between border-b border-cream-300 pb-3">
                   <span className="text-sm text-cream-700">{item.label}</span>
-                  <span className="text-xl font-bold gradient-text-champagne">{item.value}</span>
+                  <span className="font-serif text-xl text-kcc-beige-dark">{item.value}</span>
                 </div>
               ))}
             </div>
