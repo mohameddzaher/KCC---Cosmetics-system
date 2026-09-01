@@ -6,6 +6,8 @@ import { Beaker, FlaskConical, ShieldCheck, Package, Truck, FileCheck, Factory }
 import type { LucideIcon } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { onImgError } from '@/lib/imageFallback';
+import { useContentList } from '@/lib/useContentList';
+import ContentSkeleton from '@/components/public/ContentSkeleton';
 
 const ICONS: Record<string, LucideIcon> = {
   Beaker, FlaskConical, ShieldCheck, Package, Truck, FileCheck, Factory,
@@ -95,27 +97,22 @@ const cardVariants = {
 
 export default function ServicesSection() {
   const { t, locale } = useLanguage();
-  const [items, setItems] = useState(services);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/content/services', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => {
-        if (cancelled || !Array.isArray(data) || data.length === 0) return;
-        setItems(
-          data.map((s: any, i: number) => ({
-            icon: ICONS[s.icon] || Beaker,
-            title: s.title || { en: '', ar: '' },
-            description: s.description || { en: '', ar: '' },
-            image: s.image || services[i % services.length].image,
-            accent: (i % 2 === 0 ? 'rose' : 'champagne') as 'rose' | 'champagne',
-          }))
-        );
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
+  /*
+   * Waits for the published services. This rendered the six shipped entries
+   * and cut back to the four that exist a moment later — the last place on
+   * the site still doing it.
+   */
+  const { items, ready } = useContentList<(typeof services)[number]>(
+    '/api/content/services',
+    (s, i) => ({
+      icon: ICONS[s.icon as string] || Beaker,
+      title: (s.title || { en: '', ar: '' }) as { en: string; ar: string },
+      description: (s.description || { en: '', ar: '' }) as { en: string; ar: string },
+      image: String(s.image || services[i % services.length].image),
+      accent: (i % 2 === 0 ? 'rose' : 'champagne') as 'rose' | 'champagne',
+    }),
+    services
+  );
 
   return (
     <section className="relative py-12 lg:py-16 bg-cream-50 overflow-hidden">
@@ -161,7 +158,9 @@ export default function ServicesSection() {
           */
           className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-7"
         >
-          {items.map((service, index) => {
+          {!ready ? (
+            <ContentSkeleton count={2} className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-7" height="h-64" />
+          ) : items.map((service, index) => {
             const Icon = service.icon;
             const cardClass = service.accent === 'rose' ? 'glass-card-blush' : 'glass-card-champagne';
             const iconBg = service.accent === 'rose'

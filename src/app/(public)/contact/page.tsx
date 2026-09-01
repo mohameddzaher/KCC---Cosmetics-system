@@ -106,16 +106,23 @@ export default function ContactPage() {
             })}
           </motion.div>
 
-          {/* Form + Map */}
-          <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
+          {/*
+            `items-start`, so neither column is stretched to match the other.
+
+            The grid stretched both to the tallest row item and the form card
+            carried `h-full`, so a tall map forced a band of empty card under
+            the Send button just to make the two bottoms line up. Each column
+            takes its natural height now, and the map is a sensible size
+            rather than one chosen to fill a column.
+          */}
+          <div className="grid items-start gap-6 lg:grid-cols-2 lg:gap-8">
             {/* Form */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="h-full"
           >
-            <div className="bg-surface border border-cream-300 shadow-soft rounded-2xl p-6 sm:p-8 h-full">
+            <div className="rounded-2xl border border-cream-300 bg-surface p-6 shadow-soft sm:p-8">
               {success ? (
                 <div className="text-center py-12">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-kcc-green/20 mb-4">
@@ -221,7 +228,7 @@ export default function ContactPage() {
               <p className="text-xs uppercase tracking-[0.18em] text-kcc-beige-dark mb-2">{t('contact.locationLabel')}</p>
               <h3 className="text-lg font-semibold text-ink-700 mb-1">{t('contact.locationTitle')}</h3>
               <p className="text-sm text-cream-700 mb-4">{t('contact.locationDesc')}</p>
-              <div className="rounded-xl overflow-hidden border border-cream-300 aspect-[4/3]">
+              <div className="h-64 overflow-hidden rounded-xl border border-cream-300 sm:h-72">
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d237818.01564880843!2d39.0579!3d21.4858!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x15c3d01fb1137e59%3A0xe059579737b118db!2sJeddah%20Saudi%20Arabia!5e0!3m2!1sen!2s!4v1709290000000!5m2!1sen!2s"
                 width="100%"
