@@ -252,7 +252,7 @@ export default function AboutPage() {
             <p className="text-cream-700">{t('about.leadershipSubtitle')}</p>
             <div className="mx-auto mt-5 h-px w-14 bg-gradient-to-r from-transparent via-kcc-rose-dark/50 to-transparent" />
             <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-cream-800">
-              {tx('KCC was founded by a chemist, not a marketer — which is why the formulation comes first here and everything else is built around it.')}
+              {tx('KCC grew from a conviction that the Kingdom should make what it sells — and that no brand should have to leave it to get the quality it wants.')}
             </p>
           </div>
           <div className="max-w-xs mx-auto">
