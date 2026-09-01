@@ -18,7 +18,7 @@ interface TeamMember {
 }
 
 export default function AboutPage() {
-  const { t, locale } = useLanguage();
+  const { t, tx, locale } = useLanguage();
   const [leaders, setLeaders] = useState<TeamMember[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
@@ -128,7 +128,9 @@ export default function AboutPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="relative"
             >
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-cream-400">
+              {/* 5:4 and capped: at half a 1440px row a 4:3 plate ran taller
+                  than the story beside it and pulled the eye off the words. */}
+              <div className="h-72 overflow-hidden rounded-2xl border border-cream-400 lg:h-80">
                 <img
                   src="https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=800&q=80"
                   alt={t('a11y.labImageAlt')}
@@ -248,6 +250,10 @@ export default function AboutPage() {
           <div className="text-center mb-12">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2rem] text-ink-800 mb-3">{t('about.leadershipTeam')}</h2>
             <p className="text-cream-700">{t('about.leadershipSubtitle')}</p>
+            <div className="mx-auto mt-5 h-px w-14 bg-gradient-to-r from-transparent via-kcc-rose-dark/50 to-transparent" />
+            <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-cream-800">
+              {tx('KCC was founded by a chemist, not a marketer — which is why the formulation comes first here and everything else is built around it.')}
+            </p>
           </div>
           <div className="max-w-xs mx-auto">
             {leaders.length > 0 ? (
@@ -258,9 +264,9 @@ export default function AboutPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="text-center p-6 bg-surface border border-cream-300 shadow-soft rounded-xl"
+                  className="group rounded-2xl border border-cream-300 bg-surface p-6 text-center shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-kcc-beige/60 hover:shadow-soft-lg"
                 >
-                  <div className="w-24 h-24 mx-auto rounded-full overflow-hidden mb-4 border-2 border-cream-400">
+                  <div className="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full ring-1 ring-kcc-beige/50 ring-offset-4 ring-offset-surface">
                     {member.image ? (
                       <Image
                         src={member.image}
@@ -275,7 +281,7 @@ export default function AboutPage() {
                       </div>
                     )}
                   </div>
-                  <h4 className="font-semibold text-ink-700 mb-1">{member.name}</h4>
+                  <h4 className="mb-1 font-serif text-lg text-ink-800">{member.name}</h4>
                   <p className="text-sm text-cream-700">{member.role[locale]}</p>
                 </motion.div>
               ))
@@ -285,9 +291,9 @@ export default function AboutPage() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="text-center p-6 bg-surface border border-cream-300 shadow-soft rounded-xl"
+                className="group rounded-2xl border border-cream-300 bg-surface p-6 text-center shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-kcc-beige/60 hover:shadow-soft-lg"
               >
-                <div className="w-24 h-24 mx-auto rounded-full overflow-hidden mb-4 border-2 border-cream-400">
+                <div className="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full ring-1 ring-kcc-beige/50 ring-offset-4 ring-offset-surface">
                   <Image
                     src="/images/mohamedsalah.jpeg"
                     alt="Dr. Mohamed Salah"
@@ -296,7 +302,7 @@ export default function AboutPage() {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <h4 className="font-semibold text-ink-700 mb-1">Dr. Mohamed Salah</h4>
+                <h4 className="mb-1 font-serif text-lg text-ink-800">Dr. Mohamed Salah</h4>
                 <p className="text-sm text-cream-700">{t('about.ceoFounder')}</p>
               </motion.div>
             )}
@@ -310,8 +316,12 @@ export default function AboutPage() {
           <div className="text-center mb-12">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2rem] text-ink-800 mb-3">{t('about.ourTeam')}</h2>
             <p className="text-cream-700">{t('about.ourTeamSubtitle')}</p>
+            <div className="mx-auto mt-5 h-px w-14 bg-gradient-to-r from-transparent via-kcc-beige/70 to-transparent" />
+            <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-cream-800">
+              {tx('Chemists, regulatory specialists, account managers and the factory floor — one team, one building, so a question about your formula never has to travel far.')}
+            </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {teamMembers.length > 0 ? (
               teamMembers.map((member, i) => (
                 <motion.div
@@ -337,7 +347,7 @@ export default function AboutPage() {
                       </div>
                     )}
                   </div>
-                  <h4 className="font-semibold text-ink-700 mb-1">{member.name}</h4>
+                  <h4 className="mb-1 font-serif text-lg text-ink-800">{member.name}</h4>
                   <p className="text-sm text-cream-700">{member.role[locale]}</p>
                 </motion.div>
               ))
@@ -368,7 +378,7 @@ export default function AboutPage() {
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <h4 className="font-semibold text-ink-700 mb-1">{member.name}</h4>
+                  <h4 className="mb-1 font-serif text-lg text-ink-800">{member.name}</h4>
                   <p className="text-sm text-cream-700">{member.role}</p>
                 </motion.div>
               ))

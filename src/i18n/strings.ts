@@ -333,6 +333,8 @@ export const AR_STRINGS: Record<string, string> = {
   'Sample Quiz': 'استبيان العينات',
   'Collapse': 'طيّ',
   'Configure': 'إعداد',
+  'KCC was founded by a chemist, not a marketer — which is why the formulation comes first here and everything else is built around it.': 'أسّس KCC كيميائي لا مسوّق — ولهذا تأتي التركيبة أولًا هنا ويُبنى كل شيء آخر حولها.',
+  'Chemists, regulatory specialists, account managers and the factory floor — one team, one building, so a question about your formula never has to travel far.': 'كيميائيون ومختصّون تنظيميون ومديرو حسابات وأرضية المصنع — فريق واحد في مبنى واحد، حتى لا يقطع أي سؤال عن تركيبتك مسافة طويلة.',
   'Article not found': 'المقال غير موجود',
   'That article does not exist, or it has been taken down.': 'هذا المقال غير موجود، أو تمت إزالته.',
   'Back to all news': 'العودة إلى كل الأخبار',
