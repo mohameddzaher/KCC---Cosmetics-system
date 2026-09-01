@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import ReviewForm from './ReviewForm';
+import { useContentList } from '@/lib/useContentList';
 
 interface Testimonial {
   quote: { en: string; ar: string };
@@ -46,27 +47,17 @@ const testimonials: Testimonial[] = [
 export default function TestimonialsSection() {
   const { t, locale } = useLanguage();
   const [current, setCurrent] = useState(0);
-  const [list, setList] = useState<Testimonial[]>(testimonials);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/content/testimonials', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => {
-        if (cancelled || !Array.isArray(data) || data.length === 0) return;
-        setList(
-          data.map((d: any) => ({
-            quote: d.content || d.quote || { en: '', ar: '' },
-            name: d.name || { en: '', ar: '' },
-            company: d.company || { en: '', ar: '' },
-            rating: d.rating || 5,
-          }))
-        );
-        setCurrent(0);
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
+  /* Waits for the real list — it used to show shipped quotes and swap. */
+  const { items: list, ready } = useContentList<Testimonial>(
+    '/api/content/testimonials',
+    (d) => ({
+      quote: (d.content || d.quote || { en: '', ar: '' }) as { en: string; ar: string },
+      name: (d.name || { en: '', ar: '' }) as { en: string; ar: string },
+      company: (d.company || { en: '', ar: '' }) as { en: string; ar: string },
+      rating: Number(d.rating) || 5,
+    }),
+    testimonials
+  );
 
   const nextSlide = useCallback(() => {
     setCurrent((prev) => (prev + 1) % list.length);
@@ -124,6 +115,9 @@ export default function TestimonialsSection() {
               strokeWidth={1.2}
             />
 
+            {!ready ? (
+              <div data-skeleton className="h-56 animate-pulse rounded-2xl bg-cream-200/50" aria-hidden />
+            ) : (
             <AnimatePresence mode="wait">
               <motion.div
                 key={current}
@@ -162,6 +156,7 @@ export default function TestimonialsSection() {
                 </div>
               </motion.div>
             </AnimatePresence>
+            )}
           </div>
 
           {/* Navigation Arrows */}

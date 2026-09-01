@@ -43,19 +43,34 @@ function interpolate(template: string, vars?: Vars): string {
   return template.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
 }
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(defaultLocale);
+export function LanguageProvider({
+  children,
+  initialLocale,
+}: {
+  children: React.ReactNode;
+  /** Resolved from the cookie on the server so the first render is correct. */
+  initialLocale?: Locale;
+}) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale || defaultLocale);
 
-  // The inline boot script in <head> already stamped lang/dir from storage,
-  // so this only syncs React state — no visible flash.
+  /*
+   * The cookie is the source of truth and the server has already applied it,
+   * so there is normally nothing to do here. This only covers a visitor whose
+   * choice predates the cookie: read it once from storage, adopt it, and write
+   * the cookie so every later request is right from the server.
+   */
   useEffect(() => {
+    if (initialLocale) return;
     try {
       const saved = localStorage.getItem(STORAGE_KEY) as Locale | null;
-      if (saved === 'en' || saved === 'ar') setLocaleState(saved);
+      if (saved === 'en' || saved === 'ar') {
+        setLocaleState(saved);
+        document.cookie = `${STORAGE_KEY}=${saved}; path=/; max-age=31536000; samesite=lax`;
+      }
     } catch {
       /* private mode — stay on the default */
     }
-  }, []);
+  }, [initialLocale]);
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -68,6 +83,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setLocaleState(newLocale);
     try {
       localStorage.setItem(STORAGE_KEY, newLocale);
+      // The cookie is what the server reads on the next request.
+      document.cookie = `${STORAGE_KEY}=${newLocale}; path=/; max-age=31536000; samesite=lax`;
     } catch {
       /* ignore */
     }

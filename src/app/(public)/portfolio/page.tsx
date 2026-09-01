@@ -143,7 +143,7 @@ export default function PortfolioPage() {
           </motion.div>
           )}
 
-          {filtered.length === 0 && (
+          {ready && filtered.length === 0 && (
             <div className="text-center py-12">
               <p className="text-cream-700">{t('common.noResults')}</p>
             </div>

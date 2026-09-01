@@ -110,6 +110,7 @@ export default function AboutPage() {
                       <span
                         key={i}
                         aria-hidden
+                        data-skeleton
                         className="block h-16 animate-pulse rounded-lg bg-cream-200/50"
                         style={{ animationDelay: `${i * 90}ms` }}
                       />
@@ -139,22 +140,42 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-12 px-4 border-y border-cream-300">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {stats.map((stat: { number: string; label: string }, i: number) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="text-center"
-            >
-              <p className="text-4xl font-bold text-kcc-green mb-2">{stat.number}</p>
-              <p className="text-sm text-cream-700">{stat.label}</p>
-            </motion.div>
-          ))}
+      {/*
+        The figures, in the same treatment as the homepage's "By the numbers"
+        band: hairline-separated, no card chrome, serif figures, and colour
+        appearing exactly once as a champagne rule above each. They were a
+        bold green sans in a grid, which belonged to no part of the system.
+      */}
+      <section className="border-y border-cream-300 bg-cream-50 py-12 lg:py-16">
+        <div className="page-shell">
+          <p className="mb-8 text-center text-[10px] font-medium uppercase tracking-[0.32em] text-kcc-beige-dark">
+            {locale === 'ar' ? 'بالأرقام' : 'By the numbers'}
+          </p>
+
+          <div className="grid grid-cols-2 border-y border-cream-300 lg:grid-cols-4">
+            {stats.map((stat: { number: string; label: string }, i: number) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.45, delay: i * 0.07 }}
+                className={`px-4 py-8 text-center sm:px-6 lg:py-10 ${
+                  i < 2 ? 'border-b border-cream-300 lg:border-b-0' : ''
+                } ${i % 2 === 0 ? 'border-e border-cream-300' : ''} ${
+                  i === 1 ? 'lg:border-e lg:border-cream-300' : ''
+                } ${i === 3 ? 'lg:border-e-0' : ''}`}
+              >
+                <span className="mx-auto mb-4 block h-px w-8 bg-kcc-beige/70" />
+                <p className="font-serif text-3xl leading-none text-ink-800 sm:text-4xl">
+                  {stat.number}
+                </p>
+                <p className="mt-3 text-[11px] uppercase tracking-[0.16em] text-cream-700">
+                  {stat.label}
+                </p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 

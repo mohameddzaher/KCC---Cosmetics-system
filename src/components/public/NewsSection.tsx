@@ -6,6 +6,8 @@ import { ArrowRight, Calendar } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { onImgError } from '@/lib/imageFallback';
 import { useEffect, useState } from 'react';
+import { useContentList } from '@/lib/useContentList';
+import ContentSkeleton from '@/components/public/ContentSkeleton';
 
 interface NewsItem {
   id: string;
@@ -98,33 +100,23 @@ const cardVariants = {
 
 export default function NewsSection() {
   const { t, locale } = useLanguage();
-  const [items, setItems] = useState<NewsItem[]>(fallbackNews);
-
-  useEffect(() => {
-    let alive = true;
-    fetch('/api/content/news', { cache: 'no-store' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        const list = Array.isArray(data) ? data : data?.items || [];
-        if (!alive || list.length === 0) return;
-        setItems(
-          list.slice(0, 3).map((post: Record<string, any>) => ({
-            id: String(post._id || post.slug),
-            slug: String(post.slug || ''),
-            date: post.publishedAt || post.createdAt || '',
-            title: post.title,
-            excerpt: post.excerpt,
-            image: post.imageUrl || '',
-          }))
-        );
-      })
-      .catch(() => {
-        /* keep the shipped copy rather than an empty section */
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
+  /*
+   * Waits for the published posts. This section used to render the three
+   * shipped placeholders and swap them for the real ones a moment later — the
+   * last place on the site still doing it.
+   */
+  const { items, ready } = useContentList<NewsItem>(
+    '/api/content/news',
+    (post) => ({
+      id: String(post._id || post.slug),
+      slug: String(post.slug || ''),
+      date: String(post.publishedAt || post.createdAt || ''),
+      title: post.title as { en: string; ar: string },
+      excerpt: post.excerpt as { en: string; ar: string },
+      image: String(post.imageUrl || ''),
+    }),
+    fallbackNews
+  );
 
   return (
     <section className="relative py-12 lg:py-16 bg-cream-100 overflow-hidden">
@@ -169,7 +161,9 @@ export default function NewsSection() {
           */
           className="mx-auto flex w-full flex-wrap justify-center gap-6 lg:gap-8"
         >
-          {items.map((item, idx) => {
+          {!ready ? (
+            <ContentSkeleton count={3} className="flex w-full flex-wrap justify-center gap-6 lg:gap-8" height="h-80 w-full max-w-[26rem] flex-1 basis-[20rem]" />
+          ) : items.map((item, idx) => {
             const cardClass = idx % 2 === 0 ? 'glass-card-blush' : 'glass-card-champagne';
             const hoverBorder = idx % 2 === 0 ? 'hover:border-kcc-rose/45' : 'hover:border-kcc-beige/55';
             return (

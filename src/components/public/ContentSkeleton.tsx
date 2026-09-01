@@ -17,10 +17,11 @@ export default function ContentSkeleton({
   height?: string;
 }) {
   return (
-    <div className={className} aria-hidden>
+    <div className={className} aria-hidden data-skeleton>
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
+          data-skeleton
           className={`${height} animate-pulse rounded-2xl border border-cream-300 bg-cream-200/50`}
           style={{ animationDelay: `${i * 90}ms` }}
         />

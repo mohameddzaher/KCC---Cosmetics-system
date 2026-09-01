@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useContentList } from '@/lib/useContentList';
+import ContentSkeleton from '@/components/public/ContentSkeleton';
 
 interface FAQItem {
   question: { en: string; ar: string };
@@ -96,19 +98,15 @@ const faqItems: FAQItem[] = [
 export default function FAQSection() {
   const { locale } = useLanguage();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const [list, setList] = useState<FAQItem[]>(faqItems);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/content/faqs', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => {
-        if (cancelled || !Array.isArray(data) || data.length === 0) return;
-        setList(data.map((f: any) => ({ question: f.question || { en: '', ar: '' }, answer: f.answer || { en: '', ar: '' } })));
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
+  /* Waits for the real list — it used to show shipped questions and swap. */
+  const { items: list, ready } = useContentList<FAQItem>(
+    '/api/content/faqs',
+    (f) => ({
+      question: (f.question as { en: string; ar: string }) || { en: '', ar: '' },
+      answer: (f.answer as { en: string; ar: string }) || { en: '', ar: '' },
+    }),
+    faqItems
+  );
 
   const sectionTitle = {
     en: 'Frequently Asked Questions',
@@ -160,7 +158,9 @@ export default function FAQSection() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="space-y-4"
         >
-          {list.map((item, index) => {
+          {!ready ? (
+            <ContentSkeleton count={4} className="space-y-3" height="h-16" />
+          ) : list.map((item, index) => {
             const isOpen = openIndex === index;
             return (
               <motion.div

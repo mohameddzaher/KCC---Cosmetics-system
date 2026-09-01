@@ -6,6 +6,7 @@ import {
   organizationJsonLd, websiteJsonLd,
 } from '@/lib/seo';
 import { THEME_BOOT_SCRIPT } from '@/contexts/ThemeContext';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -32,16 +33,20 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // The language the reader last chose, so the markup leaves the server in it.
+  const cookieLocale = (await cookies()).get('kcc-locale')?.value;
+  const locale = cookieLocale === 'ar' ? 'ar' : 'en';
+
   return (
-    <html lang="en" dir="ltr" suppressHydrationWarning>
+    <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} suppressHydrationWarning>
       <head>
         {/* Stamps data-theme + lang/dir before first paint — no theme or RTL flash. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
       </head>
       <body className="antialiased min-h-screen bg-bg text-fg">
-        <Providers>{children}</Providers>
+        <Providers initialLocale={locale}>{children}</Providers>
       </body>
     </html>
   );

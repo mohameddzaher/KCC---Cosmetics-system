@@ -107,7 +107,7 @@ export default function NewsPage() {
         <div className="page-shell">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {!ready ? (
-              <ContentSkeleton count={6} />
+              <ContentSkeleton count={3} />
             ) : news.map((item, i) => (
               <motion.div
                 key={item.slug}

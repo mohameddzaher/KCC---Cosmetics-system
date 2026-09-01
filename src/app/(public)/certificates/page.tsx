@@ -7,6 +7,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import PageHero from '@/components/public/PageHero';
 import { onImgError } from '@/lib/imageFallback';
 import { useCmsSection } from '@/lib/useCmsSection';
+import { useContentList } from '@/lib/useContentList';
+import ContentSkeleton from '@/components/public/ContentSkeleton';
 
 interface Certificate {
   id: string;
@@ -122,33 +124,27 @@ export default function CertificatesPage() {
   });
 
   const [selected, setSelected] = useState<Certificate | null>(null);
-  const [list, setList] = useState<Certificate[]>(certificates);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/content/certificates', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => {
-        if (cancelled || !Array.isArray(data) || data.length === 0) return;
-        setList(
-          data.map((c: any, i: number) => ({
-            id: c._id || String(i),
-            title: c.title?.en || '',
-            titleAr: c.title?.ar || '',
-            issuer: c.issuer?.en || '',
-            issuerAr: c.issuer?.ar || '',
-            date: c.issuedDate || '',
-            description: c.description?.en || '',
-            descriptionAr: c.description?.ar || '',
-            category: 'Certification',
-            categoryAr: 'شهادة',
-            image: c.imageUrl || certificates[i % certificates.length].image,
-          }))
-        );
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
+  /*
+   * Nothing renders until the real list has answered — the page used to paint
+   * four hardcoded certificates and cut back to the two that actually exist.
+   */
+  const { items: list, ready } = useContentList<Certificate>(
+    '/api/content/certificates',
+    (c, i) => ({
+      id: String(c._id || i),
+      title: (c.title as Record<string, string>)?.en || '',
+      titleAr: (c.title as Record<string, string>)?.ar || '',
+      issuer: (c.issuer as Record<string, string>)?.en || '',
+      issuerAr: (c.issuer as Record<string, string>)?.ar || '',
+      date: String(c.issuedDate || ''),
+      description: (c.description as Record<string, string>)?.en || '',
+      descriptionAr: (c.description as Record<string, string>)?.ar || '',
+      category: 'Certification',
+      categoryAr: 'شهادة',
+      image: String(c.imageUrl || certificates[i % certificates.length].image),
+    }),
+    certificates
+  );
 
   const getTitle = (cert: Certificate) => locale === 'ar' ? cert.titleAr : cert.title;
   const getIssuer = (cert: Certificate) => locale === 'ar' ? cert.issuerAr : cert.issuer;
@@ -177,7 +173,9 @@ export default function CertificatesPage() {
             many there are they sit centred rather than stretched.
           */}
           <div className="flex flex-wrap justify-center gap-6">
-            {list.map((cert, i) => (
+            {!ready ? (
+              <ContentSkeleton count={2} className="flex flex-wrap justify-center gap-6" height="h-80 w-full max-w-[24rem] flex-1 basis-[19rem]" />
+            ) : list.map((cert, i) => (
               <motion.button
                 key={cert.id}
                 type="button"

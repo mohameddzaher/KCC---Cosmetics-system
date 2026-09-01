@@ -109,7 +109,7 @@ export default function FactoriesPage() {
       <section className="py-12 px-4">
         <div className="page-shell space-y-8">
           {!ready ? (
-            <ContentSkeleton count={2} className="grid gap-8" height="h-80" />
+            <ContentSkeleton count={1} className="grid gap-8" height="h-80" />
           ) : list.map((factory, i) => (
             <motion.div
               key={factory.id}
