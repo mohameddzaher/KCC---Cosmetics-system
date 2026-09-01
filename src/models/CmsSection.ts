@@ -21,7 +21,16 @@ const CmsSectionSchema = new Schema<ICmsSection>(
     type: {
       type: String,
       required: true,
-      enum: ['hero', 'services', 'stats', 'process', 'clients', 'testimonials', 'about', 'technology', 'cta', 'footer', 'vision2030', 'news'],
+      /*
+       * Deliberately not an enum.
+       *
+       * It was a fixed list, so adding a new editable band to a page failed
+       * validation until someone remembered to widen the schema — the same
+       * trap that silently swallowed order_feedback notifications. A section
+       * type is a key the code and the CMS agree on, not something the
+       * database needs to police, and an unknown type simply renders nowhere.
+       */
+      trim: true,
     },
     slug: { type: String, required: true, unique: true, trim: true },
     order: { type: Number, default: 0 },

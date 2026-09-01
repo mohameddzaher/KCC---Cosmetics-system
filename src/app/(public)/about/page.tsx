@@ -51,7 +51,7 @@ export default function AboutPage() {
    *
    * Editable under Admin -> CMS Manager -> "about".
    */
-  const { content } = useCmsSection('about', {
+  const { content, ready } = useCmsSection('about', {
     en: {
       story: [t('about.storyP1'), t('about.storyP2'), t('about.storyP3')],
       mission: t('about.missionDesc'),
@@ -103,9 +103,20 @@ export default function AboutPage() {
             >
               <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2rem] text-ink-800 mb-6">{t('about.ourStory')}</h2>
               <div className="space-y-4 text-cream-800 leading-relaxed">
-                {content.story.map((paragraph: string, i: number) => (
-                  <p key={i}>{paragraph}</p>
-                ))}
+                {/* Held back until the CMS answers: the page used to show the
+                    shipped story and replace it a moment later. */}
+                {!ready
+                  ? [0, 1, 2].map((i) => (
+                      <span
+                        key={i}
+                        aria-hidden
+                        className="block h-16 animate-pulse rounded-lg bg-cream-200/50"
+                        style={{ animationDelay: `${i * 90}ms` }}
+                      />
+                    ))
+                  : content.story.map((paragraph: string, i: number) => (
+                      <p key={i}>{paragraph}</p>
+                    ))}
               </div>
             </motion.div>
 
@@ -161,7 +172,7 @@ export default function AboutPage() {
                 <Target size={24} />
               </div>
               <h3 className="font-serif text-xl text-ink-800 mb-3">{t('about.ourMission')}</h3>
-              <p className="text-cream-800 leading-relaxed">{content.mission}</p>
+              <p className="min-h-[3.5rem] text-cream-800 leading-relaxed">{ready ? content.mission : ''}</p>
             </motion.div>
 
             <motion.div
@@ -176,7 +187,7 @@ export default function AboutPage() {
               </div>
               <h3 className="font-serif text-xl text-ink-800 mb-3">{t('about.ourVision')}</h3>
               <p className="text-cream-800 leading-relaxed">
-                {content.vision}
+                {ready ? content.vision : ''}
               </p>
             </motion.div>
           </div>

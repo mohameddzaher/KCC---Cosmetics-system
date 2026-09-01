@@ -6,6 +6,9 @@ import { MapPin, Factory as FactoryIcon, Gauge, CheckCircle2 } from 'lucide-reac
 import { useLanguage } from '@/contexts/LanguageContext';
 import PageHero from '@/components/public/PageHero';
 import { onImgError } from '@/lib/imageFallback';
+import { useContentList } from '@/lib/useContentList';
+import { pickField } from '@/lib/pickField';
+import ContentSkeleton from '@/components/public/ContentSkeleton';
 
 interface FactoryData {
   id: string;
@@ -74,31 +77,24 @@ const demoFactories: FactoryData[] = [
 
 export default function FactoriesPage() {
   const { t, locale } = useLanguage();
-  const [list, setList] = useState<FactoryData[]>(demoFactories);
-
-  useEffect(() => {
-    let cancelled = false;
-    const pick = (v: any) => (typeof v === 'object' && v ? (v[locale] || v.en || '') : (v || ''));
-    fetch('/api/content/factories', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => {
-        if (cancelled || !Array.isArray(data) || data.length === 0) return;
-        setList(
-          data.map((f: any, i: number) => ({
-            id: f._id || String(i),
-            name: pick(f.name),
-            location: pick(f.location),
-            capacity: pick(f.capacity),
-            area: f.area || demoFactories[i % demoFactories.length].area,
-            features: Array.isArray(f.features) ? f.features.map((x: any) => pick(x)) : [],
-            description: pick(f.description),
-            image: f.imageUrl || demoFactories[i % demoFactories.length].image,
-          }))
-        );
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [locale]);
+  /*
+   * Nothing renders until the real list has answered — the page used to paint
+   * invented factories and swap them a moment later.
+   */
+  const { items: list, ready } = useContentList<FactoryData>(
+    '/api/content/factories',
+    (f, i) => ({
+      id: String(f._id || i),
+      name: pickField(f.name, locale),
+      location: pickField(f.location, locale),
+      capacity: pickField(f.capacity, locale),
+      area: String(f.area || demoFactories[i % demoFactories.length].area),
+      features: Array.isArray(f.features) ? f.features.map((x) => pickField(x, locale)) : [],
+      description: pickField(f.description, locale),
+      image: String(f.imageUrl || demoFactories[i % demoFactories.length].image),
+    }),
+    demoFactories
+  );
 
   return (
     <div className="min-h-screen bg-cream-100">
@@ -112,7 +108,9 @@ export default function FactoriesPage() {
       {/* Factories */}
       <section className="py-12 px-4">
         <div className="page-shell space-y-8">
-          {list.map((factory, i) => (
+          {!ready ? (
+            <ContentSkeleton count={2} className="grid gap-8" height="h-80" />
+          ) : list.map((factory, i) => (
             <motion.div
               key={factory.id}
               initial={{ opacity: 0, y: 20 }}

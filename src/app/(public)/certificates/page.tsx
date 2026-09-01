@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Award, X, Calendar, Building2 } from 'lucide-react';
+import { Award, X, Calendar, Building2, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import PageHero from '@/components/public/PageHero';
 import { onImgError } from '@/lib/imageFallback';
+import { useCmsSection } from '@/lib/useCmsSection';
 
 interface Certificate {
   id: string;
@@ -78,6 +79,48 @@ const certificates: Certificate[] = [
 
 export default function CertificatesPage() {
   const { t, locale } = useLanguage();
+  /* Editable under Admin -> CMS Manager -> "certifications". */
+  const { content: assurance } = useCmsSection('certifications', {
+    en: {
+      eyebrow: 'What this means for you',
+      title: 'Credentials are only useful if they change something',
+      lede: 'These are not badges for a footer. Each one changes what we are able to do for a brand, and what a regulator will accept from it.',
+      points: [
+        {
+          title: 'ISO 22716 — Good Manufacturing Practice',
+          body: 'Every batch is made to a documented procedure and traceable back to its raw material lots. That record is what a regulator, an auditor or a retailer asks for when something needs explaining.',
+        },
+        {
+          title: 'SFDA-licensed facility',
+          body: 'Producing in a licensed facility means your product is documented for Saudi registration from the first batch, rather than being reconstructed for the paperwork after it is made.',
+        },
+        {
+          title: 'Testing before release',
+          body: 'Stability, microbiological and pH testing on every formula, with dermatological and SPF testing where the claim needs it. Nothing ships on the strength of a recipe alone.',
+        },
+      ],
+    },
+    ar: {
+      eyebrow: 'ماذا يعني ذلك لك',
+      title: 'الشهادات لا قيمة لها ما لم تغيّر شيئًا',
+      lede: 'هذه ليست شارات تُوضع في تذييل الصفحة. كل واحدة منها تغيّر ما نستطيع تقديمه للعلامة التجارية، وما ستقبله الجهة التنظيمية منها.',
+      points: [
+        {
+          title: 'ISO 22716 — ممارسات التصنيع الجيد',
+          body: 'كل تشغيلة تُصنَّع وفق إجراء موثّق ويمكن تتبّعها رجوعًا إلى تشغيلات موادها الخام. وهذا السجل هو ما تطلبه الجهة التنظيمية أو المدقّق أو التاجر عند الحاجة لتفسير أي أمر.',
+        },
+        {
+          title: 'منشأة مرخّصة من الهيئة العامة للغذاء والدواء',
+          body: 'الإنتاج في منشأة مرخّصة يعني أن منتجك موثّق للتسجيل السعودي من أول دفعة، بدل إعادة تجميع الأوراق بعد التصنيع.',
+        },
+        {
+          title: 'الفحص قبل الإفراج',
+          body: 'فحوص الثبات والأحياء الدقيقة ودرجة الحموضة لكل تركيبة، مع الفحص الجلدي وفحص معامل الحماية حين يتطلب الادعاء ذلك. لا شيء يُشحن بالاعتماد على الوصفة وحدها.',
+        },
+      ],
+    },
+  });
+
   const [selected, setSelected] = useState<Certificate | null>(null);
   const [list, setList] = useState<Certificate[]>(certificates);
 
@@ -124,7 +167,16 @@ export default function CertificatesPage() {
       {/* Certificates Grid */}
       <section className="py-12 px-4">
         <div className="page-shell">
-          <div className="grid sm:grid-cols-2 gap-6">
+          {/*
+            Wrapping and centred, capped per card.
+
+            A two-column grid over two certificates gave each one half of a
+            1440px page, so a 3:2 image became 780px tall and the card filled
+            the screen on its own. These are credentials, not hero imagery:
+            the card is capped, the plate stays a modest ratio, and however
+            many there are they sit centred rather than stretched.
+          */}
+          <div className="flex flex-wrap justify-center gap-6">
             {list.map((cert, i) => (
               <motion.button
                 key={cert.id}
@@ -134,20 +186,20 @@ export default function CertificatesPage() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
                 onClick={() => setSelected(cert)}
-                className="text-start p-6 bg-surface border border-cream-300 shadow-soft rounded-2xl hover:border-cream-400 hover:bg-surface/90 transition-all duration-300 group"
+                className="group w-full max-w-[24rem] flex-1 basis-[19rem] rounded-2xl border border-cream-300 bg-surface p-5 text-start shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-kcc-beige/60 hover:shadow-soft-lg"
               >
-                {/* Certificate image */}
-                <div className="aspect-[3/2] rounded-xl overflow-hidden border border-cream-400 mb-5 relative">
+                {/* Certificate plate */}
+                <div className="relative mb-5 aspect-[16/10] overflow-hidden rounded-xl border border-cream-400">
                   <img
                     onError={onImgError}
                     src={cert.image}
                     alt={getTitle(cert)}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-cream-50/75 to-transparent" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Award size={40} className="text-kcc-green/70 drop-shadow-lg group-hover:text-kcc-green transition-colors" />
-                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-espresso-950/45 via-espresso-950/10 to-transparent" />
+                  <span className="absolute bottom-3 end-3 flex h-10 w-10 items-center justify-center rounded-full bg-surface/95 shadow-soft backdrop-blur-sm">
+                    <Award size={18} className="text-kcc-green" />
+                  </span>
                 </div>
 
                 {/* Category badge */}
@@ -172,6 +224,42 @@ export default function CertificatesPage() {
                   </span>
                 </div>
               </motion.button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
+      {/* What the credentials actually buy you */}
+      <section className="border-t border-cream-300 bg-cream-50 py-16 lg:py-20">
+        <div className="page-shell">
+          <div className="mx-auto mb-12 max-w-2xl text-center">
+            <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.3em] text-kcc-rose-dark">
+              {assurance.eyebrow}
+            </p>
+            <h2 className="font-serif text-2xl leading-tight text-ink-800 sm:text-3xl">
+              {assurance.title}
+            </h2>
+            <div className="mx-auto mt-5 h-px w-14 bg-gradient-to-r from-transparent via-kcc-rose-dark/50 to-transparent" />
+            <p className="mt-5 text-base leading-relaxed text-cream-800">{assurance.lede}</p>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {assurance.points.map((point: { title: string; body: string }, i: number) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.45, delay: i * 0.08 }}
+                className="rounded-2xl border border-cream-300 bg-surface p-6"
+              >
+                <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-kcc-green/10 text-kcc-green">
+                  <ShieldCheck size={18} />
+                </span>
+                <h3 className="mb-2 font-serif text-lg text-ink-800">{point.title}</h3>
+                <p className="text-sm leading-relaxed text-cream-800">{point.body}</p>
+              </motion.div>
             ))}
           </div>
         </div>

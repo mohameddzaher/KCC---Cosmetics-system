@@ -7,6 +7,9 @@ import { X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import PageHero from '@/components/public/PageHero';
 import { onImgError } from '@/lib/imageFallback';
+import { useContentList } from '@/lib/useContentList';
+import { pickField } from '@/lib/pickField';
+import ContentSkeleton from '@/components/public/ContentSkeleton';
 
 interface PortfolioItem {
   id: string;
@@ -34,30 +37,24 @@ const demoItems: PortfolioItem[] = [
 export default function PortfolioPage() {
   const { t, locale } = useLanguage();
   const [activeCategory, setActiveCategory] = useState('All');
-  const [list, setList] = useState<PortfolioItem[]>(demoItems);
+  /*
+   * Nothing renders until the real list has answered — the page used to paint
+   * the demo products and swap them a moment later.
+   */
+  const { items: list, ready } = useContentList<PortfolioItem>(
+    '/api/content/portfolio',
+    (p, i) => ({
+      id: String(p._id || i),
+      title: pickField(p.title, locale),
+      category: pickField(p.category, locale) || 'Skincare',
+      client: String(p.client || ''),
+      description: pickField(p.description, locale),
+      image: String(p.imageUrl || demoItems[i % demoItems.length].image),
+    }),
+    demoItems
+  );
   const [selected, setSelected] = useState<PortfolioItem | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    const pick = (v: any) => (typeof v === 'object' && v ? (v[locale] || v.en || '') : (v || ''));
-    fetch('/api/content/portfolio', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => {
-        if (cancelled || !Array.isArray(data) || data.length === 0) return;
-        setList(
-          data.map((p: any, i: number) => ({
-            id: p._id || String(i),
-            title: pick(p.title),
-            category: pick(p.category) || 'Skincare',
-            client: p.client || '',
-            description: pick(p.description),
-            image: p.imageUrl || demoItems[i % demoItems.length].image,
-          }))
-        );
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [locale]);
 
   const filtered = activeCategory === 'All'
     ? list
@@ -94,7 +91,10 @@ export default function PortfolioPage() {
           </div>
 
           {/* Grid */}
-          <motion.div layout className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {!ready ? (
+            <ContentSkeleton count={8} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" height="h-64" />
+          ) : (
+          <motion.div layout className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <AnimatePresence mode="popLayout">
               {filtered.map((item) => (
                 <motion.div
@@ -108,7 +108,16 @@ export default function PortfolioPage() {
                   className="group bg-surface border border-cream-300 shadow-soft rounded-2xl overflow-hidden hover:border-kcc-rose/40 hover:shadow-soft-lg cursor-pointer transition-all"
                 >
                   {/* Product image */}
-                  <div className="aspect-square overflow-hidden relative">
+                  {/*
+                    4:3, not square.
+
+                    At three columns on a 1440px page a square plate is nearly
+                    600px tall, so two rows filled the screen and the portfolio
+                    read as three products rather than a body of work. A
+                    landscape plate shows the product just as well and lets
+                    twice as much of the work be seen at once.
+                  */}
+                  <div className="relative aspect-[4/3] overflow-hidden">
                     <img
                       onError={onImgError}
                       src={item.image}
@@ -132,6 +141,7 @@ export default function PortfolioPage() {
               ))}
             </AnimatePresence>
           </motion.div>
+          )}
 
           {filtered.length === 0 && (
             <div className="text-center py-12">

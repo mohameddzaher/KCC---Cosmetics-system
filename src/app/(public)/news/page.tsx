@@ -7,6 +7,9 @@ import { Calendar, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import PageHero from '@/components/public/PageHero';
 import { onImgError } from '@/lib/imageFallback';
+import { useContentList } from '@/lib/useContentList';
+import { pickField } from '@/lib/pickField';
+import ContentSkeleton from '@/components/public/ContentSkeleton';
 
 interface NewsItem {
   slug: string;
@@ -73,30 +76,22 @@ const demoNews: NewsItem[] = [
 
 export default function NewsPage() {
   const { t, locale } = useLanguage();
-  const [news, setNews] = useState<NewsItem[]>(demoNews);
-
-  // Fetch real published posts, fall back to demo when empty
-  useEffect(() => {
-    let cancelled = false;
-    const pick = (v: any) => (typeof v === 'object' && v ? (v[locale] || v.en || '') : (v || ''));
-    fetch('/api/content/news', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => {
-        if (cancelled || !Array.isArray(data) || data.length === 0) return;
-        setNews(
-          data.map((n: any) => ({
-            slug: n.slug,
-            title: pick(n.title),
-            excerpt: pick(n.excerpt) || pick(n.content).slice(0, 160),
-            date: n.publishedAt || n.createdAt || '',
-            category: (Array.isArray(n.tags) && n.tags[0]) || 'News',
-            imageUrl: n.imageUrl,
-          }))
-        );
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [locale]);
+  /*
+   * Nothing renders until the real list has answered — the page used to paint
+   * invented headlines and swap them a moment later.
+   */
+  const { items: news, ready } = useContentList<NewsItem>(
+    '/api/content/news',
+    (n) => ({
+      slug: String(n.slug || ''),
+      title: pickField(n.title, locale),
+      excerpt: pickField(n.excerpt, locale) || pickField(n.content, locale).slice(0, 160),
+      date: String(n.publishedAt || n.createdAt || ''),
+      category: (Array.isArray(n.tags) && (n.tags as string[])[0]) || 'News',
+      imageUrl: n.imageUrl as string | undefined,
+    }),
+    demoNews
+  );
 
   return (
     <div className="min-h-screen bg-cream-100">
@@ -111,7 +106,9 @@ export default function NewsPage() {
       <section className="py-12 px-4">
         <div className="page-shell">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {news.map((item, i) => (
+            {!ready ? (
+              <ContentSkeleton count={6} />
+            ) : news.map((item, i) => (
               <motion.div
                 key={item.slug}
                 initial={{ opacity: 0, y: 20 }}
