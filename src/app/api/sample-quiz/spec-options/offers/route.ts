@@ -133,7 +133,14 @@ export async function PUT(req: NextRequest) {
     }
 
     if (detach.length > 0) {
-      // Named lists: a plain pull.
+      // ORDER MATTERS, and in our favour. The pull runs first; anything it
+      // empties is then picked up by the spell-out below. That is deliberate:
+      // a product whose list named only this option would otherwise be left
+      // with an empty list, and an empty list means "offer everything" — it
+      // would hand the customer back the very option that was just removed.
+      // Spelling the list out instead keeps the removal true. A product that
+      // should ask nothing at all is expressed by switching the spec off, not
+      // by an empty allow-list.
       const pulled = await ProductSpecConfig.updateMany(
         {
           productKey: { $in: detach },
