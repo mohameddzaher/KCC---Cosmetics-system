@@ -87,6 +87,31 @@ const ICONS = [
   'opaque', 'translucent', 'transparent',
 ];
 
+/**
+ * What a widget key means, in words.
+ *
+ * `chips-multi` is a name for the code, not for the person choosing it. The key
+ * is still what gets stored — only the reading changes.
+ */
+function widgetName(widget: string, tx: (en: string) => string): string {
+  switch (widget) {
+    case 'chips-multi':
+      return tx('Pick several from a list');
+    case 'chips-single':
+      return tx('Pick one from a list');
+    case 'color-swatches':
+      return tx('Colour swatches');
+    case 'icon-cards':
+      return tx('Cards with an icon');
+    case 'visual-cards':
+      return tx('Cards with a picture');
+    case 'fragrance-flow':
+      return tx('Fragrance: family, then notes');
+    default:
+      return widget;
+  }
+}
+
 function slug(input: string): string {
   return input
     .toLowerCase()
@@ -492,7 +517,7 @@ function LibraryInner() {
               </h2>
               <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-fg-muted">
                 <span className="font-mono">{cat.categoryKey}</span>
-                <Badge tone="info">{cat.widget}</Badge>
+                <Badge tone="info">{widgetName(cat.widget, tx)}</Badge>
                 <span>
                   {cat.options.length} {tx('options')}
                 </span>
@@ -782,6 +807,7 @@ function LibraryInner() {
         open={newList}
         onClose={() => setNewList(false)}
         title={tx('New list')}
+        subtitle={tx('A new list of answers you fill with options, then use on any product.')}
         size="md"
         footer={
           <>
@@ -809,22 +835,25 @@ function LibraryInner() {
               />
             </Field>
           </div>
-          <Field label={tx('Answer widget')}>
+          <Field
+            label={tx('How it is answered')}
+            hint={tx('How the customer picks from this list.')}
+          >
             <Select
               value={listDraft.widget}
               onChange={(e) => setListDraft((s) => ({ ...s, widget: e.target.value }))}
             >
               {['chips-multi', 'chips-single', 'color-swatches', 'icon-cards', 'visual-cards'].map((w) => (
                 <option key={w} value={w}>
-                  {w}
+                  {widgetName(w, tx)}
                 </option>
               ))}
             </Select>
           </Field>
           <div className="rounded-xl border border-line bg-surface-2 p-3.5">
             <Toggle
-              label={tx('Add it to every product, switched off')}
-              hint={tx('A new list reaches no customer until products carry it, so it is added switched off — fill it first, then turn it on per product.')}
+              label={tx('Add this question to every product now')}
+              hint={tx('It arrives switched off on each product, so no customer sees an empty question while you fill the list. Turn it on per product from the product screen when it is ready. Leave this off to add the question to a few products yourself instead.')}
               value={listDraft.attach}
               onChange={(v) => setListDraft((s) => ({ ...s, attach: v }))}
             />
