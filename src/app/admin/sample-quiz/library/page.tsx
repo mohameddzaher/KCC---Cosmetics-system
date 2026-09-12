@@ -18,7 +18,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Boxes, FlaskConical, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { Boxes, FlaskConical, Layers, Pencil, Plus, Search, Settings2, Trash2 } from 'lucide-react';
 import { SortableList } from '@/components/admin/SortableList';
 import {
   AutoGrid,
@@ -142,6 +142,22 @@ function LibraryInner() {
   const [editing, setEditing] = useState<Opt | null>(null);
   const [removing, setRemoving] = useState<Opt | null>(null);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+
+  /** Which option's product membership is open. */
+  const [offersFor, setOffersFor] = useState<Opt | null>(null);
+  /** The library itself: renaming it, or creating a new one. */
+  const [editingList, setEditingList] = useState(false);
+  const [newList, setNewList] = useState(false);
+  const [deletingList, setDeletingList] = useState(false);
+  const [listDraft, setListDraft] = useState({
+    titleEn: '',
+    titleAr: '',
+    subtitleEn: '',
+    subtitleAr: '',
+    active: true,
+    widget: 'chips-multi',
+    attach: false,
+  });
 
   const load = useCallback(async () => {
     try {
@@ -308,6 +324,63 @@ function LibraryInner() {
     setAdding(true);
   }
 
+  function openEditList() {
+    if (!cat) return;
+    setListDraft({
+      titleEn: cat.defaultTitleEn || '',
+      titleAr: cat.defaultTitleAr || '',
+      subtitleEn: '',
+      subtitleAr: '',
+      active: cat.active,
+      widget: cat.widget,
+      attach: false,
+    });
+    setEditingList(true);
+  }
+
+  async function submitEditList() {
+    if (!cat) return;
+    const ok = await send({
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        categoryKey: cat.categoryKey,
+        defaultTitleEn: listDraft.titleEn.trim(),
+        defaultTitleAr: listDraft.titleAr.trim(),
+        active: listDraft.active,
+      }),
+    });
+    if (ok) setEditingList(false);
+  }
+
+  async function submitNewList() {
+    if (!listDraft.titleEn.trim()) return;
+    const ok = await send({
+      url: '/api/sample-quiz/spec-options/categories',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        defaultTitleEn: listDraft.titleEn.trim(),
+        defaultTitleAr: listDraft.titleAr.trim(),
+        widget: listDraft.widget,
+        attachToProducts: listDraft.attach,
+      }),
+    });
+    if (ok) setNewList(false);
+  }
+
+  async function submitDeleteList() {
+    if (!cat) return;
+    const ok = await send({
+      url: `/api/sample-quiz/spec-options/categories?categoryKey=${encodeURIComponent(cat.categoryKey)}`,
+      method: 'DELETE',
+    });
+    if (ok) {
+      setDeletingList(false);
+      router.push('/admin/sample-quiz/library');
+    }
+  }
+
   function openEdit(opt: Opt) {
     const notes = Array.isArray(opt.meta?.subNotes) ? (opt.meta.subNotes as SubNote[]) : [];
     setDraft({
@@ -331,6 +404,26 @@ function LibraryInner() {
         subtitle={t('admin.optionLibraryDesc')}
         backHref="/admin/sample-quiz"
         backLabel={t('admin.quizTitle')}
+        actions={
+          <Button
+            variant="outline"
+            icon={Layers}
+            onClick={() => {
+              setListDraft({
+                titleEn: '',
+                titleAr: '',
+                subtitleEn: '',
+                subtitleAr: '',
+                active: true,
+                widget: 'chips-multi',
+                attach: false,
+              });
+              setNewList(true);
+            }}
+          >
+            {tx('New list')}
+          </Button>
+        }
       />
 
       {error && (
@@ -401,15 +494,26 @@ function LibraryInner() {
                 </span>
                 <span className="text-fg-subtle">·</span>
                 <span>{tx('Reaches the customer quiz immediately')}</span>
+                {!cat.active && <Badge tone="warn">{tx('Inactive')}</Badge>}
               </p>
             </div>
-            <Button
-              icon={Plus}
-              onClick={openAdd}
-              disabled={!!drawable && remainingDrawable.length === 0}
-            >
-              {tx('Add option')}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" icon={Settings2} onClick={openEditList}>
+                {tx('Edit list')}
+              </Button>
+              {cat.options.length === 0 && (
+                <Button variant="ghost" icon={Trash2} onClick={() => setDeletingList(true)}>
+                  {tx('Delete list')}
+                </Button>
+              )}
+              <Button
+                icon={Plus}
+                onClick={openAdd}
+                disabled={!!drawable && remainingDrawable.length === 0}
+              >
+                {tx('Add option')}
+              </Button>
+            </div>
           </div>
 
           {drawable && (
@@ -464,6 +568,7 @@ function LibraryInner() {
                     total={productTotals[cat.categoryKey] || 0}
                     onEdit={() => openEdit(opt)}
                     onRemove={() => setRemoving(opt)}
+                    onOffers={() => setOffersFor(opt)}
                   />
                 )}
               />
@@ -478,6 +583,7 @@ function LibraryInner() {
                     total={productTotals[cat.categoryKey] || 0}
                     onEdit={() => openEdit(opt)}
                     onRemove={() => setRemoving(opt)}
+                    onOffers={() => setOffersFor(opt)}
                   />
                 ))}
               </div>
@@ -605,7 +711,338 @@ function LibraryInner() {
           </div>
         )}
       </Modal>
+
+      {/* ---------------- Which products offer this option ---------------- */}
+      {cat && offersFor && (
+        <OffersModal
+          categoryKey={cat.categoryKey}
+          option={offersFor}
+          onClose={() => setOffersFor(null)}
+          onSaved={() => {
+            setOffersFor(null);
+            load();
+          }}
+        />
+      )}
+
+      {/* ---------------- The library itself ---------------- */}
+      <Modal
+        open={editingList}
+        onClose={() => setEditingList(false)}
+        title={tx('Edit list')}
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setEditingList(false)}>
+              {tx('Cancel')}
+            </Button>
+            <Button onClick={submitEditList} loading={busy} disabled={!listDraft.titleEn.trim()}>
+              {tx('Save')}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label={t('admin.questionEn')} required>
+              <TextInput
+                value={listDraft.titleEn}
+                onChange={(e) => setListDraft((s) => ({ ...s, titleEn: e.target.value }))}
+              />
+            </Field>
+            <Field label={t('admin.questionAr')}>
+              <ArabicInput
+                value={listDraft.titleAr}
+                onChange={(e) => setListDraft((s) => ({ ...s, titleAr: e.target.value }))}
+              />
+            </Field>
+          </div>
+          <div className="rounded-xl border border-line bg-surface-2 p-3.5">
+            <Toggle
+              label={tx('Active')}
+              value={listDraft.active}
+              onChange={(v) => setListDraft((s) => ({ ...s, active: v }))}
+            />
+          </div>
+          {cat && cat.options.length > 0 && (
+            <p className="text-xs leading-relaxed text-fg-muted">
+              {tx('Only an empty list can be deleted. Switch it off instead to retire it.')}
+            </p>
+          )}
+        </div>
+      </Modal>
+
+      <Modal
+        open={newList}
+        onClose={() => setNewList(false)}
+        title={tx('New list')}
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setNewList(false)}>
+              {tx('Cancel')}
+            </Button>
+            <Button onClick={submitNewList} loading={busy} disabled={!listDraft.titleEn.trim()}>
+              {tx('Save')}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label={t('admin.questionEn')} required>
+              <TextInput
+                value={listDraft.titleEn}
+                onChange={(e) => setListDraft((s) => ({ ...s, titleEn: e.target.value }))}
+              />
+            </Field>
+            <Field label={t('admin.questionAr')}>
+              <ArabicInput
+                value={listDraft.titleAr}
+                onChange={(e) => setListDraft((s) => ({ ...s, titleAr: e.target.value }))}
+              />
+            </Field>
+          </div>
+          <Field label={tx('Answer widget')}>
+            <Select
+              value={listDraft.widget}
+              onChange={(e) => setListDraft((s) => ({ ...s, widget: e.target.value }))}
+            >
+              {['chips-multi', 'chips-single', 'color-swatches', 'icon-cards', 'visual-cards'].map((w) => (
+                <option key={w} value={w}>
+                  {w}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <div className="rounded-xl border border-line bg-surface-2 p-3.5">
+            <Toggle
+              label={tx('Add it to every product, switched off')}
+              hint={tx('A new list reaches no customer until products carry it, so it is added switched off — fill it first, then turn it on per product.')}
+              value={listDraft.attach}
+              onChange={(v) => setListDraft((s) => ({ ...s, attach: v }))}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={deletingList}
+        onClose={() => setDeletingList(false)}
+        title={tx('Delete list')}
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setDeletingList(false)}>
+              {tx('Cancel')}
+            </Button>
+            <Button variant="danger" onClick={submitDeleteList} loading={busy}>
+              {tx('Delete')}
+            </Button>
+          </>
+        }
+      >
+        {cat && <p className="text-sm text-fg">{pick(cat.defaultTitleEn, cat.defaultTitleAr)}</p>}
+      </Modal>
     </div>
+  );
+}
+
+/**
+ * The product membership of one option.
+ *
+ * Answers "who offers this?" and lets it be changed per product, which is what
+ * the bulk attach toggle leaves open. Products with no list of their own offer
+ * everything, so they arrive ticked and unticking them writes their list out.
+ */
+function OffersModal({
+  categoryKey,
+  option,
+  onClose,
+  onSaved,
+}: {
+  categoryKey: string;
+  option: Opt;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const { tx, pick } = useLanguage();
+  const [rows, setRows] = useState<
+    Array<{
+      productKey: string;
+      itemName: string;
+      mainSlug: string;
+      subSlug: string;
+      specEnabled: boolean;
+      offersAll: boolean;
+      offers: boolean;
+    }>
+  >([]);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [ready, setReady] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(
+      `/api/sample-quiz/spec-options/offers?categoryKey=${encodeURIComponent(
+        categoryKey
+      )}&value=${encodeURIComponent(option.value)}`,
+      { cache: 'no-store' }
+    )
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('Could not load the product list'))))
+      .then((d) => {
+        if (cancelled) return;
+        const list = Array.isArray(d.products) ? d.products : [];
+        setRows(list);
+        setPicked(new Set(list.filter((p: { offers: boolean }) => p.offers).map((p: { productKey: string }) => p.productKey)));
+      })
+      .catch((e) => !cancelled && setError(e instanceof Error ? e.message : 'Load failed'))
+      .finally(() => !cancelled && setReady(true));
+    return () => {
+      cancelled = true;
+    };
+  }, [categoryKey, option.value]);
+
+  const groups = useMemo(() => {
+    const by = new Map<string, typeof rows>();
+    for (const r of rows) {
+      const list = by.get(r.mainSlug) || [];
+      list.push(r);
+      by.set(r.mainSlug, list);
+    }
+    return [...by.entries()];
+  }, [rows]);
+
+  function toggle(key: string) {
+    setPicked((s) => {
+      const next = new Set(s);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function setGroup(keys: string[], on: boolean) {
+    setPicked((s) => {
+      const next = new Set(s);
+      for (const k of keys) (on ? next.add(k) : next.delete(k));
+      return next;
+    });
+  }
+
+  async function save() {
+    setSaving(true);
+    setError(null);
+    try {
+      const attach = rows.filter((r) => picked.has(r.productKey) && !r.offers).map((r) => r.productKey);
+      const detach = rows.filter((r) => !picked.has(r.productKey) && r.offers).map((r) => r.productKey);
+      const res = await fetch('/api/sample-quiz/spec-options/offers', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryKey, value: option.value, attach, detach }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || 'Save failed');
+      }
+      onSaved();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={tx('Where it is offered')}
+      subtitle={pick(option.labelEn, option.labelAr)}
+      size="lg"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            {tx('Cancel')}
+          </Button>
+          <Button onClick={save} loading={saving} disabled={!ready}>
+            {tx('Save')}
+          </Button>
+        </>
+      }
+    >
+      {!ready ? (
+        <Spinner />
+      ) : (
+        <div className="space-y-4">
+          {error && <ErrorNote>{error}</ErrorNote>}
+
+          <p className="text-xs leading-relaxed text-fg-muted">
+            {tx('A product with no list of its own offers every option, so it is ticked here. Unticking it writes out the full list for that product, minus this one.')}
+          </p>
+
+          {rows.length === 0 ? (
+            <p className="py-6 text-center text-sm text-fg-subtle">
+              {tx('No product carries this list yet')}
+            </p>
+          ) : (
+            groups.map(([main, list]) => {
+              const keys = list.map((r) => r.productKey);
+              const on = keys.filter((k) => picked.has(k)).length;
+              return (
+                <div key={main} className="rounded-xl border border-line">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-bg-subtle px-3 py-2">
+                    <p className="text-xs font-semibold capitalize text-fg">
+                      {main.replace(/-/g, ' ')}
+                      <span className="ms-2 font-normal text-fg-muted">
+                        {on}/{keys.length}
+                      </span>
+                    </p>
+                    <div className="flex items-center gap-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setGroup(keys, true)}
+                        className="font-medium text-brand hover:underline"
+                      >
+                        {tx('All')}
+                      </button>
+                      <span className="text-fg-subtle">·</span>
+                      <button
+                        type="button"
+                        onClick={() => setGroup(keys, false)}
+                        className="font-medium text-fg-muted hover:text-fg hover:underline"
+                      >
+                        {tx('None')}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="divide-y divide-line">
+                    {list.map((r) => (
+                      <label
+                        key={r.productKey}
+                        className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm hover:bg-surface-2"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={picked.has(r.productKey)}
+                          onChange={() => toggle(r.productKey)}
+                          className="accent-accent"
+                        />
+                        <span className="min-w-0 flex-1 truncate text-fg">{r.itemName}</span>
+                        {r.offersAll && <Badge tone="info">{tx('Offers everything')}</Badge>}
+                        {!r.specEnabled && <Badge tone="neutral">{tx('Question switched off')}</Badge>}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </Modal>
   );
 }
 
@@ -750,6 +1187,7 @@ function OptionRow({
   total,
   onEdit,
   onRemove,
+  onOffers,
 }: {
   cat: Master;
   opt: Opt;
@@ -758,6 +1196,7 @@ function OptionRow({
   total: number;
   onEdit: () => void;
   onRemove: () => void;
+  onOffers: () => void;
 }) {
   const { tx, pick } = useLanguage();
   const hex = swatchOf(cat, opt);
@@ -788,7 +1227,13 @@ function OptionRow({
         </p>
       </div>
 
-      <span className="shrink-0 text-[11px] text-fg-muted">
+      {/* The count is the way in to changing it, so it is the button. */}
+      <button
+        type="button"
+        onClick={onOffers}
+        title={tx('Where it is offered')}
+        className="shrink-0 rounded-lg px-2 py-1 text-[11px] text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+      >
         {used > 0 ? (
           <>
             {used}
@@ -797,7 +1242,7 @@ function OptionRow({
         ) : (
           <Badge tone="neutral">{tx('Offered by no product yet')}</Badge>
         )}
-      </span>
+      </button>
 
       <div className="flex shrink-0 items-center gap-1">
         <Button variant="ghost" size="sm" icon={Pencil} onClick={onEdit} aria-label={tx('Edit')} />

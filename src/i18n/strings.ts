@@ -430,6 +430,18 @@ export const AR_STRINGS: Record<string, string> = {
   'manual / referral / event': 'يدوي / إحالة / فعالية',
 
   /* ---------- Sample-quiz option library ---------- */
+  'Where it is offered': 'أين يُعرض',
+  'Offers everything': 'يعرض كل الخيارات',
+  'Question switched off': 'السؤال موقوف',
+  'A product with no list of its own offers every option, so it is ticked here. Unticking it writes out the full list for that product, minus this one.': 'المنتج الذي لا يملك قائمة خاصة يعرض كل الخيارات، ولذلك هو مُعلَّم هنا. وإلغاء التعليم يكتب القائمة كاملةً لذلك المنتج، ناقصةً هذا الخيار.',
+  'Edit list': 'تعديل القائمة',
+  'New list': 'قائمة جديدة',
+  'Delete list': 'حذف القائمة',
+  'Answer widget': 'طريقة الإجابة',
+  'Add it to every product, switched off': 'أضِفها إلى كل المنتجات وهي موقوفة',
+  'A new list reaches no customer until products carry it, so it is added switched off — fill it first, then turn it on per product.': 'القائمة الجديدة لا تصل إلى أي عميل حتى تحملها المنتجات، ولذلك تُضاف وهي موقوفة — املأها أولًا ثم فعّلها في كل منتج.',
+  'Only an empty list can be deleted. Switch it off instead to retire it.': 'لا يمكن حذف إلا القائمة الفارغة. أوقِفها بدلًا من ذلك لتقاعُدها.',
+  'No product carries this list yet': 'لا يحمل أي منتج هذه القائمة بعد',
   'Option library': 'مكتبة الخيارات',
   'Add option': 'إضافة خيار',
   'Edit option': 'تعديل الخيار',
