@@ -23,6 +23,7 @@ export default function SpecStep({
   spec,
   master,
   parts,
+  intensity,
   indexInGroup,
   groupSize,
   onNext,
@@ -33,6 +34,8 @@ export default function SpecStep({
   master: SpecMasterDoc;
   /** Admin config for the packaging studio's cap/label/finish/colour tabs. */
   parts?: PackagingParts;
+  /** The fragrance-intensity library, for the third of the fragrance questions. */
+  intensity?: SpecMasterDoc;
   indexInGroup: number;
   groupSize: number;
   onNext: () => void;
@@ -68,6 +71,7 @@ export default function SpecStep({
     return (
       <FragranceFlow
         master={{ options: master.options as never }}
+        intensityMaster={intensity}
         allowedFamilies={spec.allowedOptions}
         config={{
           titleEn: title,

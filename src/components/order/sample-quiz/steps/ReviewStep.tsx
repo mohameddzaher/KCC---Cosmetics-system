@@ -178,6 +178,11 @@ export default function ReviewStep({
   const fragranceRow: Row | null = useMemo(() => {
     if (!state.fragrance.family) return null;
     const fragMaster = masters.find((m) => m.categoryKey === 'fragrances');
+    // Read the intensity back through its library too, or the review would show
+    // the stored key where every other row shows a name.
+    const intMaster = masters.find((m) => m.categoryKey === 'fragrance-intensity');
+    const intOpt = intMaster?.options.find((o) => o.value === state.fragrance.intensity);
+    const intensityLabel = intOpt ? pick(intOpt.labelEn, intOpt.labelAr) : state.fragrance.intensity;
     const fam = fragMaster?.options.find((o) => o.value === state.fragrance.family);
     const meta = fam?.meta as { subNotes?: Array<{ value: string; labelEn: string; labelAr?: string }> } | undefined;
     const noteLabels = state.fragrance.notes.map((n) => {
@@ -187,7 +192,7 @@ export default function ReviewStep({
     return {
       key: 'fragrance',
       title: t('quiz.reviewFragrance'),
-      display: [fam ? pick(fam.labelEn, fam.labelAr) : state.fragrance.family, noteLabels.join('، '), state.fragrance.intensity]
+      display: [fam ? pick(fam.labelEn, fam.labelAr) : state.fragrance.family, noteLabels.join('، '), intensityLabel]
         .filter(Boolean)
         .join(' · '),
       stepId: 'spec:fragrances',

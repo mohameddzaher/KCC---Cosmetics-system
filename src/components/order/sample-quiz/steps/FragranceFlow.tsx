@@ -17,8 +17,14 @@ interface FragranceMaster {
   }>;
 }
 
+/** The fragrance-intensity library — the admin's list of how strong. */
+interface IntensityMaster {
+  options: Array<{ value: string; labelEn: string; labelAr?: string }>;
+}
+
 interface Props {
   master: FragranceMaster;
+  intensityMaster?: IntensityMaster;
   allowedFamilies: string[];
   config: { titleEn?: string; subtitleEn?: string; isRequired?: boolean; maxSelectNotes?: number };
   onComplete: () => void;
@@ -33,6 +39,7 @@ interface Props {
  */
 export default function FragranceFlow({
   master,
+  intensityMaster,
   allowedFamilies,
   config,
   onComplete,
@@ -52,12 +59,20 @@ export default function FragranceFlow({
   const subNotes = family?.meta?.subNotes || [];
   const hasSubNotes = subNotes.length > 0;
 
-  const intensityOptions = [
-    { value: 'light', label: t('quiz.fragrance.light') },
-    { value: 'medium', label: t('quiz.fragrance.medium') },
-    { value: 'strong', label: t('quiz.fragrance.strong') },
-    { value: 'long-lasting', label: t('quiz.fragrance.longLasting') },
-  ];
+  /**
+   * Intensity is a library like every other spec, so the admin's list is the
+   * list. The four steps below survive only as a fallback for a database with
+   * no fragrance-intensity library at all — they are not a second source of
+   * truth competing with what the admin edits.
+   */
+  const intensityOptions = intensityMaster?.options?.length
+    ? intensityMaster.options.map((o) => ({ value: o.value, label: pick(o.labelEn, o.labelAr) }))
+    : [
+        { value: 'light', label: t('quiz.fragrance.light') },
+        { value: 'medium', label: t('quiz.fragrance.medium') },
+        { value: 'strong', label: t('quiz.fragrance.strong') },
+        { value: 'long-lasting', label: t('quiz.fragrance.longLasting') },
+      ];
 
   if (sub === 0) {
     return (
@@ -129,7 +144,7 @@ export default function FragranceFlow({
         onChange={(v) =>
           dispatch({
             type: 'SET_FRAGRANCE',
-            patch: { intensity: v as 'light' | 'medium' | 'strong' | 'long-lasting' },
+            patch: { intensity: v },
           })
         }
       />

@@ -115,6 +115,7 @@ export default function QuizOrchestrator() {
             spec={step.spec}
             master={step.master}
             parts={step.parts}
+            intensity={step.intensity}
             indexInGroup={step.indexInGroup}
             groupSize={step.groupSize}
             onNext={goNext}

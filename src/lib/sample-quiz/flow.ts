@@ -110,7 +110,7 @@ export type Step =
   | { id: string; kind: 'intro'; section: Section; intro: 'brief' | 'category' | 'specs' }
   | { id: string; kind: 'category'; section: 'category'; level: 1 | 2 | 3 }
   | { id: string; kind: 'question'; section: Section; question: QuestionDoc; indexInGroup: number; groupSize: number }
-  | { id: string; kind: 'spec'; section: 'specs'; spec: ProductSpecDoc; master: SpecMasterDoc; indexInGroup: number; groupSize: number; parts?: PackagingParts }
+  | { id: string; kind: 'spec'; section: 'specs'; spec: ProductSpecDoc; master: SpecMasterDoc; indexInGroup: number; groupSize: number; parts?: PackagingParts; intensity?: SpecMasterDoc }
   | { id: 'review'; kind: 'review'; section: 'review' };
 
 export type Section = 'you' | 'brief' | 'category' | 'specs' | 'review';
@@ -438,6 +438,12 @@ export function buildSteps(state: QuizState, data: QuizData): Step[] {
         indexInGroup: i,
         groupSize: enabledSpecs.length,
         ...(spec.specKey === 'product-packaging' ? { parts } : {}),
+        // Fragrance asks three questions in one step, and the third of them —
+        // how strong — is its own library. Handed over here so the step renders
+        // the admin's list instead of a copy kept in the component.
+        ...(spec.specKey === 'fragrances'
+          ? { intensity: data.masters.find((m) => m.categoryKey === 'fragrance-intensity') }
+          : {}),
       })
     );
   }

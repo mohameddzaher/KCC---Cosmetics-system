@@ -38,7 +38,12 @@ export interface SpecAnswer {
 export interface FragranceAnswer {
   family: string;               // primary family value
   notes: string[];              // sub-notes (multi-select)
-  intensity: 'light' | 'medium' | 'strong' | 'long-lasting' | '';
+  /**
+   * Whatever the fragrance-intensity library offers. Not a fixed union: the
+   * admin owns that list, and a closed type here would mean an option they add
+   * could be picked on screen and then fail to type-check anywhere it is read.
+   */
+  intensity: string;
 }
 
 /** Packaging configurator selections (bottle / cap / label / finish). */
