@@ -10,6 +10,9 @@ import {
 } from 'lucide-react';
 
 const iconMap: Record<string, LucideIcon> = {
+  // Keyed by meta.icon first, then by the option's own value — both spellings
+  // are in the data, so both resolve rather than falling back to a plain box.
+  'pump': Droplet,
   'gel-pump': Droplet,
   'jar': Box,
   'bottle': FlaskConical,

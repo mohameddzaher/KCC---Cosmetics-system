@@ -36,25 +36,11 @@ export interface IProductSpecConfig extends Document {
 
 const ProductSpecSchema = new Schema<IProductSpec>(
   {
-    specKey: {
-      type: String,
-      enum: [
-        'oils-extracts',
-        'actives',
-        'fine-actives',
-        'product-color',
-        'product-packaging',
-        // The packaging studio's parts. Each is a normal, admin-editable spec —
-        // they simply render as tabs inside one visual step instead of five
-        // separate question screens.
-        'package-cap',
-        'package-label',
-        'package-finish',
-        'package-color',
-        'fragrances',
-      ],
-      required: true,
-    },
+    // Matches whatever categories exist in SpecOptionMaster, which is also
+    // unconstrained: an enum here would silently reject a category the admin
+    // added — `fragrance-intensity` already existed as a master and could never
+    // have been attached to a product.
+    specKey: { type: String, required: true },
     enabled: { type: Boolean, default: true },
     titleEn: { type: String },
     titleAr: { type: String },

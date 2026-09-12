@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowRight, Boxes, ExternalLink, Layers, ListChecks } from 'lucide-react';
+import { ArrowRight, Boxes, ExternalLink, FlaskConical, Layers, ListChecks } from 'lucide-react';
 import { AutoGrid, Card, PageHeader } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function SampleQuizAdminLanding() {
   const { t, pick } = useLanguage();
-  const [counts, setCounts] = useState({ general: 0, scoped: 0, products: 0 });
+  const [counts, setCounts] = useState({ general: 0, scoped: 0, products: 0, options: 0 });
 
   useEffect(() => {
     Promise.all([
@@ -18,12 +18,17 @@ export default function SampleQuizAdminLanding() {
       fetch('/api/sample-quiz/product-config', { cache: 'no-store' })
         .then((r) => (r.ok ? r.json() : { configs: [] }))
         .catch(() => ({ configs: [] })),
-    ]).then(([qs, pc]) => {
+      fetch('/api/sample-quiz/spec-options?all=true', { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : { categories: [] }))
+        .catch(() => ({ categories: [] })),
+    ]).then(([qs, pc, so]) => {
       const all: Array<{ scope?: string }> = Array.isArray(qs) ? qs : [];
+      const cats: Array<{ options?: unknown[] }> = Array.isArray(so.categories) ? so.categories : [];
       setCounts({
         general: all.filter((q) => (q.scope || 'general') === 'general').length,
         scoped: all.filter((q) => (q.scope || 'general') !== 'general').length,
         products: Array.isArray(pc.configs) ? pc.configs.length : 0,
+        options: cats.reduce((n, c) => n + (c.options?.length || 0), 0),
       });
     });
   }, []);
@@ -52,6 +57,14 @@ export default function SampleQuizAdminLanding() {
       href: '/admin/sample-quiz/products',
       Icon: Boxes,
       stat: counts.products,
+    },
+    {
+      key: 'library',
+      title: t('admin.optionLibrary'),
+      desc: t('admin.optionLibraryDesc'),
+      href: '/admin/sample-quiz/library',
+      Icon: FlaskConical,
+      stat: counts.options,
     },
   ];
 

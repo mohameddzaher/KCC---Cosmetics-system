@@ -255,6 +255,9 @@ export const adminEn = {
   categoryQuestions: 'Category questions',
   categoryQuestionsDesc:
     'Asked right after the customer picks this category, before the technical specs. Same widgets as the brief.',
+  optionLibrary: 'Option library',
+  optionLibraryDesc:
+    'The master lists every product draws from — oils and extracts, actives, colours, fragrances and packaging parts.',
   addQuestion: 'Add question',
   editQuestion: 'Edit question',
   questionEn: 'Question (English)',
@@ -592,6 +595,9 @@ export const adminAr: typeof adminEn = {
   categoryQuestions: 'أسئلة القسم',
   categoryQuestionsDesc:
     'تُطرح فور اختيار العميل لهذا القسم، وقبل المواصفات التقنية. بنفس أدوات الأسئلة العامة.',
+  optionLibrary: 'مكتبة الخيارات',
+  optionLibraryDesc:
+    'القوائم الأساسية التي تُبنى منها كل المنتجات — الزيوت والخلاصات والمواد الفعّالة والألوان والعطور وأجزاء التغليف.',
   addQuestion: 'إضافة سؤال',
   editQuestion: 'تعديل السؤال',
   questionEn: 'السؤال (بالإنجليزية)',

@@ -10,6 +10,7 @@
  */
 
 import { useMemo, useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import { Boxes, GripVertical, Search } from 'lucide-react';
 import { SortableList } from '@/components/admin/SortableList';
 import { Field, TextArea, TextInput, Toggle } from '@/components/admin/ui';
@@ -251,6 +252,14 @@ function SpecBlock({
                 >
                   {t('admin.selectNone')}
                 </button>
+                <span className="text-fg-subtle">·</span>
+                {/* This screen picks from the list; the list itself is edited there. */}
+                <Link
+                  href={`/admin/sample-quiz/library?category=${encodeURIComponent(spec.specKey)}`}
+                  className="font-medium text-brand hover:underline"
+                >
+                  {tx('Edit this list')}
+                </Link>
               </div>
             </div>
 
