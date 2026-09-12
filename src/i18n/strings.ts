@@ -430,6 +430,8 @@ export const AR_STRINGS: Record<string, string> = {
   'manual / referral / event': 'يدوي / إحالة / فعالية',
 
   /* ---------- Sample-quiz option library ---------- */
+  'It will appear on every product straight away, switched off. Fill the list with options, then turn the question on for the products that should ask it — from the product screen.': 'ستظهر في كل المنتجات فورًا وهي موقوفة. املأ القائمة بالخيارات، ثم فعّل السؤال للمنتجات التي يجب أن تطرحه — من شاشة المنتجات.',
+  'How the customer picks from this list — oils and extracts use "pick several", product colour uses swatches.': 'كيف يختار العميل من هذه القائمة — الزيوت والخلاصات تستخدم «اختيار عدة عناصر»، ولون المنتج يستخدم دوائر الألوان.',
   'Pick several from a list': 'اختيار عدة عناصر من قائمة',
   'Pick one from a list': 'اختيار عنصر واحد من قائمة',
   'Colour swatches': 'دوائر ألوان',
@@ -437,10 +439,7 @@ export const AR_STRINGS: Record<string, string> = {
   'Cards with a picture': 'بطاقات بصورة',
   'Fragrance: family, then notes': 'العطر: العائلة ثم النغمات',
   'How it is answered': 'طريقة الإجابة',
-  'How the customer picks from this list.': 'كيف يختار العميل من هذه القائمة.',
   'A new list of answers you fill with options, then use on any product.': 'قائمة إجابات جديدة تملأها بالخيارات، ثم تستخدمها في أي منتج.',
-  'Add this question to every product now': 'أضِف هذا السؤال إلى كل المنتجات الآن',
-  'It arrives switched off on each product, so no customer sees an empty question while you fill the list. Turn it on per product from the product screen when it is ready. Leave this off to add the question to a few products yourself instead.': 'يُضاف وهو موقوف في كل منتج، حتى لا يرى أي عميل سؤالًا فارغًا وأنت تملأ القائمة. فعّله لكل منتج من شاشة المنتجات عندما تصبح جاهزة. واتركه مغلقًا إن كنت تفضّل إضافة السؤال لعدد محدود من المنتجات بنفسك.',
   'Type the name customers will see. The shape list only supplies the 3D shape.': 'اكتب الاسم الذي سيراه العميل. قائمة الأشكال تحدّد الشكل ثلاثي الأبعاد فقط.',
   'Where it is offered': 'أين يُعرض',
   'Offers everything': 'يعرض كل الخيارات',

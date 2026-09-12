@@ -392,7 +392,8 @@ function LibraryInner() {
         defaultTitleEn: listDraft.titleEn.trim(),
         defaultTitleAr: listDraft.titleAr.trim(),
         widget: listDraft.widget,
-        attachToProducts: listDraft.attach,
+        // Always: a list no product carries cannot be reached from anywhere.
+        attachToProducts: true,
       }),
     });
     if (ok) setNewList(false);
@@ -837,7 +838,7 @@ function LibraryInner() {
           </div>
           <Field
             label={tx('How it is answered')}
-            hint={tx('How the customer picks from this list.')}
+            hint={tx('How the customer picks from this list — oils and extracts use "pick several", product colour uses swatches.')}
           >
             <Select
               value={listDraft.widget}
@@ -851,12 +852,9 @@ function LibraryInner() {
             </Select>
           </Field>
           <div className="rounded-xl border border-line bg-surface-2 p-3.5">
-            <Toggle
-              label={tx('Add this question to every product now')}
-              hint={tx('It arrives switched off on each product, so no customer sees an empty question while you fill the list. Turn it on per product from the product screen when it is ready. Leave this off to add the question to a few products yourself instead.')}
-              value={listDraft.attach}
-              onChange={(v) => setListDraft((s) => ({ ...s, attach: v }))}
-            />
+            <p className="text-xs leading-relaxed text-fg-muted">
+              {tx('It will appear on every product straight away, switched off. Fill the list with options, then turn the question on for the products that should ask it — from the product screen.')}
+            </p>
           </div>
         </div>
       </Modal>

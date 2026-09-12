@@ -83,8 +83,13 @@ export async function POST(req: NextRequest) {
       active: true,
     });
 
+    // Always attached, never optional. A library that no product carries is
+    // invisible to every customer AND unreachable from the admin panel — no
+    // screen adds a missing category back to a product config — so "do not
+    // attach" was an answer that led nowhere. Switched off is the safe part:
+    // nothing is asked until someone turns it on for that product.
     let productsUpdated = 0;
-    if (body.attachToProducts === true) {
+    if (body.attachToProducts !== false) {
       // Appended last and switched off, so a half-built library cannot appear in
       // front of a customer the moment it is created.
       const highest = await ProductSpecConfig.findOne({}, { specs: 1 })
