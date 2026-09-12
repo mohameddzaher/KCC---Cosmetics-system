@@ -35,18 +35,17 @@ interface MainGroup {
   totalEnabled: number;
 }
 
-const MAIN_NAME_LABELS: Record<string, string> = {
-  'hair-care': 'Hair Care',
-  'skin-care': 'Skin Care',
-  'body-care': 'Body Care',
-  'sun-care': 'Sun Care',
-  'baby-care': 'Baby Care',
-  'makeup': 'Makeup',
-  'fragrance': 'Fragrance',
-  'hygiene': 'Hygiene',
-  'massage': 'Massage',
-  'oral-care': 'Oral Care',
-};
+/**
+ * A category's name as the admin wrote it, in both languages.
+ *
+ * These used to be a hardcoded English list in this file, which meant renaming
+ * a category in the category manager did not rename it here, and an Arabic
+ * admin read English on this one screen. They are read from the collection now.
+ */
+interface CatName {
+  name: string;
+  nameAr: string;
+}
 
 function prettifySub(slug: string): string {
   return slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -59,10 +58,14 @@ interface BulkTarget {
 }
 
 export default function ProductConfigListPage() {
-  const { t, tx } = useLanguage();
+  const { t, tx, pick } = useLanguage();
   const [bulk, setBulk] = useState<BulkTarget | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
   const [configs, setConfigs] = useState<ProductConfig[]>([]);
+  const [catNames, setCatNames] = useState<{
+    mains: Record<string, CatName>;
+    subs: Record<string, CatName>;
+  }>({ mains: {}, subs: {} });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -71,9 +74,28 @@ export default function ProductConfigListPage() {
 
   const load = useCallback(async () => {
     try {
-      const r = await fetch('/api/sample-quiz/product-config', { cache: 'no-store' });
-      if (!r.ok) throw new Error('Failed to load configs');
-      const d = await r.json();
+      const [cRes, catRes] = await Promise.all([
+        fetch('/api/sample-quiz/product-config', { cache: 'no-store' }),
+        fetch('/api/sample-quiz/categories', { cache: 'no-store' }),
+      ]);
+      if (!cRes.ok) throw new Error('Failed to load configs');
+      const d = await cRes.json();
+
+      const cats = catRes.ok
+        ? await catRes.json().catch(() => ({ categories: [] }))
+        : { categories: [] };
+      const mains: Record<string, CatName> = {};
+      const subs: Record<string, CatName> = {};
+      for (const m of Array.isArray(cats.categories) ? cats.categories : []) {
+        mains[m.slug] = { name: m.name || '', nameAr: m.nameAr || '' };
+        for (const s of m.subcategories || []) {
+          subs[`${m.slug}__${s.slug}`] = { name: s.name || '', nameAr: s.nameAr || '' };
+        }
+      }
+
+      // Both land together: the tree must never render one set of names and
+      // then swap to another a moment later.
+      setCatNames({ mains, subs });
       setConfigs(Array.isArray(d.configs) ? d.configs : []);
       setError(null);
     } catch (e) {
@@ -94,7 +116,9 @@ export default function ProductConfigListPage() {
       if (!map.has(c.mainSlug)) {
         map.set(c.mainSlug, {
           mainSlug: c.mainSlug,
-          mainName: MAIN_NAME_LABELS[c.mainSlug] || prettifySub(c.mainSlug),
+          mainName:
+            pick(catNames.mains[c.mainSlug]?.name, catNames.mains[c.mainSlug]?.nameAr) ||
+            prettifySub(c.mainSlug),
           subs: new Map(),
           totalProducts: 0,
           totalEnabled: 0,
@@ -104,7 +128,11 @@ export default function ProductConfigListPage() {
       if (!main.subs.has(c.subSlug)) {
         main.subs.set(c.subSlug, {
           subSlug: c.subSlug,
-          subName: prettifySub(c.subSlug),
+          subName:
+            pick(
+              catNames.subs[`${c.mainSlug}__${c.subSlug}`]?.name,
+              catNames.subs[`${c.mainSlug}__${c.subSlug}`]?.nameAr
+            ) || prettifySub(c.subSlug),
           configs: [],
         });
       }
@@ -115,7 +143,7 @@ export default function ProductConfigListPage() {
       }
     }
     return Array.from(map.values()).sort((a, b) => a.mainName.localeCompare(b.mainName));
-  }, [configs]);
+  }, [configs, catNames, pick]);
 
   // Filter by search query — keep tree shape
   const filtered = useMemo<MainGroup[]>(() => {
