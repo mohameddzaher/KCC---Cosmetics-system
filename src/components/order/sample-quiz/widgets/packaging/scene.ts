@@ -349,6 +349,14 @@ export interface BuildOptions {
   cheap?: boolean;
   /** Printed on the label. */
   name?: string;
+  /**
+   * The colour to paint, when the admin authored one.
+   *
+   * The code list below is only a fallback for a pack whose colour predates
+   * the admin panel: a colour the admin edits has to be the colour that gets
+   * rendered, or the library and the render disagree about the same choice.
+   */
+  colorHex?: string;
 }
 
 export interface BuiltPack {
@@ -361,7 +369,7 @@ export interface BuiltPack {
 export function buildPack(v: PackagingAnswer, opts: BuildOptions = {}): BuiltPack {
   const cheap = !!opts.cheap;
   const profile = findProfile(v.bottle);
-  const color = findColor(v.color).hex;
+  const color = opts.colorHex || findColor(v.color).hex;
   const finish = v.finish || 'glossy';
   const spec = finishSpec(finish);
 

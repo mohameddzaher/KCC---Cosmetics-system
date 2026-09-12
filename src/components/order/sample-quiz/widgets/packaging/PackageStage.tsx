@@ -18,12 +18,15 @@ export default function PackageStage({
   value,
   name,
   angle,
+  colorHex,
   className = '',
 }: {
   value: PackagingAnswer;
   name?: string;
   /** Degrees. 0 faces the camera. */
   angle: number;
+  /** The authored hex for the chosen colour, when the library carries one. */
+  colorHex?: string;
   className?: string;
 }) {
   const host = useRef<HTMLDivElement>(null);
@@ -97,12 +100,12 @@ export default function PackageStage({
     r.studio.pivot.clear();
     r.pack?.dispose();
 
-    const built = buildPack(value, { name });
+    const built = buildPack(value, { name, colorHex });
     r.pack = built;
     r.studio.pivot.add(built.group);
     r.studio.frame(built.height);
     r.draw();
-  }, [value.bottle, value.cap, value.label, value.finish, value.color, name]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [value.bottle, value.cap, value.label, value.finish, value.color, colorHex, name]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* --- spin --- */
   useEffect(() => {

@@ -27,10 +27,13 @@ export default function PackagePreview({
   className = '',
   spin = 0,
   scene = false,
+  colorHex,
 }: {
   value: PackagingAnswer;
   name?: string;
   className?: string;
+  /** The authored hex for the chosen colour, when the library carries one. */
+  colorHex?: string;
   /** -1 … 1 — how far the viewer has turned the object. */
   spin?: number;
   /** Draw the studio backdrop and cast shadow (off for small thumbnails). */
@@ -42,6 +45,9 @@ export default function PackagePreview({
   const label = findLabel(value.label);
   const finish = findFinish(value.finish);
   const color = findColor(value.color);
+  // The library's hex wins here too, so the no-WebGL fallback paints the same
+  // colour the admin chose rather than the code palette's idea of it.
+  const packHex = colorHex || color.hex;
 
   const id = (n: string) => `${n}-${uid}`;
 
@@ -66,10 +72,10 @@ export default function PackagePreview({
       <defs>
         {/* ---------- body ---------- */}
         <linearGradient id={id('body')} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor={color.hex} stopOpacity={opaque * 0.55} />
-          <stop offset={`${Math.max(6, highlight * 100 - 18)}%`} stopColor={color.hex} stopOpacity={opaque * 0.9} />
-          <stop offset={`${highlight * 100}%`} stopColor={color.hex} stopOpacity={opaque} />
-          <stop offset={`${rimDark * 100}%`} stopColor={color.hex} stopOpacity={opaque * 0.82} />
+          <stop offset="0%" stopColor={packHex} stopOpacity={opaque * 0.55} />
+          <stop offset={`${Math.max(6, highlight * 100 - 18)}%`} stopColor={packHex} stopOpacity={opaque * 0.9} />
+          <stop offset={`${highlight * 100}%`} stopColor={packHex} stopOpacity={opaque} />
+          <stop offset={`${rimDark * 100}%`} stopColor={packHex} stopOpacity={opaque * 0.82} />
           <stop offset="100%" stopColor="#000000" stopOpacity={opaque * 0.28} />
         </linearGradient>
 
@@ -110,9 +116,9 @@ export default function PackagePreview({
         </linearGradient>
 
         <linearGradient id={id('cap')} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor={color.hex} stopOpacity="0.62" />
+          <stop offset="0%" stopColor={packHex} stopOpacity="0.62" />
           <stop offset={`${highlight * 100}%`} stopColor="#ffffff" stopOpacity="0.55" />
-          <stop offset={`${rimDark * 100}%`} stopColor={color.hex} stopOpacity="1" />
+          <stop offset={`${rimDark * 100}%`} stopColor={packHex} stopOpacity="1" />
           <stop offset="100%" stopColor="#000000" stopOpacity="0.35" />
         </linearGradient>
 

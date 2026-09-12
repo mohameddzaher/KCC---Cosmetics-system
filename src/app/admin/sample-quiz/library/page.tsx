@@ -42,7 +42,6 @@ import {
   CAPS,
   FINISHES,
   LABELS,
-  PACK_COLORS,
 } from '@/components/order/sample-quiz/widgets/packaging/shapes';
 
 interface SubNote {
@@ -67,13 +66,18 @@ interface Master {
 
 type Drawable = { value: string; labelEn: string; labelAr?: string };
 
-/** Values the packaging studio can actually render, by category. */
+/**
+ * Values the packaging studio can actually render, by category.
+ *
+ * Colour is deliberately absent: a colour is pure data, so the studio paints
+ * whatever hex is saved here and a new one needs no code. Only shapes, closures,
+ * label styles and finishes are drawn in code.
+ */
 const DRAWABLE: Record<string, Drawable[]> = {
   'product-packaging': BOTTLES.map((b) => ({ value: b.value, labelEn: b.labelEn, labelAr: b.labelAr })),
   'package-cap': CAPS.map((c) => ({ value: c.value, labelEn: c.labelEn, labelAr: c.labelAr })),
   'package-label': LABELS.map((l) => ({ value: l.value, labelEn: l.labelEn, labelAr: l.labelAr })),
   'package-finish': FINISHES.map((f) => ({ value: f.value, labelEn: f.labelEn, labelAr: f.labelAr })),
-  'package-color': PACK_COLORS.map((c) => ({ value: c.value, labelEn: c.labelEn, labelAr: c.labelAr })),
 };
 
 /** Icon names the quiz's icon grid knows how to draw. */
@@ -93,12 +97,9 @@ function slug(input: string): string {
     .replace(/^-|-$/g, '');
 }
 
-/** The swatch hex for a colour option — authored for the product, code for the pack. */
+/** The swatch hex — the saved one, which is also the one that gets painted. */
 function swatchOf(cat: Master, opt: Opt): string | null {
   if (cat.widget !== 'color-swatches') return null;
-  if (cat.categoryKey === 'package-color') {
-    return PACK_COLORS.find((c) => c.value === opt.value)?.hex || null;
-  }
   return typeof opt.meta?.hex === 'string' ? (opt.meta.hex as string) : null;
 }
 
@@ -209,6 +210,9 @@ function LibraryInner() {
      handle is offered on the full list only. */
   const canDrag = !search.trim() && !arabicOnly;
 
+  /** The shape being added, when this list is one the studio draws in code. */
+  const picked = drawable ? remainingDrawable.find((d) => d.value === draft.value) : undefined;
+
   function goto(key: string) {
     router.push(`/admin/sample-quiz/library?category=${encodeURIComponent(key)}`);
     setSearch('');
@@ -236,7 +240,7 @@ function LibraryInner() {
 
   function metaFromDraft(): Record<string, unknown> | undefined {
     if (!cat) return undefined;
-    if (cat.widget === 'color-swatches' && cat.categoryKey !== 'package-color') {
+    if (cat.widget === 'color-swatches') {
       return { hex: draft.hex };
     }
     if (cat.widget === 'icon-cards' && draft.icon) return { icon: draft.icon };
@@ -316,11 +320,11 @@ function LibraryInner() {
   }
 
   function openAdd() {
+    // Only the shape key is pre-chosen. The names stay empty on purpose: what a
+    // customer reads has to be what the admin wrote, not a copy of a label that
+    // also lives in the code and would disagree with it the moment it is edited.
     const first = remainingDrawable[0];
-    setDraft({
-      ...EMPTY_DRAFT,
-      ...(first ? { value: first.value, labelEn: first.labelEn, labelAr: first.labelAr || '' } : {}),
-    });
+    setDraft({ ...EMPTY_DRAFT, ...(first ? { value: first.value } : {}) });
     setAdding(true);
   }
 
@@ -613,18 +617,14 @@ function LibraryInner() {
         {cat && (
           <div className="space-y-4">
             {drawable ? (
-              <Field label={tx('Pick a shape')} required>
+              <Field
+                label={tx('Pick a shape')}
+                hint={tx('Type the name customers will see. The shape list only supplies the 3D shape.')}
+                required
+              >
                 <Select
                   value={draft.value}
-                  onChange={(e) => {
-                    const d = remainingDrawable.find((x) => x.value === e.target.value);
-                    setDraft((s) => ({
-                      ...s,
-                      value: e.target.value,
-                      labelEn: d?.labelEn || s.labelEn,
-                      labelAr: d?.labelAr || s.labelAr,
-                    }));
-                  }}
+                  onChange={(e) => setDraft((s) => ({ ...s, value: e.target.value }))}
                 >
                   {remainingDrawable.map((d) => (
                     <option key={d.value} value={d.value}>
@@ -635,7 +635,13 @@ function LibraryInner() {
               </Field>
             ) : null}
 
-            <DraftFields cat={cat} draft={draft} setDraft={setDraft} />
+            <DraftFields
+              cat={cat}
+              draft={draft}
+              setDraft={setDraft}
+              placeholderEn={picked?.labelEn}
+              placeholderAr={picked?.labelAr}
+            />
 
             <div className="rounded-xl border border-line bg-surface-2 p-3.5">
               <Toggle
@@ -1051,13 +1057,17 @@ function DraftFields({
   cat,
   draft,
   setDraft,
+  placeholderEn,
+  placeholderAr,
 }: {
   cat: Master;
   draft: Draft;
   setDraft: React.Dispatch<React.SetStateAction<Draft>>;
+  /** Shown as a hint only — never saved unless the admin types it. */
+  placeholderEn?: string;
+  placeholderAr?: string;
 }) {
   const { tx } = useLanguage();
-  const isPackColor = cat.categoryKey === 'package-color';
 
   return (
     <>
@@ -1065,18 +1075,20 @@ function DraftFields({
         <Field label={tx('English name')} required>
           <TextInput
             value={draft.labelEn}
+            placeholder={placeholderEn}
             onChange={(e) => setDraft((s) => ({ ...s, labelEn: e.target.value }))}
           />
         </Field>
         <Field label={tx('Arabic name')}>
           <ArabicInput
             value={draft.labelAr}
+            placeholder={placeholderAr}
             onChange={(e) => setDraft((s) => ({ ...s, labelAr: e.target.value }))}
           />
         </Field>
       </div>
 
-      {cat.widget === 'color-swatches' && !isPackColor && (
+      {cat.widget === 'color-swatches' && (
         <Field label={tx('Colour')}>
           <div className="flex items-center gap-2">
             <input
@@ -1093,12 +1105,6 @@ function DraftFields({
             />
           </div>
         </Field>
-      )}
-
-      {cat.widget === 'color-swatches' && isPackColor && (
-        <p className="text-xs leading-relaxed text-fg-muted">
-          {tx('The colour the 3D studio paints comes from the packaging library, not from here.')}
-        </p>
       )}
 
       {cat.widget === 'icon-cards' && (

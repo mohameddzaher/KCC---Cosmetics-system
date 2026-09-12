@@ -430,6 +430,7 @@ export const AR_STRINGS: Record<string, string> = {
   'manual / referral / event': 'يدوي / إحالة / فعالية',
 
   /* ---------- Sample-quiz option library ---------- */
+  'Type the name customers will see. The shape list only supplies the 3D shape.': 'اكتب الاسم الذي سيراه العميل. قائمة الأشكال تحدّد الشكل ثلاثي الأبعاد فقط.',
   'Where it is offered': 'أين يُعرض',
   'Offers everything': 'يعرض كل الخيارات',
   'Question switched off': 'السؤال موقوف',
@@ -468,7 +469,6 @@ export const AR_STRINGS: Record<string, string> = {
   'Search this list…': 'ابحث في هذه القائمة…',
   'options': 'خيار',
   'Reaches the customer quiz immediately': 'يصل إلى استبيان العميل فورًا',
-  'The colour the 3D studio paints comes from the packaging library, not from here.': 'اللون الذي يرسمه الاستوديو ثلاثي الأبعاد يأتي من مكتبة التغليف، وليس من هنا.',
   'Nothing in this list yet': 'لا يوجد شيء في هذه القائمة بعد',
   'Pick a list to edit': 'اختر قائمة لتعديلها',
 };

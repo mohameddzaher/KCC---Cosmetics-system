@@ -61,7 +61,10 @@ export default function PackagingStudio({
   const caps = useMemo(() => applyPart(CAPS, parts?.cap), [parts?.cap]);
   const labels = useMemo(() => applyPart(LABELS, parts?.label), [parts?.label]);
   const finishes = useMemo(() => applyPart(FINISHES, parts?.finish), [parts?.finish]);
-  const colors = useMemo(() => applyPart(PACK_COLORS, parts?.color), [parts?.color]);
+  // Colour is the one part that needs no geometry, so it is read from the
+  // library rather than from the code list — a colour the admin adds or
+  // recolours shows up here and on the pack.
+  const colors = useMemo(() => applyColors(parts?.color), [parts?.color]);
 
   /* Never show a part the admin switched off: fall back to the default while it
      is still allowed, otherwise to the first option that survived. */
@@ -72,6 +75,9 @@ export default function PackagingStudio({
     finish: settle(value.finish, DEFAULTS.finish, finishes),
     color: settle(value.color, DEFAULTS.color, colors),
   };
+
+  /** What the renderer should actually paint for the chosen colour. */
+  const currentHex = colors.find((c) => c.value === current.color)?.hex;
 
   const norm = ((angle % 360) + 360) % 360;
   /** Past a quarter turn the far side faces us — the print is not visible. */
@@ -152,6 +158,7 @@ export default function PackagingStudio({
               value={current}
               name={showingBack ? undefined : customerName}
               angle={angle}
+              colorHex={currentHex}
               className="h-full w-full"
             />
           ) : (
@@ -166,6 +173,7 @@ export default function PackagingStudio({
             >
               <PackagePreview
                 scene
+                colorHex={currentHex}
                 value={{ ...current, label: showingBack ? 'none' : current.label }}
                 name={showingBack ? undefined : customerName}
                 spin={lightPhase}
@@ -230,6 +238,7 @@ export default function PackagingStudio({
               >
                 <PackageThumb
                   value={{ ...current, bottle: b.value, label: 'none' }}
+                  colorHex={currentHex}
                   alt=""
                   className="h-24 w-full object-contain"
                 />
@@ -249,6 +258,7 @@ export default function PackagingStudio({
               >
                 <PackageThumb
                   value={{ ...current, cap: c.value, label: 'none' }}
+                  colorHex={currentHex}
                   alt=""
                   className="h-24 w-full object-contain"
                 />
@@ -268,6 +278,7 @@ export default function PackagingStudio({
               >
                 <PackageThumb
                   value={{ ...current, label: l.value }}
+                  colorHex={currentHex}
                   name={customerName}
                   alt=""
                   className="h-24 w-full object-contain"
@@ -288,6 +299,7 @@ export default function PackagingStudio({
               >
                 <PackageThumb
                   value={{ ...current, finish: f.value }}
+                  colorHex={currentHex}
                   alt=""
                   className="h-24 w-full object-contain"
                 />
@@ -341,6 +353,34 @@ export default function PackagingStudio({
  * admin-authored label win over the built-in one. An empty `allowed` means
  * "everything", matching how every other spec reads its allowedOptions.
  */
+/**
+ * The colour list, straight from the library.
+ *
+ * Unlike a cap or a bottle, a colour is pure data — nothing has to be drawn in
+ * code for it to work — so the authored options are the list, and the code
+ * palette only supplies a hex for an entry that never had one. Reading the code
+ * list first would mean a colour added in the admin panel could never appear,
+ * and a recoloured one would keep painting its old hex.
+ */
+function applyColors(
+  part: PackagingPart | undefined
+): Array<{ value: string; labelEn: string; labelAr: string; hex: string }> {
+  if (!part) return [];
+  const allowed = part.allowed?.length ? new Set(part.allowed) : null;
+  return part.options
+    .filter((o) => !allowed || allowed.has(o.value))
+    .map((o) => {
+      const fallback = PACK_COLORS.find((c) => c.value === o.value);
+      const hex = (o.meta as { hex?: string } | undefined)?.hex;
+      return {
+        value: o.value,
+        labelEn: o.labelEn || fallback?.labelEn || o.value,
+        labelAr: o.labelAr || fallback?.labelAr || '',
+        hex: hex || fallback?.hex || '#CCCCCC',
+      };
+    });
+}
+
 function applyPart<T extends { value: string; labelEn: string; labelAr: string }>(
   defs: T[],
   part: PackagingPart | undefined

@@ -41,8 +41,9 @@ function lab(): { renderer: THREE.WebGLRenderer; studio: Studio } {
   return { renderer, studio };
 }
 
-const keyOf = (v: PackagingAnswer, name?: string) =>
-  `${v.bottle}|${v.cap}|${v.label}|${v.finish}|${v.color}|${name || ''}`;
+/** The authored hex joins the key, or two different colours would share a tile. */
+const keyOf = (v: PackagingAnswer, name?: string, colorHex?: string) =>
+  `${v.bottle}|${v.cap}|${v.label}|${v.finish}|${v.color}|${colorHex || ''}|${name || ''}`;
 
 function drawNext() {
   const key = queue.shift();
@@ -51,11 +52,14 @@ function drawNext() {
     return;
   }
 
-  const [bottle, cap, label, finish, color, name] = key.split('|');
+  const [bottle, cap, label, finish, color, hex, name] = key.split('|');
   const { renderer: r, studio: s } = lab();
 
   s.pivot.clear();
-  const built = buildPack({ bottle, cap, label, finish, color }, { cheap: true, name: name || undefined });
+  const built = buildPack(
+    { bottle, cap, label, finish, color },
+    { cheap: true, name: name || undefined, colorHex: hex || undefined }
+  );
   s.pivot.add(built.group);
   // A three-quarter view reads as a solid object; dead-on reads as a sticker.
   s.pivot.rotation.y = -0.42;
@@ -94,14 +98,17 @@ export default function PackageThumb({
   value,
   name,
   alt,
+  colorHex,
   className = '',
 }: {
   value: PackagingAnswer;
   name?: string;
   alt?: string;
+  /** The authored hex for the chosen colour, when the library carries one. */
+  colorHex?: string;
   className?: string;
 }) {
-  const key = keyOf(value, name);
+  const key = keyOf(value, name, colorHex);
   const [rendered, setRendered] = useState<Record<string, string>>({});
 
   useEffect(() => {
