@@ -25,7 +25,7 @@ export async function GET(
     }
 
     const order = await Order.findById(id)
-      .populate('userId', 'name email company phone')
+      .populate('userId', 'name email company phone referralBalance')
       .populate('promoCodeId', 'code type value')
       .populate('surveyResponseId')
       .populate('convertedFromSample', 'orderNumber type status')

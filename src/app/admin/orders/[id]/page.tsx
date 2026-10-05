@@ -14,6 +14,7 @@ import OrderFeedbackPanel from '@/components/admin/OrderFeedbackPanel';
 import { usePermission } from '@/contexts/AuthContext';
 import { statusBadgeClass, statusLabel } from '@/lib/orderWorkflow';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatCurrency } from '@/lib/money';
 
 const PAYMENT_STATUSES = ['pending', 'paid', 'refunded'];
 
@@ -116,10 +117,6 @@ export default function OrderDetailPage() {
     return new Date(dateStr).toLocaleDateString('en-US', {
       month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
     });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return `$${(amount || 0).toFixed(2)}`;
   };
 
   if (loading) {

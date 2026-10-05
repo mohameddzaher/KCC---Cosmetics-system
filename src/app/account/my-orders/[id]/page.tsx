@@ -11,6 +11,7 @@ import {
   AlertCircle, Eye
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatCurrency } from '@/lib/money';
 import OrderProgressTracker from '@/components/account/OrderProgressTracker';
 import OrderFeedbackCard from '@/components/account/OrderFeedbackCard';
 import { statusLabel } from '@/lib/orderWorkflow';
@@ -36,10 +37,6 @@ function formatDate(dateStr: string | undefined, dateLocale: string = 'en-US') {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-function formatCurrency(amount: number) {
-  return `$${(amount || 0).toFixed(2)}`;
 }
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {

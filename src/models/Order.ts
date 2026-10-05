@@ -76,6 +76,12 @@ export interface IOrder extends Document {
     sentByName?: string;
   };
   promoCodeId?: Types.ObjectId;
+  /**
+   * Referral credit held against this order. Taken out of the customer's
+   * balance the moment it is applied, so the same credit cannot be spent on
+   * two orders at once, and returned if it is lifted off again.
+   */
+  creditApplied?: number;
   referralCode?: string;
   paymentMethod: 'cash' | 'card';
   paymentStatus: 'pending' | 'paid' | 'refunded';
@@ -153,6 +159,7 @@ const OrderSchema = new Schema<IOrder>(
       sentByName: { type: String, trim: true },
     },
     promoCodeId: { type: Schema.Types.ObjectId, ref: 'PromoCode' },
+    creditApplied: { type: Number, default: 0 },
     referralCode: { type: String, trim: true },
     paymentMethod: { type: String, enum: ['cash', 'card'] },
     paymentStatus: { type: String, enum: ['pending', 'paid', 'refunded'], default: 'pending' },

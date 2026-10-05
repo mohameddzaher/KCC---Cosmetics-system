@@ -13,6 +13,7 @@ import {
 import { useLanguage } from '@/contexts/LanguageContext';
 import OrderProgressTracker from '@/components/account/OrderProgressTracker';
 import OrderFeedbackCard from '@/components/account/OrderFeedbackCard';
+import QuotationCard from '@/components/account/QuotationCard';
 import { statusLabel } from '@/lib/orderWorkflow';
 
 const statusColors: Record<string, string> = {
@@ -328,6 +329,9 @@ export default function SampleDetailPage() {
       </motion.div>
 
       <OrderProgressTracker status={order.status} updatedAt={order.updatedAt} />
+
+      {/* The price, and what the customer can do about it. */}
+      <QuotationCard order={order} onChanged={() => loadOrder(true)} />
 
       {/* Once it is delivered, ask how it went — and show any reply from KCC. */}
       <OrderFeedbackCard orderId={order._id} />

@@ -14,6 +14,7 @@ import CrmPanel, { stageMeta } from '@/components/admin/CrmPanel';
 import CustomerCredentials from '@/components/admin/CustomerCredentials';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatCurrency } from '@/lib/money';
 
 const statusColors: Record<string, string> = {
   'Submitted': 'bg-blue-500/10 text-blue-400',
@@ -109,10 +110,6 @@ export default function CustomerDetailPage() {
     return new Date(dateStr).toLocaleDateString('en-US', {
       month: 'short', day: 'numeric', year: 'numeric'
     });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return `$${(amount || 0).toFixed(2)}`;
   };
 
   if (loading) {

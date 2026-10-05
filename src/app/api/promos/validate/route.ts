@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import PromoCode from '@/models/PromoCode';
-import PromoUsage from '@/models/PromoUsage';
 import { getSession } from '@/lib/auth';
+import { evaluatePromo } from '@/lib/promo';
 
+/**
+ * Is this code usable by me, and what would it take off?
+ *
+ * Checks only — nothing is claimed here, so a customer typing a code to see
+ * what it does cannot use up a limited one. The rules themselves live in
+ * src/lib/promo.ts, shared with order creation and with a quotation.
+ */
 export async function POST(req: NextRequest) {
   try {
     const user = await getSession();
@@ -13,50 +19,31 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     const body = await req.json();
-    const { code } = body;
-
-    if (!code || typeof code !== 'string') {
+    if (!body.code || typeof body.code !== 'string') {
       return NextResponse.json({ valid: false, error: 'Promo code is required' }, { status: 400 });
     }
 
-    const promo = await PromoCode.findOne({ code: code.toUpperCase() });
+    // The subtotal is what a percentage applies to and what `minOrder` is
+    // measured against. A caller that does not know it yet gets the
+    // eligibility answer without the amount.
+    const subtotal = Number(body.subtotal);
+    const decision = await evaluatePromo(
+      body.code,
+      user.id,
+      Number.isFinite(subtotal) && subtotal > 0 ? subtotal : 0
+    );
 
-    if (!promo) {
-      return NextResponse.json({ valid: false, error: 'Promo code not found' });
-    }
-
-    if (!promo.isActive) {
-      return NextResponse.json({ valid: false, error: 'Promo code is no longer active' });
-    }
-
-    if (promo.expiresAt && new Date(promo.expiresAt) < new Date()) {
-      return NextResponse.json({ valid: false, error: 'Promo code has expired' });
-    }
-
-    if (promo.usageLimit > 0 && promo.usedCount >= promo.usageLimit) {
-      return NextResponse.json({ valid: false, error: 'Promo code usage limit reached' });
-    }
-
-    // Always scope the per-user check to the authenticated session — never a client-supplied id.
-    if (promo.perUserLimit > 0) {
-      const userUsageCount = await PromoUsage.countDocuments({
-        promoCodeId: promo._id,
-        userId: user.id,
-      });
-      if (userUsageCount >= promo.perUserLimit) {
-        return NextResponse.json({ valid: false, error: 'You have already used this promo code the maximum number of times' });
-      }
+    if (!decision.ok) {
+      return NextResponse.json({ valid: false, error: decision.error });
     }
 
     return NextResponse.json({
       valid: true,
-      discount: {
-        type: promo.type,
-        value: promo.value,
-        maxDiscount: promo.maxDiscount,
-      },
+      code: decision.code,
+      discount: decision.discount,
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to validate promo code' }, { status: 500 });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Failed to validate promo code';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

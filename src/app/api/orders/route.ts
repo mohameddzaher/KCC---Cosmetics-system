@@ -9,6 +9,7 @@ import Notification from '@/models/Notification';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { computeTotals } from '@/lib/orderTotals';
+import { claimPromo, evaluatePromo } from '@/lib/promo';
 import { scopeFilterForRole } from '@/lib/orderWorkflow';
 import { generateOrderNumber } from '@/lib/api-helpers';
 import { sendEventEmail, adminUrl } from '@/lib/mailer';
@@ -127,47 +128,18 @@ export async function POST(req: NextRequest) {
     let promoCodeId = null;
     let discount = 0;
 
+    // One rule set for who may use a code and what it takes off, shared with the
+    // validate endpoint and with a quotation's discounts.
     if (body.promoCode && typeof body.promoCode === 'string') {
-      const promo = await PromoCode.findOne({
-        code: body.promoCode.toUpperCase(),
-        isActive: true,
-      });
-
-      if (promo) {
-        const isExpired = promo.expiresAt && new Date(promo.expiresAt) < new Date();
-        const perUserLimit = promo.perUserLimit || 0;
-        let perUserOk = true;
-        if (user && perUserLimit > 0) {
-          const used = await PromoUsage.countDocuments({ promoCodeId: promo._id, userId: user.id });
-          perUserOk = used < perUserLimit;
-        }
-
-        if (!isExpired && perUserOk) {
-          if (promo.type === 'percentage') {
-            discount = (subtotal * promo.value) / 100;
-            if (promo.maxDiscount > 0 && discount > promo.maxDiscount) discount = promo.maxDiscount;
-          } else {
-            discount = promo.value;
-          }
-          if (discount > subtotal) discount = subtotal;
-
-          // Atomic, capacity-checked increment: only succeeds if the code isn't maxed out.
-          const claimed = await PromoCode.findOneAndUpdate(
-            {
-              _id: promo._id,
-              isActive: true,
-              $or: [{ usageLimit: 0 }, { $expr: { $lt: ['$usedCount', '$usageLimit'] } }],
-            },
-            { $inc: { usedCount: 1 } },
-            { new: true }
-          );
-          if (claimed) {
-            promoCodeId = promo._id;
-          } else {
-            discount = 0; // code was exhausted between check and claim
-          }
-        }
+      const decision = await evaluatePromo(body.promoCode, user?.id, subtotal);
+      if (decision.ok && (await claimPromo(decision.promoId))) {
+        discount = decision.discount;
+        // Mongoose casts the id string on save; `mongoose` in this file is the
+        // connection cache, not the driver.
+        promoCodeId = decision.promoId;
       }
+      // A code that is ineligible, or that ran out between the check and the
+      // claim, simply does not discount this order.
     }
 
     // Calculate totals server-side, by the same rule a quotation uses.

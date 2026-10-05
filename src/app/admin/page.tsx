@@ -16,6 +16,7 @@ import {
   AreaChart, Area, Legend
 } from 'recharts';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { CURRENCY } from '@/lib/money';
 import MyQueue from '@/components/admin/MyQueue';
 
 /* ────────────────── colour palette constants ────────────────── */
@@ -59,10 +60,12 @@ const tooltipStyle = {
 };
 
 /* ────────────────── helpers ────────────────── */
+/** Abbreviated for a stat tile, in the currency the business actually quotes. */
 function formatCurrency(n: number): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
-  return `$${n.toLocaleString()}`;
+  const unit = `${CURRENCY} `;
+  if (n >= 1_000_000) return `${unit}${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${unit}${(n / 1_000).toFixed(1)}K`;
+  return `${unit}${n.toLocaleString()}`;
 }
 
 function formatNumber(n: number): string {
