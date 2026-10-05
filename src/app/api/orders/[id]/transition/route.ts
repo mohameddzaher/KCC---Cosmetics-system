@@ -8,7 +8,8 @@ import { can } from '@/lib/roles';
 import {
   allowedTransitions, canTransition, findTransition, isValidStatus, statusMeta,
 } from '@/lib/orderWorkflow';
-import { sendEventEmail, adminUrl } from '@/lib/mailer';
+import { sendEventEmail, sendCustomerEmail, adminUrl, publicUrl } from '@/lib/mailer';
+import { formatCurrency } from '@/lib/money';
 import { computeTotals } from '@/lib/orderTotals';
 
 export const dynamic = 'force-dynamic';
@@ -177,6 +178,38 @@ export async function POST(req: NextRequest, context: RouteContext) {
       });
     } catch {
       /* notification failure must never block the transition */
+    }
+
+    // The customer is told their price directly. They were always going to be
+    // called or mailed about it by hand; this makes the figure arrive with the
+    // same words the screen shows, and links them straight to it.
+    if (rule?.requiresQuote && order.quote?.amount) {
+      try {
+        const validUntil = order.quote.validUntil
+          ? new Date(order.quote.validUntil).toLocaleDateString('en-GB', {
+              day: 'numeric', month: 'short', year: 'numeric',
+            })
+          : null;
+
+        await sendCustomerEmail(order.customerInfo?.email || '', {
+          subject: `Your quotation for ${order.orderNumber}`,
+          heading: 'Your sample is priced',
+          intro:
+            'We have read your brief and priced the sample. The figures below are on your order page, where a promo code or your referral credit can be applied before paying.',
+          rows: [
+            ['Order', order.orderNumber],
+            ['Price', formatCurrency(order.totals?.subtotal)],
+            ['VAT', formatCurrency(order.totals?.tax)],
+            ['Total', formatCurrency(order.totals?.total)],
+            ...(validUntil ? ([['Valid until', validUntil]] as [string, string][]) : []),
+            ...(order.quote.notes ? ([['What it covers', order.quote.notes]] as [string, string][]) : []),
+          ],
+          actionUrl: publicUrl(`/account/my-samples/${order._id}`),
+          actionLabel: 'See your quotation',
+        });
+      } catch {
+        /* a quotation is sent whether or not the mail leaves */
+      }
     }
 
     return NextResponse.json({

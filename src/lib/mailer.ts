@@ -194,6 +194,37 @@ export async function sendTestEmail(to: string): Promise<{ sent: boolean; error?
   }
 }
 
+/**
+ * Mail one person — the customer whose order this is.
+ *
+ * Deliberately not `sendEventEmail`: that one resolves its recipients from the
+ * team's notification preferences, which is right for "a new order arrived" and
+ * wrong for "here is your price". A customer is told directly, and the team's
+ * preferences have no say in whether they hear it.
+ */
+export async function sendCustomerEmail(
+  to: string,
+  body: MailBody
+): Promise<{ sent: boolean; reason?: string }> {
+  try {
+    if (!to || !to.includes('@')) return { sent: false, reason: 'no-address' };
+    const t = transporter();
+    if (!t) return { sent: false, reason: 'smtp-not-configured' };
+
+    await t.sendMail({ from: env().from, to, subject: body.subject, html: render(body) });
+    return { sent: true };
+  } catch (e) {
+    console.error('[mailer] customer mail failed:', e instanceof Error ? e.message : e);
+    return { sent: false, reason: 'send-failed' };
+  }
+}
+
+/** Absolute link into the customer's own area, for the button in their email. */
+export function publicUrl(path: string): string {
+  const base = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
+  return `${base}${path}`;
+}
+
 /** Absolute link back into the admin panel, for the button in each email. */
 export function adminUrl(path: string): string {
   const base = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
