@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowRight, Clock, User as UserIcon } from 'lucide-react';
-import { Button, Card, ErrorNote, Modal, SectionTitle, TextArea } from '@/components/admin/ui';
+import { Button, Card, ErrorNote, Field, Modal, SectionTitle, TextArea, TextInput } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { statusBadgeClass, statusLabel, type Transition } from '@/lib/orderWorkflow';
 import { roleLabel } from '@/lib/roles';
@@ -40,6 +40,7 @@ export default function OrderWorkflow({
   const [transitions, setTransitions] = useState<Transition[]>([]);
   const [pending, setPending] = useState<Transition | null>(null);
   const [note, setNote] = useState('');
+  const [quote, setQuote] = useState({ amount: '', notes: '', validUntil: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,12 +66,25 @@ export default function OrderWorkflow({
       const res = await fetch(`/api/orders/${orderId}/transition`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: tr.to, note: withNote }),
+        body: JSON.stringify({
+          to: tr.to,
+          note: withNote,
+          ...(tr.requiresQuote
+            ? {
+                quote: {
+                  amount: Number(quote.amount),
+                  notes: quote.notes || undefined,
+                  validUntil: quote.validUntil || undefined,
+                },
+              }
+            : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || t('admin.saveFailed'));
       setPending(null);
       setNote('');
+      setQuote({ amount: '', notes: '', validUntil: '' });
       onChanged?.(data.status, data.timeline || []);
       setTransitions(Array.isArray(data.transitions) ? data.transitions : []);
     } catch (e) {
@@ -81,9 +95,10 @@ export default function OrderWorkflow({
   }
 
   function start(tr: Transition) {
-    if (tr.requiresNote) {
+    if (tr.requiresNote || tr.requiresQuote) {
       setPending(tr);
       setNote('');
+      setQuote({ amount: '', notes: '', validUntil: '' });
       return;
     }
     apply(tr, '');
@@ -121,10 +136,12 @@ export default function OrderWorkflow({
             <ErrorNote>{error}</ErrorNote>
           </div>
         )}
-        <NoteModal
+        <ActionModal
           pending={pending}
           note={note}
           setNote={setNote}
+          quote={quote}
+          setQuote={setQuote}
           busy={busy}
           onClose={() => setPending(null)}
           onConfirm={() => pending && apply(pending, note)}
@@ -186,10 +203,12 @@ export default function OrderWorkflow({
         )}
       </div>
 
-      <NoteModal
+      <ActionModal
         pending={pending}
         note={note}
         setNote={setNote}
+        quote={quote}
+        setQuote={setQuote}
         busy={busy}
         onClose={() => setPending(null)}
         onConfirm={() => pending && apply(pending, note)}
@@ -199,38 +218,102 @@ export default function OrderWorkflow({
   );
 }
 
-function NoteModal({
-  pending, note, setNote, busy, onClose, onConfirm, label,
+/**
+ * What a move needs before it can be made: a note, a price, or neither.
+ *
+ * The price lives here because this is the moment the business decides it — a
+ * sample is quoted after its brief has been read, so there is no earlier screen
+ * on which a number could have been typed.
+ */
+function ActionModal({
+  pending, note, setNote, quote, setQuote, busy, onClose, onConfirm, label,
 }: {
   pending: Transition | null;
   note: string;
   setNote: (v: string) => void;
+  quote: { amount: string; notes: string; validUntil: string };
+  setQuote: (v: { amount: string; notes: string; validUntil: string }) => void;
   busy: boolean;
   onClose: () => void;
   onConfirm: () => void;
   label: string;
 }) {
-  const { t } = useLanguage();
+  const { t, tx } = useLanguage();
+  const needsQuote = !!pending?.requiresQuote;
+  const needsNote = !!pending?.requiresNote;
+  const amount = Number(quote.amount);
+  const amountOk = Number.isFinite(amount) && amount > 0;
+  const ready = (!needsQuote || amountOk) && (!needsNote || !!note.trim());
+
   return (
     <Modal
       open={!!pending}
       onClose={onClose}
-      size="sm"
+      size={needsQuote ? 'md' : 'sm'}
       title={label}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
             {t('ui.cancel')}
           </Button>
-          <Button onClick={onConfirm} loading={busy} disabled={!note.trim()}>
+          <Button onClick={onConfirm} loading={busy} disabled={!ready}>
             {t('ui.confirm')}
           </Button>
         </>
       }
     >
-      <label className="field-label">{t('admin.transitionNote')}</label>
-      <TextArea rows={4} value={note} onChange={(e) => setNote(e.target.value)} autoFocus />
-      {!note.trim() && <p className="mt-2 text-xs text-danger">{t('admin.transitionNoteRequired')}</p>}
+      {needsQuote && (
+        <div className="mb-5 space-y-4">
+          <Field
+            label={tx('Price you are quoting')}
+            hint={tx('VAT is added on top, and the customer sees this as the amount to pay.')}
+            required
+          >
+            <TextInput
+              type="number"
+              min={1}
+              step="0.01"
+              inputMode="decimal"
+              value={quote.amount}
+              onChange={(e) => setQuote({ ...quote, amount: e.target.value })}
+              autoFocus
+            />
+          </Field>
+          <Field label={tx('Valid until')}>
+            <TextInput
+              type="date"
+              value={quote.validUntil}
+              onChange={(e) => setQuote({ ...quote, validUntil: e.target.value })}
+            />
+          </Field>
+          <Field label={tx('What the price covers')}>
+            <TextArea
+              rows={3}
+              value={quote.notes}
+              onChange={(e) => setQuote({ ...quote, notes: e.target.value })}
+              placeholder={tx('Anything the customer should read with the price.')}
+            />
+          </Field>
+          {!amountOk && quote.amount !== '' && (
+            <p className="text-xs text-danger">{tx('Enter an amount greater than zero.')}</p>
+          )}
+        </div>
+      )}
+
+      {needsNote && (
+        <>
+          <label className="field-label">{t('admin.transitionNote')}</label>
+          <TextArea
+            rows={4}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            autoFocus={!needsQuote}
+          />
+          {!note.trim() && (
+            <p className="mt-2 text-xs text-danger">{t('admin.transitionNoteRequired')}</p>
+          )}
+        </>
+      )}
     </Modal>
   );
 }

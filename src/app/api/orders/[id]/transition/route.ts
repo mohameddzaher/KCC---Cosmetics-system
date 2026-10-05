@@ -9,6 +9,7 @@ import {
   allowedTransitions, canTransition, findTransition, isValidStatus, statusMeta,
 } from '@/lib/orderWorkflow';
 import { sendEventEmail, adminUrl } from '@/lib/mailer';
+import { computeTotals } from '@/lib/orderTotals';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,6 +94,32 @@ export async function POST(req: NextRequest, context: RouteContext) {
         { error: 'Assign a delivery rep before shipping this order.' },
         { status: 400 }
       );
+    }
+
+    /* ---- The price, when this is the move that sets one ---- */
+    if (rule?.requiresQuote) {
+      const amount = Number(body.quote?.amount);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return NextResponse.json(
+          { error: 'Enter the price you are quoting before sending it.' },
+          { status: 400 }
+        );
+      }
+
+      const validUntil = body.quote?.validUntil ? new Date(body.quote.validUntil) : undefined;
+      order.quote = {
+        amount,
+        notes: typeof body.quote?.notes === 'string' ? body.quote.notes.trim().slice(0, 2000) : undefined,
+        validUntil: validUntil && !isNaN(validUntil.getTime()) ? validUntil : undefined,
+        sentAt: new Date(),
+        sentByName: user.name,
+      };
+
+      // The quote IS the order's money from here on, so every screen that
+      // already reads `totals` — the financial summary, the invoice, the
+      // customer's payment card — shows the quoted figure without being told.
+      // Any discount already granted stays granted.
+      order.totals = computeTotals(amount, order.totals?.discount || 0);
     }
 
     order.status = to;

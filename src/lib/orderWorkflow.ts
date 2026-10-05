@@ -194,6 +194,8 @@ export interface Transition {
   requiresNote?: boolean;
   /** Requires a courier/rep to be assigned first. */
   requiresCourier?: boolean;
+  /** The move needs a price: a quotation with no amount says nothing. */
+  requiresQuote?: boolean;
   tone?: StatusTone;
 }
 
@@ -213,7 +215,7 @@ export const TRANSITIONS: Record<OrderStatus, Transition[]> = {
     { to: 'On Hold', actionEn: 'Put on hold', actionAr: 'إيقاف مؤقت', roles: AM, requiresNote: true, tone: 'warn' },
   ],
   'Approved': [
-    { to: 'Quotation Sent', actionEn: 'Send quotation', actionAr: 'إرسال عرض السعر', roles: AM, tone: 'info' },
+    { to: 'Quotation Sent', actionEn: 'Send quotation', actionAr: 'إرسال عرض السعر', roles: AM, requiresQuote: true, tone: 'info' },
     // Free samples skip the commercial leg entirely.
     { to: 'Queued for Production', actionEn: 'Release to factory', actionAr: 'تحويل للمصنع', roles: AM, tone: 'brand' },
     { to: 'On Hold', actionEn: 'Put on hold', actionAr: 'إيقاف مؤقت', roles: AM, requiresNote: true, tone: 'warn' },

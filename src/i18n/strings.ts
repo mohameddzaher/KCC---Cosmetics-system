@@ -429,6 +429,14 @@ export const AR_STRINGS: Record<string, string> = {
   '…or paste an image URL': '…أو الصق رابط صورة',
   'manual / referral / event': 'يدوي / إحالة / فعالية',
 
+
+  /* ---------- Quotation ---------- */
+  'Price you are quoting': 'السعر الذي تعرضه',
+  'VAT is added on top, and the customer sees this as the amount to pay.': 'تُضاف ضريبة القيمة المضافة فوقه، ويرى العميل هذا المبلغ كالمطلوب دفعه.',
+  'Valid until': 'صالح حتى',
+  'What the price covers': 'ما يشمله السعر',
+  'Anything the customer should read with the price.': 'أي شيء ينبغي أن يقرأه العميل مع السعر.',
+  'Enter an amount greater than zero.': 'أدخل مبلغًا أكبر من صفر.',
   /* ---------- Sample-quiz option library ---------- */
   'Drag a step to change where it is asked.': 'اسحب الخطوة لتغيير موضع طرحها.',
   'The cap, label, finish and pack colour are tabs inside this step, so they move with it.': 'الغطاء والملصق واللمسة ولون العلبة تبويبات داخل هذه الخطوة، ولذلك تتحرك معها.',

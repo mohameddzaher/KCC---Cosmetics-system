@@ -8,6 +8,7 @@ import User from '@/models/User';
 import Notification from '@/models/Notification';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { computeTotals } from '@/lib/orderTotals';
 import { scopeFilterForRole } from '@/lib/orderWorkflow';
 import { generateOrderNumber } from '@/lib/api-helpers';
 import { sendEventEmail, adminUrl } from '@/lib/mailer';
@@ -169,9 +170,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Calculate totals server-side
-    const tax = toNonNegNumber(body.totals?.tax) || Number((subtotal * 0.15).toFixed(2));
-    const total = subtotal - discount + tax;
+    // Calculate totals server-side, by the same rule a quotation uses.
+    const totals = computeTotals(subtotal, discount, toNonNegNumber(body.totals?.tax));
+    const { tax, total } = totals;
 
     const order = await Order.create({
       orderNumber,

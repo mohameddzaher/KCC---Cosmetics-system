@@ -63,6 +63,18 @@ export interface IOrder extends Document {
   surveyResponseId: Types.ObjectId;
   customerInfo: ICustomerInfo;
   totals: ITotals;
+  /**
+   * What the business quoted, and when. A sample is priced after the brief is
+   * read — not at submit — so the price arrives with the "Send quotation" step
+   * rather than from anything the customer typed.
+   */
+  quote?: {
+    amount: number;
+    notes?: string;
+    validUntil?: Date;
+    sentAt?: Date;
+    sentByName?: string;
+  };
   promoCodeId?: Types.ObjectId;
   referralCode?: string;
   paymentMethod: 'cash' | 'card';
@@ -132,6 +144,13 @@ const OrderSchema = new Schema<IOrder>(
       discount: { type: Number, default: 0 },
       tax: { type: Number, default: 0 },
       total: { type: Number, default: 0 },
+    },
+    quote: {
+      amount: { type: Number },
+      notes: { type: String, trim: true },
+      validUntil: { type: Date },
+      sentAt: { type: Date },
+      sentByName: { type: String, trim: true },
     },
     promoCodeId: { type: Schema.Types.ObjectId, ref: 'PromoCode' },
     referralCode: { type: String, trim: true },
