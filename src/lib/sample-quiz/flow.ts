@@ -18,6 +18,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { PACKAGING_PART_KEYS } from './packagingParts';
 import type { AnswerValue, QuizState } from './types';
 
 export type Scope = 'general' | 'main' | 'sub' | 'product';
@@ -98,12 +99,7 @@ export type PackagingParts = Partial<Record<'cap' | 'label' | 'finish' | 'color'
  * sees them as tabs on the one visual packaging step, because picking a cap
  * without seeing it on the bottle is a worse question.
  */
-export const PACKAGING_PART_KEYS: Record<string, keyof PackagingParts> = {
-  'package-cap': 'cap',
-  'package-label': 'label',
-  'package-finish': 'finish',
-  'package-color': 'color',
-};
+export { PACKAGING_PART_KEYS };
 
 export type Step =
   | { id: 'personalization'; kind: 'personalization'; section: 'you' }

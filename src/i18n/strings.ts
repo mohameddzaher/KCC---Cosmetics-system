@@ -430,6 +430,8 @@ export const AR_STRINGS: Record<string, string> = {
   'manual / referral / event': 'يدوي / إحالة / فعالية',
 
   /* ---------- Sample-quiz option library ---------- */
+  'Drag a step to change where it is asked.': 'اسحب الخطوة لتغيير موضع طرحها.',
+  'The cap, label, finish and pack colour are tabs inside this step, so they move with it.': 'الغطاء والملصق واللمسة ولون العلبة تبويبات داخل هذه الخطوة، ولذلك تتحرك معها.',
   'It will appear on every product straight away, switched off. Fill the list with options, then turn the question on for the products that should ask it — from the product screen.': 'ستظهر في كل المنتجات فورًا وهي موقوفة. املأ القائمة بالخيارات، ثم فعّل السؤال للمنتجات التي يجب أن تطرحه — من شاشة المنتجات.',
   'How the customer picks from this list — oils and extracts use "pick several", product colour uses swatches.': 'كيف يختار العميل من هذه القائمة — الزيوت والخلاصات تستخدم «اختيار عدة عناصر»، ولون المنتج يستخدم دوائر الألوان.',
   'Pick several from a list': 'اختيار عدة عناصر من قائمة',

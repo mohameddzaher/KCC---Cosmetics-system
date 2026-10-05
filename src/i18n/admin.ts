@@ -255,6 +255,9 @@ export const adminEn = {
   categoryQuestions: 'Category questions',
   categoryQuestionsDesc:
     'Asked right after the customer picks this category, before the technical specs. Same widgets as the brief.',
+  stepOrder: 'Step order',
+  stepOrderDesc:
+    'The order the quiz asks its spec questions in, for every product at once.',
   optionLibrary: 'Option library',
   optionLibraryDesc:
     'The master lists every product draws from — oils and extracts, actives, colours, fragrances and packaging parts.',
@@ -595,6 +598,9 @@ export const adminAr: typeof adminEn = {
   categoryQuestions: 'أسئلة القسم',
   categoryQuestionsDesc:
     'تُطرح فور اختيار العميل لهذا القسم، وقبل المواصفات التقنية. بنفس أدوات الأسئلة العامة.',
+  stepOrder: 'ترتيب الخطوات',
+  stepOrderDesc:
+    'الترتيب الذي يطرح به الاستبيان أسئلة المواصفات، لكل المنتجات في مرة واحدة.',
   optionLibrary: 'مكتبة الخيارات',
   optionLibraryDesc:
     'القوائم الأساسية التي تُبنى منها كل المنتجات — الزيوت والخلاصات والمواد الفعّالة والألوان والعطور وأجزاء التغليف.',

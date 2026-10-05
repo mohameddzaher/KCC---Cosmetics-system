@@ -18,7 +18,8 @@
     "create:users": "npx tsx scripts/create-users.ts",
     "i18n:check": "npx tsx scripts/i18n-check.ts",
     "verify:data": "npx tsx scripts/verify-data.ts",
-    "seed:ar-options": "npx tsx scripts/seed-option-arabic.ts"
+    "seed:ar-options": "npx tsx scripts/seed-option-arabic.ts",
+    "verify:step-order": "npx tsx scripts/verify-step-order.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

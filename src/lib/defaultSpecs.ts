@@ -1,17 +1,21 @@
 import SpecOptionMaster from '@/models/SpecOptionMaster';
 
 // Canonical spec categories (must match ProductSpecConfig.specKey enum)
+// The order a brand-new product asks its specs in. Fragrance comes before the
+// packaging studio: the scent is part of the formula, and the pack is the last
+// decision. Existing products carry their own order, set on the step-order
+// screen, so this is only the starting point for a product that has none.
 const SPEC_ORDER = [
   'oils-extracts',
   'actives',
   'fine-actives',
   'product-color',
+  'fragrances',
   'product-packaging',
   'package-cap',
   'package-label',
   'package-finish',
   'package-color',
-  'fragrances',
 ] as const;
 
 const MAX_SELECT: Record<string, number> = {

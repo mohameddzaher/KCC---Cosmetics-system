@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowRight, Boxes, ExternalLink, FlaskConical, Layers, ListChecks } from 'lucide-react';
+import { ArrowRight, Boxes, ExternalLink, FlaskConical, Layers, ListChecks, ListOrdered } from 'lucide-react';
 import { AutoGrid, Card, PageHeader } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function SampleQuizAdminLanding() {
   const { t, pick } = useLanguage();
-  const [counts, setCounts] = useState({ general: 0, scoped: 0, products: 0, options: 0 });
+  const [counts, setCounts] = useState({ general: 0, scoped: 0, products: 0, options: 0, steps: 0 });
 
   useEffect(() => {
     Promise.all([
@@ -29,6 +29,7 @@ export default function SampleQuizAdminLanding() {
         scoped: all.filter((q) => (q.scope || 'general') !== 'general').length,
         products: Array.isArray(pc.configs) ? pc.configs.length : 0,
         options: cats.reduce((n, c) => n + (c.options?.length || 0), 0),
+        steps: cats.length,
       });
     });
   }, []);
@@ -65,6 +66,14 @@ export default function SampleQuizAdminLanding() {
       href: '/admin/sample-quiz/library',
       Icon: FlaskConical,
       stat: counts.options,
+    },
+    {
+      key: 'order',
+      title: t('admin.stepOrder'),
+      desc: t('admin.stepOrderDesc'),
+      href: '/admin/sample-quiz/order',
+      Icon: ListOrdered,
+      stat: counts.steps,
     },
   ];
 
