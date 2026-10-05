@@ -5,6 +5,7 @@ import { Building2, Loader2, Mail, Pencil, Phone } from 'lucide-react';
 import QuizShell from '../QuizShell';
 import StepFooter from '../StepFooter';
 import PackageThumb from '../widgets/packaging/PackageThumb';
+import { CUSTOM_PREFIX } from '../widgets/ColorSwatchGrid';
 import { useQuiz } from '@/lib/sample-quiz/QuizContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -158,12 +159,15 @@ export default function ReviewStep({
       // The whole pack — bottle, cap, label, finish, colour — gets its own card.
       if (key === 'product-packaging' || PACKAGING_PART_KEYS[key]) continue;
       const master = masters.find((m) => m.categoryKey === key);
-      const labels = val.selected.map(
-        (sv) => {
-          const o = master?.options.find((x) => x.value === sv);
-          return o ? pick(o.labelEn, o.labelAr) : sv;
+      const labels = val.selected.map((sv) => {
+        // A shade the customer specified rather than picked off the list: show
+        // it as that, with the code, instead of printing the stored marker.
+        if (sv.startsWith(CUSTOM_PREFIX)) {
+          return `${t('quiz.color.custom')} (${sv.slice(CUSTOM_PREFIX.length)})`;
         }
-      );
+        const o = master?.options.find((x) => x.value === sv);
+        return o ? pick(o.labelEn, o.labelAr) : sv;
+      });
       rows.push({
         key,
         title: master ? pick(master.defaultTitleEn, master.defaultTitleAr) : key,
@@ -173,7 +177,7 @@ export default function ReviewStep({
       });
     }
     return rows;
-  }, [state.specs, state.questionNotes, masters, pick]);
+  }, [state.specs, state.questionNotes, masters, pick, t]);
 
   const fragranceRow: Row | null = useMemo(() => {
     if (!state.fragrance.family) return null;

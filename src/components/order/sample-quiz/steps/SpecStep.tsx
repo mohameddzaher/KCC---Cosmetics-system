@@ -132,12 +132,20 @@ export default function SpecStep({
       />
     );
   } else if (master.widget === 'color-swatches') {
+    // A free shade is offered for the product's own colour only. The pack's
+    // colour is drawn by the 3D studio from the library's palette, so a shade
+    // that is not in the library would have nothing to render.
+    const freeShade = spec.specKey === 'product-color';
     widget = (
       <ColorSwatchGrid
         options={opts}
         selected={answer.selected}
         onChange={setSelected}
         maxSelect={spec.maxSelect}
+        allowCustom={freeShade}
+        customLabel={t('quiz.color.custom')}
+        customHint={t('quiz.color.customHint')}
+        codeLabel={t('quiz.color.code')}
       />
     );
   } else if (master.widget === 'icon-cards') {

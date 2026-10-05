@@ -140,6 +140,13 @@ export const quizEn = {
     excludePlaceholder: 'e.g. no parabens, no sulphates',
   },
 
+  // Colour picker
+  color: {
+    custom: 'Custom shade',
+    customHint: 'Pick any shade on the wheel, or type its code — we match it in the lab.',
+    code: 'Colour code',
+  },
+
   // Fragrance flow
   fragrance: {
     family: 'Fragrance family',
@@ -273,6 +280,12 @@ export const quizAr: typeof quizEn = {
     needHelp: 'أفضّل أن يرشّح فريق البحث والتطوير مكوّنًا',
     excludeLabel: 'هل من مكوّنات يجب تجنّبها؟',
     excludePlaceholder: 'مثال: بدون بارابين، بدون سلفات',
+  },
+
+  color: {
+    custom: 'درجة مخصّصة',
+    customHint: 'اختر أي درجة من العجلة، أو اكتب كودها — ونطابقها في المعمل.',
+    code: 'كود اللون',
   },
 
   fragrance: {

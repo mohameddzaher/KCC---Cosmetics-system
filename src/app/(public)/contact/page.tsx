@@ -55,7 +55,7 @@ export default function ContactPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const g = settings || {};
   const phones = [g.contactPhone || g.phones?.primary, g.phones?.secondary].filter(Boolean).join('\n')
