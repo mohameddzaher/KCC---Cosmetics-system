@@ -67,3 +67,11 @@ CREDENTIALS.local.json
 
 # Local quiz attachments (served through /api/files, never committed)
 .uploads/
+
+# Commercial data dropped in for import — prospect lists, contact names and
+# phone numbers. It belongs in the database, never in the repo: this is a public
+# git remote and a deployed bundle.
+*.xlsx
+*.xls
+*.csv
+CRM data.xlsx
