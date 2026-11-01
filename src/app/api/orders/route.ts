@@ -10,6 +10,7 @@ import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { computeTotals } from '@/lib/orderTotals';
 import { claimPromo, evaluatePromo } from '@/lib/promo';
+import { linkOrderToCrm } from '@/lib/crmLink';
 import { scopeFilterForRole } from '@/lib/orderWorkflow';
 import { generateOrderNumber } from '@/lib/api-helpers';
 import { sendEventEmail, adminUrl } from '@/lib/mailer';
@@ -213,6 +214,25 @@ export async function POST(req: NextRequest) {
         actionLabel: 'Open the order',
       });
     } catch { /* non-fatal */ }
+
+    // Put the order on the CRM, so the sales team sees a company that asked
+    // for something without being told, and the account stops reading as never
+    // contacted. Never allowed to fail the order.
+    try {
+      await linkOrderToCrm({
+        orderId: order._id,
+        orderNumber: order.orderNumber,
+        type: body.type === 'bulk' ? 'bulk' : 'sample',
+        company: order.customerInfo?.companyName || '',
+        personName: order.customerInfo?.personName || '',
+        city: order.customerInfo?.city || '',
+        phone: order.customerInfo?.phone || '',
+        email: order.customerInfo?.email || '',
+        userId: user?.id,
+      });
+    } catch (e) {
+      console.error('[crm] could not link order', order.orderNumber, e instanceof Error ? e.message : e);
+    }
 
     // Record promo usage (for accurate per-user limits going forward)
     if (promoCodeId && user) {

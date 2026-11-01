@@ -9,6 +9,7 @@ import NotificationBell from '@/components/admin/NotificationBell';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import { can, isStaffRole, roleLabel, type Permission } from '@/lib/roles';
 import {
+  BookOpen,
   Brain,
   Briefcase,
   CheckSquare,
@@ -64,6 +65,7 @@ const NAV_GROUPS: NavGroup[] = [
       { key: 'crmUpcoming', href: '/admin/crm/upcoming', icon: ClipboardList, permission: 'crm.view' },
       { key: 'crmCurrent', href: '/admin/crm/current', icon: Briefcase, permission: 'crm.view' },
       { key: 'crmKpis', href: '/admin/crm/kpis', icon: Gauge, permission: 'crm.view' },
+      { key: 'crmCatalogue', href: '/admin/crm/catalogue', icon: BookOpen, permission: 'crm.view' },
       { key: 'crmContacts', href: '/admin/crm/contacts', icon: Users, permission: 'crm.view' },
       { key: 'crmSettings', href: '/admin/crm/settings', icon: SlidersHorizontal, permission: 'crm.edit' },
       { key: 'tasks', href: '/admin/crm/tasks', icon: CheckSquare, permission: 'crm.view' },
