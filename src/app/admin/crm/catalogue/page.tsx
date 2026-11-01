@@ -10,7 +10,7 @@ import {
   Field, Modal, PageHeader, SectionTitle, Select, Spinner, Td, TextArea, TextInput, Th,
 } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { downloadCsv } from '@/lib/exportCsv';
+import { downloadFile } from '@/lib/download';
 
 /**
  * The code catalogue — what the sales team quotes from.
@@ -140,31 +140,15 @@ export default function CataloguePage() {
   const maxCat = useMemo(() => Math.max(1, ...(d?.byCategory || []).map((c) => c.n)), [d]);
 
   /** English headers whatever the screen language: this file goes to partners. */
-  const exportRows = () =>
-    downloadCsv(`kcc-code-catalogue-${new Date().toISOString().slice(0, 10)}.csv`, (d?.items || []).map((i) => ({
-      'Code': i.code || '',
-      'Category': i.category,
-      'Product': i.product,
-      'Size code': i.sizeCode || '',
-      'Status': i.status || 'In development',
-      'Volume (ml)': i.volume ?? '',
-      'Package': i.package || '',
-      'Form': i.form || '',
-      'International benchmark': i.benchmarkIntl || '',
-      'Benchmark RSP (SAR)': i.rspSaudi ?? '',
-      'Saudi benchmark brand': i.benchmarkSaudi || '',
-      'Egypt benchmark': i.benchmarkEgypt || '',
-      'Cost (SAR)': i.cost ?? '',
-      'Shelf price (SAR)': i.rsp ?? '',
-      'Cost / shelf price': i.costRatio != null ? `${(i.costRatio * 100).toFixed(1)}%` : '',
-      'KCC recommended (SAR)': i.kccRecommendedSar ?? '',
-      'ECC price (EGP)': i.priceEccEgp ?? '',
-      'Bonn factory (SAR)': i.bonnSar ?? '',
-      'Al Kamal UAE': i.alKamalUae ?? '',
-      'Ingredients': i.ingredients || '',
-    })), {
-      totalsFor: ['Volume (ml)', 'Cost (SAR)', 'Shelf price (SAR)', 'KCC recommended (SAR)'],
-    });
+  const exportRows = () => {
+    const p = new URLSearchParams({ what: 'catalogue' });
+    if (q.trim()) p.set('q', q.trim());
+    if (category !== 'all') p.set('category', category);
+    if (status !== 'all') p.set('status', status);
+    if (pack !== 'all') p.set('package', pack);
+    if (costed !== 'all') p.set('costed', costed);
+    downloadFile(`/api/crm/export?${p}`).catch((e) => setError(e.message));
+  };
 
   if (!ready) return <Spinner />;
   if (error && !d) return <ErrorNote>{error}</ErrorNote>;

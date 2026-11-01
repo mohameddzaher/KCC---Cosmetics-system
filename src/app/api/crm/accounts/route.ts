@@ -5,6 +5,7 @@ import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { matchKeysFor, primaryKey } from '@/lib/crmMatch';
 import { canonicalCategory, canonicalCity } from '@/lib/crmVocab';
+import { accountScope } from '@/lib/crmScope';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,9 @@ export async function GET(req: NextRequest) {
     await connectDB();
 
     const p = req.nextUrl.searchParams;
-    const filter: Record<string, unknown> = { active: { $ne: false } };
+    // A manager sees his whole branch; a rep his own plus the unowned pool.
+    const scope = await accountScope(user);
+    const filter: Record<string, unknown> = { active: { $ne: false }, ...scope };
 
     const stage = p.get('stage');
     if (stage && stage !== 'all') filter.stage = stage;
@@ -64,8 +67,10 @@ export async function GET(req: NextRequest) {
         .lean(),
       CrmAccount.countDocuments(filter),
       // The tabs' own counts, unaffected by the stage filter in force.
+      // The tabs count what this viewer can see, or a rep would be told there
+      // are 233 upcoming and then shown a different number of rows.
       CrmAccount.aggregate([
-        { $match: { active: { $ne: false } } },
+        { $match: { active: { $ne: false }, ...scope } },
         { $group: { _id: '$stage', n: { $sum: 1 } } },
       ]),
     ]);

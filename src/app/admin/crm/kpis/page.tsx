@@ -9,7 +9,7 @@ import {
   Spinner, Td, Th,
 } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { downloadCsv } from '@/lib/exportCsv';
+import { downloadFile } from '@/lib/download';
 
 /**
  * Each rep against the targets the business set for itself.
@@ -41,14 +41,25 @@ interface Person {
   weeklyClientAttainmentPct: number | null;
   mix: Array<{ key: string; labelEn: string; labelAr: string; targetPct: number; visits: number; actualPct: number }>;
   accountsOwned: Record<string, number>;
-  checklist?: Array<{ key: string; labelEn: string; labelAr: string; done: number; pct: number }>;
+  complaints: number;
+  suggestions: number;
+  callsWithChecklist: number;
+  checklist: Array<{
+    key: string; labelEn: string; labelAr: string;
+    required: boolean; done: number; pct: number | null;
+  }>;
 }
 
 interface Kpi {
   period: string;
   from: string;
   daysElapsed: number;
-  targets: { dailyVisits: { min: number; max: number }; weeklyClients: { min: number; max: number }; sectorMix: Array<{ key: string; labelEn: string; labelAr: string; sharePct: number }> };
+  targets: {
+    dailyVisits: { min: number; max: number };
+    weeklyClients: { min: number; max: number };
+    sectorMix: Array<{ key: string; labelEn: string; labelAr: string; sharePct: number }>;
+    visitChecklist: Array<{ key: string; labelEn: string; labelAr: string; required?: boolean }>;
+  };
   team: { visits: number; actions: number; accountsSeen: number };
   people: Person[];
 }
@@ -88,24 +99,7 @@ function KpisInner() {
   const people = focus ? d.people.filter((p) => p.id === focus) : d.people;
 
   const exportRows = () =>
-    downloadCsv(`crm-kpis-${period}-${new Date().toISOString().slice(0, 10)}.csv`, people.map((p) => ({
-      [ar ? 'الموظف' : 'Rep']: p.name,
-      [ar ? 'الدور' : 'Role']: p.role,
-      [ar ? 'زيارات' : 'Visits']: p.visits,
-      [ar ? 'اجتماعات' : 'Meetings']: p.meetings,
-      [ar ? 'مكالمات' : 'Calls']: p.calls,
-      [ar ? 'طلبات عيّنات' : 'Sample requests']: p.sampleRequests,
-      [ar ? 'حسابات تمّت زيارتها' : 'Accounts seen']: p.accountsSeen,
-      [ar ? 'أيام عمل' : 'Active days']: p.activeDays,
-      [ar ? 'زيارات/يوم' : 'Visits per day']: p.visitsPerDay,
-      [ar ? 'المستهدف اليومي' : 'Daily target']: `${p.dailyTarget.min}-${p.dailyTarget.max}`,
-      [ar ? 'التحقيق %' : 'Attainment %']: p.dailyAttainmentPct,
-    })), {
-      totalsFor: [
-        ar ? 'زيارات' : 'Visits', ar ? 'اجتماعات' : 'Meetings', ar ? 'مكالمات' : 'Calls',
-        ar ? 'طلبات عيّنات' : 'Sample requests', ar ? 'حسابات تمّت زيارتها' : 'Accounts seen',
-      ],
-    });
+    downloadFile(`/api/crm/export?what=kpis&period=${period}`).catch((e) => setError(e.message));
 
   return (
     <div>
@@ -235,6 +229,110 @@ function KpisInner() {
           ))}
         </tbody>
       </DataTable>
+
+      {/* --------- is the call actually being made properly --------- */}
+      {d.targets.visitChecklist?.length > 0 && (
+        <Card className="mt-5">
+          <SectionTitle
+            title={tx('Is the visit being done properly')}
+            hint={tx('Share of calls where each step was ticked. Counted over calls that carried the checklist, so an older visit is not held against anyone.')}
+          />
+          {people.every((p) => p.callsWithChecklist === 0) ? (
+            <p className="py-4 text-sm text-fg-subtle">
+              {tx('No visit has been logged against the checklist yet.')}
+            </p>
+          ) : (
+            <div className="scroll-thin overflow-x-auto">
+              <table className="w-full min-w-[40rem] border-collapse text-sm">
+                <thead>
+                  <tr>
+                    <Th>{tx('Rep')}</Th>
+                    {d.targets.visitChecklist.map((c) => (
+                      <Th key={c.key} align="center">
+                        {ar ? c.labelAr : c.labelEn}
+                        {c.required ? <span className="text-danger"> *</span> : null}
+                      </Th>
+                    ))}
+                    <Th align="center">{tx('Calls counted')}</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {people.filter((p) => p.callsWithChecklist > 0).map((p) => (
+                    <tr key={p.id} className="hover:bg-surface-2/40">
+                      <Td>{p.name}</Td>
+                      {p.checklist.map((c) => (
+                        <Td key={c.key} align="center">
+                          {c.pct === null ? (
+                            <span className="text-fg-subtle">—</span>
+                          ) : (
+                            <span className="inline-flex flex-col items-center gap-1">
+                              <span className="font-mono text-xs text-fg">{c.pct}%</span>
+                              <span className="block h-1.5 w-12 overflow-hidden rounded-full bg-surface-3">
+                                <span
+                                  className="block h-full rounded-e-[4px] bg-brand"
+                                  style={{ width: `${Math.max(2, c.pct)}%` }}
+                                />
+                              </span>
+                            </span>
+                          )}
+                        </Td>
+                      ))}
+                      <Td align="center" className="font-mono text-xs text-fg-muted">
+                        {p.callsWithChecklist}
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* The step the team drops most often — the thing worth a word in a meeting. */}
+          {(() => {
+            const counted = people.filter((p) => p.callsWithChecklist > 0);
+            if (counted.length === 0) return null;
+            const weakest = d.targets.visitChecklist
+              .map((c) => {
+                const done = counted.reduce((n, p) => n + (p.checklist.find((x) => x.key === c.key)?.done || 0), 0);
+                const of = counted.reduce((n, p) => n + p.callsWithChecklist, 0);
+                return { label: ar ? c.labelAr : c.labelEn, pct: of ? Math.round((done / of) * 100) : 0 };
+              })
+              .sort((a, b) => a.pct - b.pct)[0];
+            return weakest ? (
+              <p className="mt-3 rounded-xl bg-surface-2 px-3.5 py-2.5 text-xs leading-relaxed text-fg-muted">
+                {tx('Most often skipped across the team')}: <strong className="text-fg">{weakest.label}</strong>{' '}
+                — {tx('covered on')} {weakest.pct}% {tx('of calls')}
+              </p>
+            ) : null;
+          })()}
+        </Card>
+      )}
+
+      {/* --------- what accounts told us, per person --------- */}
+      {people.some((p) => p.complaints + p.suggestions > 0) && (
+        <Card className="mt-5">
+          <SectionTitle
+            title={tx('Complaints and suggestions brought in')}
+            hint={tx('A rep who hears nothing is usually a rep who is not asking.')}
+          />
+          <ul className="space-y-1.5">
+            {people.filter((p) => p.complaints + p.suggestions > 0).map((p) => (
+              <li key={p.id} className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-fg">{p.name}</span>
+                <span className="font-mono text-xs text-fg-muted">
+                  {p.complaints} {tx('complaints')} · {p.suggestions} {tx('suggestions')}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <Link
+            href="/admin/crm/feedback"
+            className="mt-3 inline-block text-xs font-medium text-brand hover:underline"
+          >
+            {tx('Open the complaints screen')}
+          </Link>
+        </Card>
+      )}
 
       {/* --------- the sector split, per person, against the plan --------- */}
       {people.some((p) => p.mix.length > 0) && (

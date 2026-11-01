@@ -8,6 +8,7 @@ import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { CRM_CATEGORIES } from '@/lib/crmVocab';
 import { ENGAGEMENT_TYPES } from '@/lib/crmProgress';
+import { seesEveryAccount, visibleOwnerIds } from '@/lib/crmScope';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,16 +35,19 @@ function startOfWeek(now: Date): Date {
 /** Roles that carry a visit target. */
 const SALES_ROLES = ['SALES', 'ACCOUNT_MANAGER', 'SUPER_ADMIN', 'ADMIN'];
 
-export async function GET(req: NextRequest) {
-  try {
-    const user = await getSession();
-    if (!can(user?.role, 'crm.view')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-    await connectDB();
-
+/**
+ * The figures behind the KPI screen.
+ *
+ * Exported so the spreadsheet export runs the same computation rather than a
+ * second copy of it — a workbook that disagreed with the screen it came from
+ * would be worse than no workbook.
+ */
+export async function computeKpis(
+  user: { id?: string; role?: string } | null,
+  period: string
+) {
+  {
     const now = new Date();
-    const period = req.nextUrl.searchParams.get('period') || 'week';
     const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0);
     const weekStart = startOfWeek(now);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -52,17 +56,30 @@ export async function GET(req: NextRequest) {
     // Only work counts towards a target: a stage change is written by the system
     // when a visit is logged, and crediting both would double every rep's day.
     const live = { backfilled: { $ne: true }, type: { $in: [...ENGAGEMENT_TYPES] } };
+    /**
+     * Who this screen is allowed to describe. A rep reads his own line; the
+     * commercial manager and the country manager read the whole team, which is
+     * the difference crm.viewAll exists to express.
+     */
+    const all = seesEveryAccount(user);
+    // A manager's branch: himself and everyone under him, however deep.
+    const branch = await visibleOwnerIds(user);
+    const onlyMe = all ? {} : { byId: { $in: branch } };
     const groupOf = new Map(CRM_CATEGORIES.map((c) => [c.key, c.mixGroup]));
 
     const [target, reps, rows, owned] = await Promise.all([
       CrmTarget.findOne({ key: 'main' }).lean(),
-      User.find({ role: { $in: SALES_ROLES }, isActive: { $ne: false } })
+      User.find(
+        all
+          ? { role: { $in: SALES_ROLES }, isActive: { $ne: false } }
+          : { _id: { $in: branch } }
+      )
         .select('name email role')
         .lean(),
       // Everything each rep did in the period, with the account's sector so the
       // 60/30/10 split can be measured rather than assumed.
       CrmActivity.aggregate([
-        { $match: { ...live, at: { $gte: from }, byId: { $ne: null } } },
+        { $match: { ...live, ...onlyMe, at: { $gte: from }, byId: { $ne: null } } },
         {
           $lookup: {
             from: 'crmaccounts', localField: 'accountId', foreignField: '_id',
@@ -73,6 +90,7 @@ export async function GET(req: NextRequest) {
         {
           $project: {
             byId: 1, byName: 1, type: 1, accountId: 1,
+            checklist: 1,
             category: '$acc.category',
             day: { $dateToString: { format: '%Y-%m-%d', date: '$at' } },
           },
@@ -88,6 +106,7 @@ export async function GET(req: NextRequest) {
       dailyVisits?: { min: number; max: number };
       weeklyClients?: { min: number; max: number };
       sectorMix?: Array<{ key: string; labelEn: string; labelAr: string; sharePct: number }>;
+      visitChecklist?: Array<{ key: string; labelEn: string; labelAr: string; required?: boolean }>;
     };
     const daily = t.dailyVisits || { min: 4, max: 5 };
     const weekly = t.weeklyClients || { min: 20, max: 25 };
@@ -97,10 +116,16 @@ export async function GET(req: NextRequest) {
       actions: number; visits: number; meetings: number; calls: number;
       samples: number; accounts: Set<string>; days: Set<string>;
       mix: Record<string, number>;
+      /** How often each checklist item was ticked, and on how many calls. */
+      checklistDone: Record<string, number>;
+      callsWithChecklist: number;
+      complaints: number;
+      suggestions: number;
     }
     const empty = (): Bucket => ({
       actions: 0, visits: 0, meetings: 0, calls: 0, samples: 0,
       accounts: new Set(), days: new Set(), mix: {},
+      checklistDone: {}, callsWithChecklist: 0, complaints: 0, suggestions: 0,
     });
     const buckets = new Map<string, Bucket>();
     const names = new Map<string, string>();
@@ -120,6 +145,16 @@ export async function GET(req: NextRequest) {
       if (r.type === 'meeting') b.meetings++;
       if (r.type === 'call' || r.type === 'whatsapp') b.calls++;
       if (r.type === 'sample_request') b.samples++;
+      if (r.type === 'complaint') b.complaints++;
+      if (r.type === 'suggestion') b.suggestions++;
+      // Only calls that carried the checklist count towards its completion, so
+      // a rep is not marked down for visits logged before it existed.
+      if (Array.isArray(r.checklist) && r.checklist.length > 0) {
+        b.callsWithChecklist++;
+        for (const k of r.checklist as string[]) {
+          b.checklistDone[k] = (b.checklistDone[k] || 0) + 1;
+        }
+      }
       if (r.accountId) b.accounts.add(String(r.accountId));
     }
 
@@ -170,6 +205,24 @@ export async function GET(req: NextRequest) {
           actualPct: b.visits ? Math.round(((b.mix[g.key] || 0) / b.visits) * 100) : 0,
         })),
         accountsOwned: ownedBy.get(id) || {},
+        complaints: b.complaints,
+        suggestions: b.suggestions,
+        callsWithChecklist: b.callsWithChecklist,
+        /**
+         * How reliably this rep does what the call is supposed to cover. The
+         * share is of calls that carried the checklist, not of all visits —
+         * otherwise an old visit would read as a skipped step.
+         */
+        checklist: (t.visitChecklist || []).map((c) => ({
+          key: c.key,
+          labelEn: c.labelEn,
+          labelAr: c.labelAr,
+          required: !!c.required,
+          done: b.checklistDone[c.key] || 0,
+          pct: b.callsWithChecklist
+            ? Math.round(((b.checklistDone[c.key] || 0) / b.callsWithChecklist) * 100)
+            : null,
+        })),
       };
     });
 
@@ -189,17 +242,26 @@ export async function GET(req: NextRequest) {
         weeklyClientAttainmentPct: null,
         mix: [],
         accountsOwned: ownedBy.get(id) || {},
+        complaints: b.complaints,
+        suggestions: b.suggestions,
+        callsWithChecklist: b.callsWithChecklist,
+        checklist: [],
       });
     }
 
     people.sort((a, b) => b.visits - a.visits || a.name.localeCompare(b.name));
 
-    return NextResponse.json(
-      {
+    return {
+      ...{
         period,
         from,
         daysElapsed,
-        targets: { dailyVisits: daily, weeklyClients: weekly, sectorMix: t.sectorMix || [] },
+        targets: {
+          dailyVisits: daily,
+          weeklyClients: weekly,
+          sectorMix: t.sectorMix || [],
+          visitChecklist: t.visitChecklist || [],
+        },
         team: {
           visits: people.reduce((n, p) => n + p.visits, 0),
           actions: people.reduce((n, p) => n + p.actions, 0),
@@ -207,8 +269,20 @@ export async function GET(req: NextRequest) {
         },
         people,
       },
-      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
-    );
+    };
+  }
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const user = await getSession();
+    if (!can(user?.role, 'crm.view')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    await connectDB();
+
+    const data = await computeKpis(user, req.nextUrl.searchParams.get('period') || 'week');
+    return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });

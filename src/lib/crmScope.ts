@@ -1,0 +1,100 @@
+import User from '@/models/User';
+import { can } from '@/lib/roles';
+
+/**
+ * Whose work a person is shown — by the reporting line, at any depth.
+ *
+ * A manager reads his own team and everyone beneath them: the country manager
+ * sees the commercial manager, the commercial manager's regionals, and anybody
+ * added under those later, without a list to maintain anywhere. It walks
+ * `managerId` downwards rather than hardcoding three levels, so a fourth level
+ * works the day it is created.
+ *
+ * `crm.viewAll` bypasses the tree entirely, for the country manager and the
+ * admins who are not in anybody's branch.
+ *
+ * Unowned accounts are visible to everyone with crm.view. The upcoming list is
+ * the shared pool a rep is supposed to work from; scoping him out of it would
+ * leave him an empty screen and nothing to do. An account becomes his the
+ * moment he logs something against it.
+ */
+
+export interface Viewer {
+  id?: string;
+  role?: string;
+}
+
+/** Guards against a cycle in the reporting line, and against a silly depth. */
+const MAX_DEPTH = 8;
+
+export function seesEveryAccount(user: Viewer | null | undefined): boolean {
+  return can(user?.role, 'crm.viewAll');
+}
+
+/**
+ * This person, plus everyone reporting to them, directly or through somebody
+ * else. Returns an empty list for a viewer who sees everything — there is
+ * nothing to narrow to.
+ */
+export async function visibleOwnerIds(user: Viewer | null | undefined): Promise<string[]> {
+  if (!user?.id || seesEveryAccount(user)) return [];
+
+  const seen = new Set<string>([String(user.id)]);
+  let frontier = [String(user.id)];
+
+  for (let depth = 0; depth < MAX_DEPTH && frontier.length > 0; depth++) {
+    const children = await User.find({ managerId: { $in: frontier } })
+      .select('_id')
+      .lean();
+    frontier = children
+      .map((c: Record<string, unknown>) => String(c._id))
+      .filter((id) => !seen.has(id));
+    for (const id of frontier) seen.add(id);
+  }
+
+  return [...seen];
+}
+
+/** Conditions to fold into an account query for this viewer. */
+export async function accountScope(
+  user: Viewer | null | undefined
+): Promise<Record<string, unknown>> {
+  const ids = await visibleOwnerIds(user);
+  if (ids.length === 0) return {};
+  return {
+    $or: [
+      { ownerId: { $in: ids } },
+      { ownerId: { $exists: false } },
+      { ownerId: null },
+    ],
+  };
+}
+
+/** Conditions for activity queries — whose logged work this viewer may read. */
+export async function activityScope(
+  user: Viewer | null | undefined
+): Promise<Record<string, unknown>> {
+  const ids = await visibleOwnerIds(user);
+  if (ids.length === 0) return {};
+  return { byId: { $in: ids } };
+}
+
+/** True when this viewer may open that particular account. */
+export async function mayOpenAccount(
+  user: Viewer | null | undefined,
+  account: { ownerId?: unknown } | null
+): Promise<boolean> {
+  if (seesEveryAccount(user)) return true;
+  if (!account) return false;
+
+  const owner = account.ownerId;
+  // Nobody owns it yet, so it is still in the shared pool.
+  if (!owner) return true;
+
+  const ownerId =
+    typeof owner === 'object' && owner !== null && '_id' in owner
+      ? String((owner as { _id: unknown })._id)
+      : String(owner);
+
+  return (await visibleOwnerIds(user)).includes(ownerId);
+}

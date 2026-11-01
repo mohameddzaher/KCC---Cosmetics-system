@@ -1172,3 +1172,94 @@ select.field {
 .theme-booting * {
   transition: none !important;
 }
+
+/* ------------------------------------------------------------------ */
+/* Printing — the admin screens saved as PDF                           */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Management prints these. Without this block a browser renders the dark admin
+ * chrome, the sidebar and every button onto the page, and the result looks like
+ * a screenshot rather than a report.
+ *
+ * Anything marked print:hidden (Tailwind) is already gone; this handles the
+ * frame around it: light ground, black text, no navigation, and cards that are
+ * not allowed to split across a page.
+ */
+@media print {
+  @page {
+    margin: 14mm 12mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  /* The sidebar, the top bar and anything that only exists to be clicked. */
+  aside,
+  nav,
+  [role='tablist'],
+  .modal-overlay {
+    display: none !important;
+  }
+
+  /* The content column carries the page on its own once the frame is gone. */
+  main {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Surfaces print as outlines, not as fills — a tinted card eats toner and
+     reads worse on paper than a rule does. */
+  .bg-surface,
+  .bg-surface-2,
+  .bg-surface-3,
+  .bg-bg-subtle {
+    background: #fff !important;
+  }
+
+  .border-line,
+  .border-line-strong {
+    border-color: #d4d4d4 !important;
+  }
+
+  /* A card, a table or a chart split across two pages is unreadable. */
+  table,
+  .rounded-xl,
+  .rounded-2xl,
+  ol,
+  ul {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  /* A table that scrolls on screen must print in full. */
+  .overflow-x-auto,
+  .overflow-y-auto,
+  .scroll-thin {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  /* Bars and badges keep their ink, so a chart still reads in print. */
+  .bg-brand,
+  .badge {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+}

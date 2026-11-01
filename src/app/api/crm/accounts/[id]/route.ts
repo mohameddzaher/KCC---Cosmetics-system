@@ -8,6 +8,7 @@ import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { matchKeysFor } from '@/lib/crmMatch';
 import { canonicalCategory, canonicalCity } from '@/lib/crmVocab';
+import { mayOpenAccount } from '@/lib/crmScope';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +33,12 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       .populate('customerId', 'name email company')
       .lean();
     if (!account) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+    if (!(await mayOpenAccount(user, account as { ownerId?: unknown }))) {
+      return NextResponse.json(
+        { error: 'This account belongs to another rep.' },
+        { status: 403 }
+      );
+    }
 
     const [activities, orders] = await Promise.all([
       CrmActivity.find({ accountId: id })

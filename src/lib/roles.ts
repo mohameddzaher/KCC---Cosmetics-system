@@ -47,6 +47,7 @@ export const PERMISSIONS = [
 
   'crm.view',
   'crm.edit',
+  'crm.viewAll',
   'customers.view',
   'customers.edit',
   'customers.credentials',
@@ -113,7 +114,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   // order from intake → quotation → payment → handoff → delivery follow-up.
   ACCOUNT_MANAGER: [
     'dashboard.view',
-    'crm.view', 'crm.edit',
+    'crm.view', 'crm.edit', 'crm.viewAll',
     'customers.view', 'customers.edit', 'customers.credentials',
     'orders.view', 'orders.edit', 'orders.assign', 'orders.advance',
     'logistics.view',
@@ -263,6 +264,7 @@ export const PERMISSION_META: Record<Permission, PermissionMeta> = {
 
   'crm.view': { labelEn: 'See the sales pipeline', labelAr: 'رؤية مسار المبيعات', groupEn: 'customers', groupAr: 'customers' },
   'crm.edit': { labelEn: 'Move deals and add tasks', labelAr: 'تحريك الصفقات وإضافة المهام', groupEn: 'customers', groupAr: 'customers' },
+  'crm.viewAll': { labelEn: 'See every rep\'s accounts and figures, not only their own', labelAr: 'رؤية حسابات وأرقام كل المندوبين، لا حساباته فقط', groupEn: 'customers', groupAr: 'customers' },
   'customers.view': { labelEn: 'See customer records', labelAr: 'رؤية بيانات العملاء', groupEn: 'customers', groupAr: 'customers' },
   'customers.edit': { labelEn: 'Add and edit customers', labelAr: 'إضافة وتعديل العملاء', groupEn: 'customers', groupAr: 'customers' },
   'customers.credentials': { labelEn: 'Create customer logins and reset their passwords', labelAr: 'إنشاء حسابات دخول للعملاء وإعادة ضبط كلمات المرور', groupEn: 'customers', groupAr: 'customers' },

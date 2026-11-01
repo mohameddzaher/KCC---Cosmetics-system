@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Phone, Plus, Search } from 'lucide-react';
+import { ArrowRight, Download, Phone, Plus, Printer, Search } from 'lucide-react';
 import {
-  Badge, Card, DataTable, EmptyState, ErrorNote, Select, Spinner, Td, Th, TextInput,
+  Badge, Button, Card, DataTable, EmptyState, ErrorNote, Select, Spinner, Td, Th, TextInput,
 } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { downloadFile } from '@/lib/download';
 import { CRM_CATEGORIES, CRM_CITIES } from '@/lib/crmVocab';
 import { STEP_ORDER } from '@/lib/crmProgress';
 import LogActionModal, { type LogTarget } from './LogActionModal';
@@ -62,12 +63,18 @@ export default function AccountsTable({
   const [sort, setSort] = useState('recent');
   const [logging, setLogging] = useState<LogTarget | null>(null);
 
+  /** The filters in force, shared by the list and its export. */
+  const query = useCallback(() => {
+    const p = new URLSearchParams({ stage, sort, limit: '200' });
+    if (q.trim()) p.set('q', q.trim());
+    if (category !== 'all') p.set('category', category);
+    if (city !== 'all') p.set('city', city);
+    return p;
+  }, [stage, sort, q, category, city]);
+
   const load = useCallback(async () => {
     try {
-      const p = new URLSearchParams({ stage, sort, limit: '200' });
-      if (q.trim()) p.set('q', q.trim());
-      if (category !== 'all') p.set('category', category);
-      if (city !== 'all') p.set('city', city);
+      const p = query();
 
       const r = await fetch(`/api/crm/accounts?${p}`, { cache: 'no-store' });
       if (!r.ok) throw new Error('Could not load the accounts');
@@ -80,7 +87,7 @@ export default function AccountsTable({
     } finally {
       setReady(true);
     }
-  }, [stage, sort, q, category, city]);
+  }, [query]);
 
   useEffect(() => {
     const t = setTimeout(load, q ? 250 : 0);
@@ -145,9 +152,28 @@ export default function AccountsTable({
               <option value="progress">{tx('Most worked')}</option>
             </Select>
           </div>
-          <p className="ms-auto pb-2.5 text-xs text-fg-muted">
-            {total} {tx('accounts')}
-          </p>
+          <div className="ms-auto flex flex-wrap items-center gap-2 pb-1 print:hidden">
+            <p className="text-xs text-fg-muted">
+              {total} {tx('accounts')}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={Download}
+              onClick={() => {
+                const p = query();
+                p.set('what', 'accounts');
+                p.delete('limit');
+                p.delete('sort');
+                downloadFile(`/api/crm/export?${p}`).catch((e) => setError(e.message));
+              }}
+            >
+              {tx('Export to Excel')}
+            </Button>
+            <Button variant="outline" size="sm" icon={Printer} onClick={() => window.print()}>
+              {tx('Print / PDF')}
+            </Button>
+          </div>
         </div>
       </Card>
 

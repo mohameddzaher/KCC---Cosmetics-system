@@ -7,6 +7,7 @@ import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { CRM_CATEGORIES, CRM_CITIES } from '@/lib/crmVocab';
 import { ENGAGEMENT_TYPES, STEP_ORDER } from '@/lib/crmProgress';
+import { accountScope, activityScope } from '@/lib/crmScope';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +50,10 @@ export async function GET() {
      * visit and overstate the week by half.
      */
     const work = { ...live, type: { $in: [...ENGAGEMENT_TYPES] } };
-    const activeAccounts = { active: { $ne: false } };
+    // Scoped the same way the lists are: a rep's dashboard describes the
+    // accounts he can actually open, and a manager's describes the team's.
+    const activeAccounts = { active: { $ne: false }, ...(await accountScope(user)) };
+    const mine = await activityScope(user);
 
     const [
       byStage, byCategory, byCity, stepCounts,
@@ -95,16 +99,16 @@ export async function GET() {
         { $group: Object.fromEntries([['_id', null], ...STEP_ORDER.map((k) => [k, { $sum: `$${k}` }])]) },
       ]),
 
-      CrmActivity.countDocuments({ ...work, at: { $gte: dayStart } }),
-      CrmActivity.countDocuments({ ...work, at: { $gte: weekStart } }),
-      CrmActivity.countDocuments({ ...work, at: { $gte: monthStart } }),
+      CrmActivity.countDocuments({ ...work, ...mine, at: { $gte: dayStart } }),
+      CrmActivity.countDocuments({ ...work, ...mine, at: { $gte: weekStart } }),
+      CrmActivity.countDocuments({ ...work, ...mine, at: { $gte: monthStart } }),
       CrmActivity.aggregate([
-        { $match: live },
+        { $match: { ...live, ...mine } },
         { $group: { _id: '$type', n: { $sum: 1 } } },
         { $sort: { n: -1 } },
       ]),
 
-      CrmActivity.find(live)
+      CrmActivity.find({ ...live, ...mine })
         .populate('accountId', 'name nameAr stage category city')
         .sort({ at: -1 })
         .limit(15)
@@ -129,7 +133,7 @@ export async function GET() {
 
       // Who did what this week.
       CrmActivity.aggregate([
-        { $match: { ...work, at: { $gte: weekStart }, byId: { $ne: null } } },
+        { $match: { ...work, ...mine, at: { $gte: weekStart }, byId: { $ne: null } } },
         {
           $group: {
             _id: { id: '$byId', name: '$byName' },
@@ -144,7 +148,7 @@ export async function GET() {
 
       // Four weeks of activity, for the shape of the trend.
       CrmActivity.aggregate([
-        { $match: { ...work, at: { $gte: new Date(now.getTime() - 28 * 86400000) } } },
+        { $match: { ...work, ...mine, at: { $gte: new Date(now.getTime() - 28 * 86400000) } } },
         {
           $group: {
             _id: { $dateToString: { format: '%Y-%m-%d', date: '$at' } },

@@ -10,7 +10,7 @@ import {
   AutoGrid, Badge, Button, Card, ErrorNote, SectionTitle, Select, Spinner,
 } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { downloadCsv } from '@/lib/exportCsv';
+import { downloadFile } from '@/lib/download';
 
 /**
  * The CRM dashboard — every figure read from the accounts and their history.
@@ -88,28 +88,9 @@ export default function CrmDashboardPage() {
   if (error && !d) return <ErrorNote>{error}</ErrorNote>;
   if (!d) return null;
 
-  const exportSummary = () => {
-    const rows: Array<Record<string, string | number>> = [
-      ...d.byCategory.map((c) => ({
-        section: ar ? 'القطاعات' : 'Sectors',
-        item: ar ? c.labelAr : c.labelEn,
-        total: c.total, current: c.current, upcoming: c.upcoming, worked: c.worked,
-      })),
-      ...d.byCity.map((c) => ({
-        section: ar ? 'المدن' : 'Cities',
-        item: ar ? c.labelAr : c.labelEn,
-        total: c.total, current: c.current, upcoming: '', worked: '',
-      })),
-      ...d.funnel.map((f) => ({
-        section: ar ? 'خطوات البيع' : 'Sales steps',
-        item: STEP_LABELS[f.key] ? (ar ? STEP_LABELS[f.key][1] : STEP_LABELS[f.key][0]) : f.key,
-        total: f.accounts, current: '', upcoming: '', worked: '',
-      })),
-    ];
-    downloadCsv(`crm-dashboard-${new Date().toISOString().slice(0, 10)}.csv`, rows, {
-      totalsFor: ['total', 'current', 'upcoming', 'worked'],
-    });
-  };
+  // The accounts behind every figure on this screen, as a workbook.
+  const exportSummary = () =>
+    downloadFile('/api/crm/export?what=accounts').catch((e) => setError(e.message));
 
   return (
     <div>
