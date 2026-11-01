@@ -170,8 +170,20 @@ export default function AccountsTable({
             >
               {tx('Export to Excel')}
             </Button>
-            <Button variant="outline" size="sm" icon={Printer} onClick={() => window.print()}>
-              {tx('Print / PDF')}
+            <Button
+              variant="outline"
+              size="sm"
+              icon={Printer}
+              onClick={() => {
+                const p = query();
+                p.set('what', 'accounts');
+                p.set('format', 'pdf');
+                p.delete('limit');
+                p.delete('sort');
+                downloadFile(`/api/crm/export?${p}`).catch((e) => setError(e.message));
+              }}
+            >
+              {tx('PDF report')}
             </Button>
           </div>
         </div>

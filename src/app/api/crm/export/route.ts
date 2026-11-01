@@ -6,6 +6,7 @@ import ProductCode from '@/models/ProductCode';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { buildXlsx, type XlsxColumn } from '@/lib/xlsx';
+import { buildPdf, hasUnrepresentable, type PdfColumn } from '@/lib/pdf';
 import { accountScope, activityScope } from '@/lib/crmScope';
 import { categoryMeta, cityMeta } from '@/lib/crmVocab';
 import { STEP_ORDER } from '@/lib/crmProgress';
@@ -23,6 +24,12 @@ export const dynamic = 'force-dynamic';
  * see. Headers are English whatever the screen language: these files go to
  * factories, partners and head office.
  */
+
+/** The daily visit target, for the KPI report's summary row. */
+function daily(data: Record<string, unknown>): string {
+  const t = (data.targets as { dailyVisits?: { min: number; max: number } } | undefined)?.dailyVisits;
+  return t ? `${t.min}-${t.max}` : '-';
+}
 
 function sheetFor(what: string, p: URLSearchParams) {
   const stamp = new Date().toISOString().slice(0, 10);
@@ -50,6 +57,13 @@ export async function GET(req: NextRequest) {
     let title = '';
     let totalsFor: string[] = [];
     let sheetName = 'Export';
+    /**
+     * The PDF carries fewer columns than the workbook on purpose. Eighteen
+     * columns across a landscape page are each too narrow to read; a report is
+     * for reading, and the workbook is there for the full detail.
+     */
+    let pdfKeys: string[] = [];
+    let summary: Array<{ label: string; value: string }> = [];
 
     /* ----------------------------- accounts ----------------------------- */
     if (what === 'accounts') {
@@ -91,6 +105,7 @@ export async function GET(req: NextRequest) {
         { header: 'Next step', key: 'nextStep', width: 30 },
       ];
       totalsFor = ['visits', 'meetings'];
+      pdfKeys = ['name', 'sector', 'city', 'stage', 'owner', 'person', 'phone', 'steps', 'last'];
       rows = docs.map((a: Record<string, unknown>) => ({
         name: a.name,
         nameAr: a.nameAr || '',
@@ -153,6 +168,7 @@ export async function GET(req: NextRequest) {
         { header: 'Ingredients', key: 'ingredients', width: 60 },
       ];
       totalsFor = ['volume', 'cost', 'rsp', 'kccRecommendedSar'];
+      pdfKeys = ['code', 'category', 'product', 'status', 'volume', 'cost', 'rsp', 'costRatio', 'kccRecommendedSar'];
       rows = docs.map((i: Record<string, unknown>) => ({
         ...i,
         status: i.status || 'In development',
@@ -199,6 +215,7 @@ export async function GET(req: NextRequest) {
         { header: 'Handled', key: 'handled', width: 12 },
         { header: 'What was done', key: 'outcome', width: 50 },
       ];
+      pdfKeys = ['type', 'account', 'sector', 'owner', 'body', 'by', 'date', 'handled'];
       rows = docs.map((r: Record<string, unknown>) => {
         const acc = r.accountId as Record<string, unknown> | undefined;
         return {
@@ -240,6 +257,13 @@ export async function GET(req: NextRequest) {
         { header: 'Calls with the checklist', key: 'callsWithChecklist', width: 20, type: 'number' },
       ];
       totalsFor = ['visits', 'meetings', 'calls', 'sampleRequests', 'complaints', 'suggestions', 'accountsSeen'];
+      pdfKeys = ['name', 'visits', 'meetings', 'calls', 'sampleRequests', 'accountsSeen', 'visitsPerDay', 'target', 'attainment'];
+      summary = [
+        { label: 'Visits logged', value: String((data.team as { visits: number }).visits) },
+        { label: 'Accounts seen', value: String((data.team as { accountsSeen: number }).accountsSeen) },
+        { label: 'All actions', value: String((data.team as { actions: number }).actions) },
+        { label: 'Daily target per rep', value: `${daily(data)}` },
+      ];
       rows = people.map((x) => ({
         name: x.name,
         role: x.role,
@@ -274,6 +298,14 @@ export async function GET(req: NextRequest) {
         { header: 'Visited', key: 'visited', width: 12 },
         { header: 'Note', key: 'note', width: 36 },
       ];
+      pdfKeys = ['date', 'day', 'rep', 'account', 'city', 'visited', 'note'];
+      const sm = data.summary as { planned: number; kept: number; adherencePct: number | null; unplannedVisits: number };
+      summary = [
+        { label: 'Planned calls', value: String(sm.planned) },
+        { label: 'Actually made', value: String(sm.kept) },
+        { label: 'Plan kept', value: sm.adherencePct === null ? '-' : `${sm.adherencePct}%` },
+        { label: 'Visits nobody planned', value: String(sm.unplannedVisits) },
+      ];
       const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       rows = plans.flatMap((pl) =>
         ((pl.items || []) as Array<Record<string, unknown>>).map((i) => {
@@ -294,6 +326,53 @@ export async function GET(req: NextRequest) {
 
     else {
       return NextResponse.json({ error: `Nothing to export called "${what}"` }, { status: 400 });
+    }
+
+    /* ---- what was filtered, written on the report so it can be trusted later ---- */
+    const applied = ['stage', 'category', 'city', 'status', 'package', 'costed', 'type', 'handled', 'from', 'to', 'period', 'q']
+      .map((k) => (p.get(k) && p.get(k) !== 'all' ? `${k}: ${p.get(k)}` : null))
+      .filter(Boolean)
+      .join('   ·   ');
+
+    if (p.get('format') === 'pdf') {
+      const chosen = pdfKeys.length
+        ? pdfKeys.map((k) => columns.find((c) => c.key === k)).filter(Boolean)
+        : columns.slice(0, 9);
+
+      const pdfColumns: PdfColumn[] = (chosen as XlsxColumn[]).map((c) => ({
+        header: c.header,
+        key: c.key,
+        // The spreadsheet's column widths are already a judgement about how
+        // much room each field needs; reuse it as the share of the page.
+        weight: c.width || 18,
+        type: c.type,
+        align: c.type && c.type !== 'text' ? 'right' : 'left',
+      }));
+
+      const textKeys = pdfColumns.filter((c) => !c.type || c.type === 'text').map((c) => c.key);
+      const arabicDropped = hasUnrepresentable(rows, textKeys);
+
+      const pdf = buildPdf({
+        brand: 'KCC — Saudi Company for Cosmetics',
+        title,
+        subtitle: applied ? `Filtered by — ${applied}` : 'No filters applied — the whole list.',
+        columns: pdfColumns,
+        rows,
+        totalsFor,
+        summary,
+        footerNote: arabicDropped
+          ? `${rows.length} rows · Internal document · Arabic names are shown on screen; this report is the Latin view.`
+          : `${rows.length} rows · Internal document`,
+      });
+
+      return new NextResponse(new Uint8Array(pdf), {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${file.replace(/\.xlsx$/, '.pdf')}"`,
+          'Content-Length': String(pdf.length),
+          'Cache-Control': 'no-store',
+        },
+      });
     }
 
     const book = buildXlsx({ sheetName, columns, rows, totalsFor, title });

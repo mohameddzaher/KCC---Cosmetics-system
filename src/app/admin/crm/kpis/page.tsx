@@ -98,8 +98,10 @@ function KpisInner() {
 
   const people = focus ? d.people.filter((p) => p.id === focus) : d.people;
 
-  const exportRows = () =>
-    downloadFile(`/api/crm/export?what=kpis&period=${period}`).catch((e) => setError(e.message));
+  const exportRows = (format?: 'pdf') =>
+    downloadFile(
+      `/api/crm/export?what=kpis&period=${period}${format ? '&format=pdf' : ''}`
+    ).catch((e) => setError(e.message));
 
   return (
     <div>
@@ -125,8 +127,8 @@ function KpisInner() {
             <option value="week">{tx('This week')}</option>
             <option value="month">{tx('This month')}</option>
           </Select>
-          <Button variant="outline" icon={Download} onClick={exportRows}>{tx('Export to Excel')}</Button>
-          <Button variant="outline" icon={Printer} onClick={() => window.print()}>{tx('Print / PDF')}</Button>
+          <Button variant="outline" icon={Download} onClick={() => exportRows()}>{tx('Export to Excel')}</Button>
+          <Button variant="outline" icon={Printer} onClick={() => exportRows('pdf')}>{tx('PDF report')}</Button>
         </div>
       </div>
 

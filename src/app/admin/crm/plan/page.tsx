@@ -153,9 +153,10 @@ export default function JourneyPlanPage() {
   /** When one rep is selected the week is his; otherwise it is the team's. */
   const single = rep !== 'all' ? rep : d.canPlanForOthers ? '' : d.reps[0]?._id || '';
 
-  const exportWeek = () => {
+  const exportWeek = (format?: 'pdf') => {
     const p = new URLSearchParams({ what: 'plan', from: iso(weekStart), to: iso(days[6]) });
     if (rep !== 'all') p.set('owner', rep);
+    if (format) p.set('format', 'pdf');
     downloadFile(`/api/crm/export?${p}`).catch((e) => setError(e.message));
   };
 
@@ -168,8 +169,8 @@ export default function JourneyPlanPage() {
         backLabel={t('admin.crmTitle')}
         actions={
           <>
-            <Button variant="outline" icon={Download} onClick={exportWeek}>{tx('Export to Excel')}</Button>
-            <Button variant="outline" icon={Printer} onClick={() => window.print()}>{tx('Print / PDF')}</Button>
+            <Button variant="outline" icon={Download} onClick={() => exportWeek()}>{tx('Export to Excel')}</Button>
+            <Button variant="outline" icon={Printer} onClick={() => exportWeek('pdf')}>{tx('PDF report')}</Button>
           </>
         }
       />

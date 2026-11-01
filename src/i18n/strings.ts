@@ -568,6 +568,7 @@ export const AR_STRINGS: Record<string, string> = {
   'that told us something': 'أخبرتنا بشيء',
   'waiting on us': 'في انتظارنا',
   /* ---------- CRM: accounts, visits, KPIs ---------- */
+  'PDF report': 'تقرير PDF',
   'Accounts seen': 'حسابات تمت زيارتها',
   'Active days': 'أيام العمل',
   'Actual': 'الفعلي',

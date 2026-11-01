@@ -89,17 +89,20 @@ export default function CrmDashboardPage() {
   if (!d) return null;
 
   // The accounts behind every figure on this screen, as a workbook.
-  const exportSummary = () =>
-    downloadFile('/api/crm/export?what=accounts').catch((e) => setError(e.message));
+  const exportSummary = (format?: 'pdf') =>
+    downloadFile(`/api/crm/export?what=accounts${format ? '&format=pdf' : ''}`).catch((e) =>
+      setError(e.message)
+    );
 
   return (
     <div>
       <PageHead
         title={t('admin.crmTitle')}
         subtitle={t('admin.crmDesc')}
-        onExport={exportSummary}
+        onExport={() => exportSummary()}
+        onPdf={() => exportSummary('pdf')}
         exportLabel={tx('Export to Excel')}
-        printLabel={tx('Print / PDF')}
+        printLabel={tx('PDF report')}
       />
 
       {error && <div className="mb-4"><ErrorNote>{error}</ErrorNote></div>}
@@ -403,9 +406,9 @@ export default function CrmDashboardPage() {
 
 /** The header, with the two exports management asks for. */
 function PageHead({
-  title, subtitle, onExport, exportLabel, printLabel,
+  title, subtitle, onExport, onPdf, exportLabel, printLabel,
 }: {
-  title: string; subtitle: string; onExport: () => void;
+  title: string; subtitle: string; onExport: () => void; onPdf: () => void;
   exportLabel: string; printLabel: string;
 }) {
   return (
@@ -416,7 +419,7 @@ function PageHead({
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2 print:hidden">
         <Button variant="outline" icon={Download} onClick={onExport}>{exportLabel}</Button>
-        <Button variant="outline" icon={Printer} onClick={() => window.print()}>{printLabel}</Button>
+        <Button variant="outline" icon={Printer} onClick={onPdf}>{printLabel}</Button>
       </div>
     </div>
   );

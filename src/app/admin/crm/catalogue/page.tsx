@@ -140,8 +140,9 @@ export default function CataloguePage() {
   const maxCat = useMemo(() => Math.max(1, ...(d?.byCategory || []).map((c) => c.n)), [d]);
 
   /** English headers whatever the screen language: this file goes to partners. */
-  const exportRows = () => {
+  const exportRows = (format?: 'pdf') => {
     const p = new URLSearchParams({ what: 'catalogue' });
+    if (format) p.set('format', 'pdf');
     if (q.trim()) p.set('q', q.trim());
     if (category !== 'all') p.set('category', category);
     if (status !== 'all') p.set('status', status);
@@ -168,8 +169,8 @@ export default function CataloguePage() {
         backLabel={t('admin.crmTitle')}
         actions={
           <>
-            <Button variant="outline" icon={Download} onClick={exportRows}>{tx('Export to Excel')}</Button>
-            <Button variant="outline" icon={Printer} onClick={() => window.print()}>{tx('Print / PDF')}</Button>
+            <Button variant="outline" icon={Download} onClick={() => exportRows()}>{tx('Export to Excel')}</Button>
+            <Button variant="outline" icon={Printer} onClick={() => exportRows('pdf')}>{tx('PDF report')}</Button>
             <Button icon={Plus} onClick={() => setEditing({ ...BLANK })}>{tx('Add a product')}</Button>
           </>
         }

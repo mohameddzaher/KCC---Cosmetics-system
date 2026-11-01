@@ -105,11 +105,12 @@ export default function CrmFeedbackPage() {
   const openComplaints = complaints.total - complaints.handled;
   const accountsAffected = new Set(rows.map((r) => r.accountId?._id).filter(Boolean)).size;
 
-  const exportRows = () => {
+  const exportRows = (format?: 'pdf') => {
     const p = new URLSearchParams({ what: 'feedback', type });
     if (handled !== 'all') p.set('handled', handled);
     if (from) p.set('from', from);
     if (to) p.set('to', to);
+    if (format) p.set('format', 'pdf');
     downloadFile(`/api/crm/export?${p}`).catch((e) => setError(e.message));
   };
 
@@ -125,8 +126,8 @@ export default function CrmFeedbackPage() {
         backLabel={t('admin.crmTitle')}
         actions={
           <>
-            <Button variant="outline" icon={Download} onClick={exportRows}>{tx('Export to Excel')}</Button>
-            <Button variant="outline" icon={Printer} onClick={() => window.print()}>{tx('Print / PDF')}</Button>
+            <Button variant="outline" icon={Download} onClick={() => exportRows()}>{tx('Export to Excel')}</Button>
+            <Button variant="outline" icon={Printer} onClick={() => exportRows('pdf')}>{tx('PDF report')}</Button>
           </>
         }
       />
