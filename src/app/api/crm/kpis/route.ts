@@ -8,7 +8,7 @@ import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { CRM_CATEGORIES } from '@/lib/crmVocab';
 import { ENGAGEMENT_TYPES } from '@/lib/crmProgress';
-import { seesEveryAccount, visibleOwnerIds } from '@/lib/crmScope';
+import { seesEveryAccount, visibleOwnerObjectIds } from '@/lib/crmScope';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,9 +20,12 @@ export const dynamic = 'force-dynamic';
  * appears: a KPI screen that only lists people who did something cannot show
  * who did nothing.
  *
- * Only dated activity counts. The meetings carried over from the spreadsheet
- * have no date of their own, and attributing them to the week of the import
- * would credit work to whoever ran it.
+ * Only dated activity counts towards a period. The meetings carried over from
+ * the spreadsheet have no date of their own, and attributing them to the week
+ * of the import would credit work to whoever ran it — so they are reported
+ * separately, under `carried`, against the rep the sheet belongs to. That is
+ * the whole of the field work done before this system existed, and leaving it
+ * off a rep's record would have been the bigger lie.
  */
 
 function startOfWeek(now: Date): Date {
@@ -63,11 +66,13 @@ export async function computeKpis(
      */
     const all = seesEveryAccount(user);
     // A manager's branch: himself and everyone under him, however deep.
-    const branch = await visibleOwnerIds(user);
+    // ObjectIds, not strings: these go into aggregation pipelines, which are
+    // not schema-cast — a string id there matches nothing at all.
+    const branch = await visibleOwnerObjectIds(user);
     const onlyMe = all ? {} : { byId: { $in: branch } };
     const groupOf = new Map(CRM_CATEGORIES.map((c) => [c.key, c.mixGroup]));
 
-    const [target, reps, rows, owned] = await Promise.all([
+    const [target, reps, rows, carriedRows, owned] = await Promise.all([
       CrmTarget.findOne({ key: 'main' }).lean(),
       User.find(
         all
@@ -93,6 +98,26 @@ export async function computeKpis(
             checklist: 1,
             category: '$acc.category',
             day: { $dateToString: { format: '%Y-%m-%d', date: '$at' } },
+          },
+        },
+      ]),
+      // The work the sales sheet recorded without a date: no period can hold
+      // it, so it is counted once, in full, per rep.
+      CrmActivity.aggregate([
+        {
+          $match: {
+            backfilled: true, byId: { $ne: null }, ...onlyMe,
+            type: { $in: [...ENGAGEMENT_TYPES] },
+          },
+        },
+        {
+          $group: {
+            _id: '$byId',
+            name: { $last: '$byName' },
+            visits: { $sum: 1 },
+            done: { $sum: { $cond: [{ $eq: ['$outcome', 'done'] }, 1, 0] } },
+            hold: { $sum: { $cond: [{ $eq: ['$outcome', 'hold'] }, 1, 0] } },
+            accounts: { $addToSet: '$accountId' },
           },
         },
       ]),
@@ -158,6 +183,18 @@ export async function computeKpis(
       if (r.accountId) b.accounts.add(String(r.accountId));
     }
 
+    /** The undated sheet work, per rep. */
+    const carriedBy = new Map<string, { visits: number; done: number; hold: number; accounts: number }>();
+    for (const c of carriedRows as Array<{
+      _id: unknown; name?: string; visits: number; done: number; hold: number; accounts: unknown[];
+    }>) {
+      carriedBy.set(String(c._id), {
+        visits: c.visits, done: c.done, hold: c.hold, accounts: (c.accounts || []).length,
+      });
+      if (c.name) names.set(String(c._id), c.name);
+    }
+    const noCarry = { visits: 0, done: 0, hold: 0, accounts: 0 };
+
     const ownedBy = new Map<string, Record<string, number>>();
     for (const o of owned) {
       const id = String(o._id.owner);
@@ -205,6 +242,12 @@ export async function computeKpis(
           actualPct: b.visits ? Math.round(((b.mix[g.key] || 0) / b.visits) * 100) : 0,
         })),
         accountsOwned: ownedBy.get(id) || {},
+        /**
+         * Carried over from the sales sheet: visited and done, with no date.
+         * Reported apart from the period figures and never folded into them,
+         * because a target is a rate and these have no time to divide by.
+         */
+        carried: carriedBy.get(id) || noCarry,
         complaints: b.complaints,
         suggestions: b.suggestions,
         callsWithChecklist: b.callsWithChecklist,
@@ -242,6 +285,32 @@ export async function computeKpis(
         weeklyClientAttainmentPct: null,
         mix: [],
         accountsOwned: ownedBy.get(id) || {},
+        carried: carriedBy.get(id) || noCarry,
+        complaints: b.complaints,
+        suggestions: b.suggestions,
+        callsWithChecklist: b.callsWithChecklist,
+        checklist: [],
+      });
+    }
+
+    // A rep whose only record is the sheet — nothing logged in this period —
+    // would otherwise be missing from the screen that is meant to show it.
+    for (const [id, c] of carriedBy) {
+      if (people.some((p) => p.id === id)) continue;
+      const b = empty();
+      people.push({
+        id,
+        name: names.get(id) || '—',
+        role: 'other',
+        actions: 0, visits: 0, meetings: 0, calls: 0,
+        sampleRequests: 0, accountsSeen: 0, activeDays: 0,
+        visitsPerDay: 0,
+        dailyTarget: daily, weeklyClientTarget: weekly,
+        dailyAttainmentPct: 0,
+        weeklyClientAttainmentPct: null,
+        mix: [],
+        accountsOwned: ownedBy.get(id) || {},
+        carried: c,
         complaints: b.complaints,
         suggestions: b.suggestions,
         callsWithChecklist: b.callsWithChecklist,
@@ -266,6 +335,8 @@ export async function computeKpis(
           visits: people.reduce((n, p) => n + p.visits, 0),
           actions: people.reduce((n, p) => n + p.actions, 0),
           accountsSeen: new Set(rows.filter((r) => r.accountId).map((r) => String(r.accountId))).size,
+          carriedVisits: people.reduce((n, p) => n + p.carried.visits, 0),
+          carriedDone: people.reduce((n, p) => n + p.carried.done, 0),
         },
         people,
       },

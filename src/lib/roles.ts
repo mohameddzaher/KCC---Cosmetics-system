@@ -112,9 +112,15 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 
   // Owns the customer relationship for their assigned accounts and drives the
   // order from intake → quotation → payment → handoff → delivery follow-up.
+  //
+  // Deliberately without crm.viewAll: that permission bypasses the reporting
+  // line, and a commercial manager who bypassed it would read the figures of
+  // the country manager above him. His reach is his branch — himself and
+  // everyone under him, at any depth — which the reporting line already gives
+  // him. crm.viewAll stays with the admins, who sit outside the tree.
   ACCOUNT_MANAGER: [
     'dashboard.view',
-    'crm.view', 'crm.edit', 'crm.viewAll',
+    'crm.view', 'crm.edit',
     'customers.view', 'customers.edit', 'customers.credentials',
     'orders.view', 'orders.edit', 'orders.assign', 'orders.advance',
     'logistics.view',

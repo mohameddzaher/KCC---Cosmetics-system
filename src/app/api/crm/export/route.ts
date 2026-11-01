@@ -33,7 +33,7 @@ function daily(data: Record<string, unknown>): string {
 
 function sheetFor(what: string, p: URLSearchParams) {
   const stamp = new Date().toISOString().slice(0, 10);
-  const suffix = p.get('stage') || p.get('category') || '';
+  const suffix = p.get('list') || p.get('stage') || p.get('category') || '';
   return {
     file: `kcc-${what}${suffix ? `-${suffix}` : ''}-${stamp}.xlsx`,
     stamp,
@@ -75,6 +75,11 @@ export async function GET(req: NextRequest) {
         const v = p.get(param);
         if (v && v !== 'all') filter[field] = v;
       }
+      // The same two populations the screens separate: the committed target
+      // list, or the wider pool behind it.
+      const list = p.get('list');
+      if (list === 'target') filter.targetList = true;
+      if (list === 'pool') filter.targetList = { $ne: true };
       const q = (p.get('q') || '').trim();
       if (q) {
         const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
@@ -255,14 +260,28 @@ export async function GET(req: NextRequest) {
         { header: 'Daily target', key: 'target', width: 13 },
         { header: 'Attainment', key: 'attainment', width: 13, type: 'percent' },
         { header: 'Calls with the checklist', key: 'callsWithChecklist', width: 20, type: 'number' },
+        // The sheet's own record, kept in its own columns: it has no date, so it
+        // belongs to no period and must never be added to the ones that do.
+        { header: 'Visited (sales sheet, undated)', key: 'carriedVisits', width: 26, type: 'number' },
+        { header: 'Done (sales sheet, undated)', key: 'carriedDone', width: 24, type: 'number' },
       ];
-      totalsFor = ['visits', 'meetings', 'calls', 'sampleRequests', 'complaints', 'suggestions', 'accountsSeen'];
-      pdfKeys = ['name', 'visits', 'meetings', 'calls', 'sampleRequests', 'accountsSeen', 'visitsPerDay', 'target', 'attainment'];
+      totalsFor = [
+        'visits', 'meetings', 'calls', 'sampleRequests', 'complaints', 'suggestions',
+        'accountsSeen', 'carriedVisits', 'carriedDone',
+      ];
+      pdfKeys = [
+        'name', 'visits', 'meetings', 'calls', 'sampleRequests', 'accountsSeen',
+        'visitsPerDay', 'target', 'attainment', 'carriedVisits', 'carriedDone',
+      ];
       summary = [
         { label: 'Visits logged', value: String((data.team as { visits: number }).visits) },
         { label: 'Accounts seen', value: String((data.team as { accountsSeen: number }).accountsSeen) },
         { label: 'All actions', value: String((data.team as { actions: number }).actions) },
         { label: 'Daily target per rep', value: `${daily(data)}` },
+        {
+          label: 'Visited on the sales sheet (undated)',
+          value: `${(data.team as { carriedVisits: number }).carriedVisits} visited, ${(data.team as { carriedDone: number }).carriedDone} done`,
+        },
       ];
       rows = people.map((x) => ({
         name: x.name,
@@ -279,6 +298,8 @@ export async function GET(req: NextRequest) {
         target: `${(x.dailyTarget as { min: number }).min}-${(x.dailyTarget as { max: number }).max}`,
         attainment: Number(x.dailyAttainmentPct) / 100,
         callsWithChecklist: x.callsWithChecklist,
+        carriedVisits: (x.carried as { visits: number }).visits,
+        carriedDone: (x.carried as { done: number }).done,
       }));
     }
 

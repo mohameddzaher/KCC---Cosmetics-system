@@ -31,6 +31,33 @@ function startOfWeek(now: Date): Date {
   return d;
 }
 
+/**
+ * Whole-number shares that add up to the whole.
+ *
+ * Rounding each share on its own is the obvious way and the wrong one: six
+ * sectors rounded independently came to 99%, and a breakdown that does not
+ * total 100 reads as a bug in the figures rather than in the arithmetic. This
+ * gives every row its floor and then hands the leftover points to the rows
+ * with the largest remainders, so the parts sum to 100 whenever they cover
+ * the whole. Rows are mutated in place, because the caller has already
+ * assembled and sorted them.
+ */
+function assignShares<T extends { total: number; sharePct: number }>(rows: T[], whole: number) {
+  if (!whole || rows.length === 0) return rows;
+  const exact = rows.map((r) => (r.total / whole) * 100);
+  const floors = exact.map((v) => Math.floor(v));
+  // Only distribute points that the rows actually account for: if this is a
+  // partial breakdown, its shares should not be inflated to 100.
+  const covered = rows.reduce((n, r) => n + r.total, 0);
+  const budget = Math.round((covered / whole) * 100) - floors.reduce((n, v) => n + v, 0);
+  const order = exact
+    .map((v, i) => ({ i, rem: v - Math.floor(v) }))
+    .sort((a, b) => b.rem - a.rem);
+  for (let k = 0; k < Math.max(0, budget) && k < order.length; k++) floors[order[k].i]++;
+  rows.forEach((r, i) => { r.sharePct = floors[i]; });
+  return rows;
+}
+
 export async function GET() {
   try {
     const user = await getSession();
@@ -53,20 +80,28 @@ export async function GET() {
     // Scoped the same way the lists are: a rep's dashboard describes the
     // accounts he can actually open, and a manager's describes the team's.
     const activeAccounts = { active: { $ne: false }, ...(await accountScope(user)) };
+    /**
+     * The headline figures describe the target list — the accounts the business
+     * chose to work — and not the prospect pool behind it. Mixing 200 untouched
+     * SFDA records into "what share of our accounts are distributors" answers a
+     * question nobody asked: that share would describe the regulator's register
+     * rather than any decision made here.
+     */
+    const targets = { ...activeAccounts, targetList: true };
     const mine = await activityScope(user);
 
     const [
       byStage, byCategory, byCity, stepCounts,
       actToday, actWeek, actMonth, byType,
       recent, attention, withOrders, backfilled,
-      perRep, trend, target,
+      perRep, trend, target, targetCounts, reachRows, requestRows, poolCount,
     ] = await Promise.all([
       CrmAccount.aggregate([
         { $match: activeAccounts },
         { $group: { _id: '$stage', n: { $sum: 1 } } },
       ]),
       CrmAccount.aggregate([
-        { $match: activeAccounts },
+        { $match: targets },
         {
           $group: {
             _id: '$category',
@@ -78,7 +113,7 @@ export async function GET() {
         },
       ]),
       CrmAccount.aggregate([
-        { $match: activeAccounts },
+        { $match: targets },
         {
           $group: {
             _id: '$city',
@@ -90,7 +125,7 @@ export async function GET() {
       ]),
       // How far accounts get through the six steps.
       CrmAccount.aggregate([
-        { $match: activeAccounts },
+        { $match: targets },
         {
           $project: Object.fromEntries(
             STEP_ORDER.map((k) => [k, { $cond: [{ $ifNull: [`$steps.${k}`, false] }, 1, 0] }])
@@ -108,10 +143,19 @@ export async function GET() {
         { $sort: { n: -1 } },
       ]),
 
-      CrmActivity.find({ ...live, ...mine })
+      /**
+       * The log, and unlike every count above it this one includes the rows
+       * carried over from the sales sheet. A count over time must leave them
+       * out — they have no date of their own. A log must not: those meetings
+       * are most of what the team has done, and a history that hid them would
+       * read as an empty CRM. Each is flagged so the screen can say the date
+       * is the import's rather than the visit's.
+       */
+      CrmActivity.find({ ...mine, type: { $ne: 'stage_change' } })
         .populate('accountId', 'name nameAr stage category city')
+        .select('type body outcome at byName backfilled accountId meetingIndex')
         .sort({ at: -1 })
-        .limit(15)
+        .limit(24)
         .lean(),
 
       // Being worked, but nobody has touched it in a fortnight.
@@ -160,8 +204,43 @@ export async function GET() {
       ]),
 
       CrmTarget.findOne({ key: 'main' }).lean(),
+
+      // On the list, and how many of them have been started.
+      CrmAccount.aggregate([
+        { $match: targets },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            worked: { $sum: { $cond: [{ $gt: ['$meetingCount', 0] }, 1, 0] } },
+            visited: { $sum: { $cond: [{ $gt: ['$visitCount', 0] }, 1, 0] } },
+          },
+        },
+      ]),
+
+      // Which meeting each account stopped at — the sheet's "where did we get to".
+      CrmAccount.aggregate([
+        { $match: targets },
+        {
+          $group: {
+            _id: { $min: ['$meetingCount', 3] },
+            n: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+
+      // What accounts have asked us for, and how many distinct accounts asked.
+      CrmActivity.aggregate([
+        { $match: { ...live, ...mine, type: { $in: ['sample_request', 'pricing_request'] } } },
+        { $group: { _id: '$type', n: { $sum: 1 }, accounts: { $addToSet: '$accountId' } } },
+        { $project: { n: 1, accounts: { $size: '$accounts' } } },
+      ]),
+
+      CrmAccount.countDocuments({ ...activeAccounts, targetList: { $ne: true } }),
     ]);
 
+    const tc = (targetCounts[0] || {}) as Record<string, number>;
     const stages: Record<string, number> = {};
     for (const s of byStage) stages[s._id || 'upcoming'] = s.n;
     const accounts = Object.values(stages).reduce((a, b) => a + b, 0);
@@ -174,13 +253,15 @@ export async function GET() {
       const g = groupOf.get(c._id) || 'scattered';
       actualByGroup[g] = (actualByGroup[g] || 0) + c.n;
     }
+    // Over the target list, which is what `byCategory` now counts.
+    const targetTotal = tc.total || 0;
     const mix = mixGroups.map((g) => ({
       key: g.key,
       labelEn: g.labelEn,
       labelAr: g.labelAr,
       targetPct: g.sharePct,
       accounts: actualByGroup[g.key] || 0,
-      actualPct: accounts ? Math.round(((actualByGroup[g.key] || 0) / accounts) * 100) : 0,
+      actualPct: targetTotal ? Math.round(((actualByGroup[g.key] || 0) / targetTotal) * 100) : 0,
     }));
 
     const steps = (stepCounts[0] || {}) as Record<string, number>;
@@ -188,6 +269,12 @@ export async function GET() {
     return NextResponse.json(
       {
         totals: {
+          /** On the target list — the figure the percentages are taken over. */
+          targets: tc.total || 0,
+          targetsWorked: tc.worked || 0,
+          targetsNotStarted: Math.max(0, (tc.total || 0) - (tc.worked || 0)),
+          /** The wider pool, counted but kept out of the split. */
+          prospects: poolCount,
           accounts,
           upcoming: stages.upcoming || 0,
           current: stages.current || 0,
@@ -195,6 +282,17 @@ export async function GET() {
           won: stages.won || 0,
           lost: stages.lost || 0,
           withOrders,
+        },
+        /** How far up the target list each account got, by meetings held. */
+        reach: [0, 1, 2, 3].map((n) => ({
+          meetings: n,
+          accounts: (reachRows.find((r) => r._id === n)?.n as number) || 0,
+        })),
+        requests: {
+          samples: (requestRows.find((r) => r._id === 'sample_request')?.n as number) || 0,
+          sampleAccounts: (requestRows.find((r) => r._id === 'sample_request')?.accounts as number) || 0,
+          pricing: (requestRows.find((r) => r._id === 'pricing_request')?.n as number) || 0,
+          pricingAccounts: (requestRows.find((r) => r._id === 'pricing_request')?.accounts as number) || 0,
         },
         activity: {
           today: actToday,
@@ -204,20 +302,30 @@ export async function GET() {
           /** Meetings carried over from the sheet, with no date of their own. */
           undated: backfilled,
         },
-        byCategory: byCategory
-          .map((c) => ({
-            key: c._id || 'other',
-            labelEn: CRM_CATEGORIES.find((x) => x.key === c._id)?.labelEn || c._id,
-            labelAr: CRM_CATEGORIES.find((x) => x.key === c._id)?.labelAr || c._id,
-            total: c.n, current: c.current, upcoming: c.upcoming, worked: c.worked,
-          }))
-          .sort((a, b) => b.total - a.total),
-        byCity: byCity.map((c) => ({
-          key: c._id || 'other',
-          labelEn: CRM_CITIES.find((x) => x.key === c._id)?.labelEn || c._id,
-          labelAr: CRM_CITIES.find((x) => x.key === c._id)?.labelAr || c._id,
-          total: c.n, current: c.current,
-        })),
+        byCategory: assignShares(
+          byCategory
+            .map((c) => ({
+              key: c._id || 'other',
+              labelEn: CRM_CATEGORIES.find((x) => x.key === c._id)?.labelEn || c._id,
+              labelAr: CRM_CATEGORIES.find((x) => x.key === c._id)?.labelAr || c._id,
+              total: c.n, current: c.current, upcoming: c.upcoming, worked: c.worked,
+              sharePct: 0,
+            }))
+            .sort((a, b) => b.total - a.total),
+          (tc.total as number) || 0
+        ),
+        byCity: assignShares(
+          byCity
+            .map((c) => ({
+              key: c._id || 'other',
+              labelEn: CRM_CITIES.find((x) => x.key === c._id)?.labelEn || c._id,
+              labelAr: CRM_CITIES.find((x) => x.key === c._id)?.labelAr || c._id,
+              total: c.n, current: c.current,
+              sharePct: 0,
+            }))
+            .sort((a, b) => b.total - a.total),
+          (tc.total as number) || 0
+        ),
         funnel: STEP_ORDER.map((k) => ({ key: k, accounts: steps[k] || 0 })),
         mix,
         recent,

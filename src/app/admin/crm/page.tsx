@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
-  AlertTriangle, ArrowRight, Building2, CalendarCheck, ClipboardList, Download,
-  Gauge, Printer, Target, TrendingUp, Users2,
+  AlertTriangle, ArrowRight, Boxes, Building2, ClipboardList, Download,
+  FlaskConical, Layers, Printer, Tag, TrendingUp, Users2,
 } from 'lucide-react';
 import {
   AutoGrid, Badge, Button, Card, ErrorNote, SectionTitle, Select, Spinner,
@@ -13,24 +13,43 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { downloadFile } from '@/lib/download';
 
 /**
- * The CRM dashboard — every figure read from the accounts and their history.
+ * The CRM dashboard.
  *
- * Nothing here is stored as a number: the upcoming tile IS a count of accounts
- * in the upcoming stage, so the dashboard and the lists can never tell
- * different stories. Each figure links to the rows behind it, because a number
- * management cannot open is a number they have to trust blindly.
+ * Two populations, kept apart on purpose. The **target list** is the 83 accounts
+ * the business committed to working — every share and percentage here is taken
+ * over those. The **prospect pool** is the wider SFDA list behind it; it is
+ * counted, and deliberately left out of the shares, because "what share of our
+ * accounts are distributors" should describe a decision the business made and
+ * not whatever the regulator happened to publish.
  *
- * Magnitude is drawn in a single hue, deliberately. A dashboard of six coloured
- * palettes reads as decoration; one hue, longer bar = more, needs no legend and
- * cannot be misread by a colour-blind reader.
+ * Every figure is read from the accounts and their history rather than stored,
+ * and every figure links to the rows behind it. Magnitude is drawn in one hue:
+ * longer is more, no legend to decode, nothing a colour-blind reader can
+ * misread. The only two-series chart (target against actual) carries a legend.
  */
 
 interface Dash {
-  totals: Record<string, number>;
-  activity: { today: number; week: number; month: number; byType: Record<string, number>; undated: number };
-  byCategory: Array<{ key: string; labelEn: string; labelAr: string; total: number; current: number; upcoming: number; worked: number }>;
-  byCity: Array<{ key: string; labelEn: string; labelAr: string; total: number; current: number }>;
+  totals: {
+    targets: number; targetsWorked: number; targetsNotStarted: number;
+    prospects: number; accounts: number;
+    upcoming: number; current: number; hold: number; won: number; lost: number;
+    withOrders: number;
+  };
+  activity: {
+    today: number; week: number; month: number;
+    byType: Record<string, number>; undated: number;
+  };
+  byCategory: Array<{
+    key: string; labelEn: string; labelAr: string;
+    total: number; current: number; upcoming: number; worked: number; sharePct: number;
+  }>;
+  byCity: Array<{
+    key: string; labelEn: string; labelAr: string;
+    total: number; current: number; sharePct: number;
+  }>;
   funnel: Array<{ key: string; accounts: number }>;
+  reach: Array<{ meetings: number; accounts: number }>;
+  requests: { samples: number; sampleAccounts: number; pricing: number; pricingAccounts: number };
   mix: Array<{ key: string; labelEn: string; labelAr: string; targetPct: number; actualPct: number; accounts: number }>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   recent: any[];
@@ -50,6 +69,18 @@ const STEP_LABELS: Record<string, [string, string]> = {
   keyPerson: ['Key person', 'الشخص المسؤول'],
   feedback: ['Feedback', 'رد الحساب'],
   commercial: ['Commercial', 'الجزء التجاري'],
+};
+
+const TYPE_LABELS: Record<string, [string, string]> = {
+  visit: ['Visit', 'زيارة'], meeting: ['Meeting', 'اجتماع'], call: ['Call', 'مكالمة'],
+  whatsapp: ['WhatsApp', 'واتساب'], email: ['Email', 'بريد'],
+  intro: ['KCC introduced', 'تعريف بـKCC'], account_info: ['Account info', 'بيانات الحساب'],
+  key_person: ['Key person', 'الشخص المسؤول'], feedback: ['Feedback', 'رد الحساب'],
+  commercial: ['Commercial', 'تجاري'], sample_request: ['Sample requested', 'طلب عيّنة'],
+  pricing_request: ['Pricing requested', 'طلب أسعار'], complaint: ['Complaint', 'شكوى'],
+  suggestion: ['Suggestion', 'اقتراح'], note: ['Note', 'ملاحظة'], task: ['Task', 'مهمة'],
+  stage_change: ['Stage change', 'تغيير المرحلة'], assignment: ['Assignment', 'تعيين'],
+  system: ['System', 'النظام'],
 };
 
 export default function CrmDashboardPage() {
@@ -77,65 +108,172 @@ export default function CrmDashboardPage() {
     load();
   }, [load]);
 
-  const dailyTarget = d?.targets?.dailyVisits?.min || 4;
-  const actions = d ? d.activity[period === 'today' ? 'today' : period] : 0;
+  const label = (map: Record<string, [string, string]>, key: string) =>
+    map[key] ? (ar ? map[key][1] : map[key][0]) : key.replace(/_/g, ' ');
 
   const maxCat = useMemo(() => Math.max(1, ...(d?.byCategory || []).map((c) => c.total)), [d]);
   const maxCity = useMemo(() => Math.max(1, ...(d?.byCity || []).map((c) => c.total)), [d]);
   const maxFunnel = useMemo(() => Math.max(1, ...(d?.funnel || []).map((f) => f.accounts)), [d]);
+  const maxReach = useMemo(() => Math.max(1, ...(d?.reach || []).map((r) => r.accounts)), [d]);
+  const maxTrend = useMemo(() => Math.max(1, ...(d?.trend || []).map((x) => x.n)), [d]);
+
+  const exportBook = (format?: 'pdf') =>
+    downloadFile(`/api/crm/export?what=accounts&list=target${format ? '&format=pdf' : ''}`).catch((e) =>
+      setError(e.message)
+    );
 
   if (!ready) return <Spinner />;
   if (error && !d) return <ErrorNote>{error}</ErrorNote>;
   if (!d) return null;
 
-  // The accounts behind every figure on this screen, as a workbook.
-  const exportSummary = (format?: 'pdf') =>
-    downloadFile(`/api/crm/export?what=accounts${format ? '&format=pdf' : ''}`).catch((e) =>
-      setError(e.message)
-    );
+  const dailyTarget = d.targets?.dailyVisits?.min || 4;
+  const actions = d.activity[period === 'today' ? 'today' : period];
+  const requestAccounts = d.requests.sampleAccounts + d.requests.pricingAccounts;
 
   return (
     <div>
-      <PageHead
-        title={t('admin.crmTitle')}
-        subtitle={t('admin.crmDesc')}
-        onExport={() => exportSummary()}
-        onPdf={() => exportSummary('pdf')}
-        exportLabel={tx('Export to Excel')}
-        printLabel={tx('PDF report')}
-      />
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-bold leading-tight text-fg sm:text-2xl">{t('admin.crmTitle')}</h1>
+          <p className="mt-1 max-w-3xl text-sm text-fg-muted">{t('admin.crmDesc')}</p>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2 print:hidden">
+          <Button variant="outline" icon={Download} onClick={() => exportBook()}>
+            {tx('Export to Excel')}
+          </Button>
+          <Button variant="outline" icon={Printer} onClick={() => exportBook('pdf')}>
+            {tx('PDF report')}
+          </Button>
+        </div>
+      </div>
 
       {error && <div className="mb-4"><ErrorNote>{error}</ErrorNote></div>}
 
-      {/* ----------------------------- the shape of the pipeline ----------------------------- */}
-      <AutoGrid min="12rem" gap="0.75rem" className="mb-5">
+      {/* ------------------------- the target list ------------------------- */}
+      <AutoGrid min="12rem" gap="0.75rem" className="mb-3">
         <Tile
           label={tx('Target accounts')}
-          value={d.totals.accounts}
+          value={d.totals.targets}
+          note={tx('the list we committed to')}
           icon={Building2}
-          href="/admin/crm/current?stage=all"
+          href="/admin/crm/current?stage=all&list=target"
         />
         <Tile
-          label={tx('Upcoming — not yet worked')}
-          value={d.totals.upcoming}
-          icon={ClipboardList}
-          href="/admin/crm/upcoming"
-          tone="neutral"
-        />
-        <Tile
-          label={tx('Being worked')}
-          value={d.totals.current}
+          label={tx('Started')}
+          value={d.totals.targetsWorked}
+          note={pct(d.totals.targetsWorked, d.totals.targets)}
           icon={TrendingUp}
-          href="/admin/crm/current"
+          href="/admin/crm/current?list=target"
           tone="brand"
         />
+        <Tile
+          label={tx('Not started yet')}
+          value={d.totals.targetsNotStarted}
+          note={pct(d.totals.targetsNotStarted, d.totals.targets)}
+          icon={ClipboardList}
+          href="/admin/crm/upcoming?list=target"
+        />
         <Tile label={tx('On hold')} value={d.totals.hold} icon={AlertTriangle} tone="warn" />
-        <Tile label={tx('Ordered')} value={d.totals.withOrders} icon={CalendarCheck} tone="ok" />
+        <Tile
+          label={tx('Asked us for something')}
+          value={requestAccounts}
+          note={`${d.requests.samples} ${tx('sample requests')} · ${d.requests.pricing} ${tx('pricing')}`}
+          icon={FlaskConical}
+          tone="ok"
+        />
       </AutoGrid>
+
+      {/* The pool is counted, and kept out of the shares below. */}
+      <Card className="mb-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-fg-muted">
+            <Layers size={13} className="me-1.5 inline text-fg-subtle" />
+            {tx('Behind the list there is a prospect pool of')}{' '}
+            <strong className="text-fg">{d.totals.prospects}</strong>{' '}
+            {tx('companies. It is deliberately left out of every share below — those describe the list the business chose, not the register it came from.')}
+          </p>
+          <Link
+            href="/admin/crm/upcoming?list=pool"
+            className="shrink-0 text-xs font-medium text-brand hover:underline"
+          >
+            {tx('Open the pool')} <ArrowRight size={11} className="rtl-flip inline" />
+          </Link>
+        </div>
+      </Card>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
         <div className="space-y-5">
-          {/* --------------------------- work recorded --------------------------- */}
+          {/* ------------------------- the sector split ------------------------- */}
+          <Card>
+            <SectionTitle
+              title={tx('Share of the target list, by sector')}
+              hint={tx('Of the accounts we committed to work. Click a sector to open it.')}
+            />
+            <ul className="space-y-2.5">
+              {d.byCategory.map((c) => (
+                <li key={c.key}>
+                  <Link
+                    href={`/admin/crm/current?stage=all&list=target&category=${c.key}`}
+                    className="group flex items-center gap-3"
+                    title={`${c.total} ${tx('accounts')} · ${c.worked} ${tx('worked')}`}
+                  >
+                    <span className="w-40 shrink-0 truncate text-sm text-fg group-hover:text-brand">
+                      {ar ? c.labelAr : c.labelEn}
+                    </span>
+                    <span className="relative h-5 min-w-0 flex-1 overflow-hidden rounded-md bg-surface-3">
+                      <span
+                        className="block h-full rounded-e-[4px] bg-brand"
+                        style={{ width: `${(c.total / maxCat) * 100}%` }}
+                      />
+                      <span className="absolute inset-y-0 start-2 flex items-center text-[11px] font-semibold text-fg-inverse mix-blend-difference">
+                        {c.sharePct}%
+                      </span>
+                    </span>
+                    <span className="w-24 shrink-0 text-end font-mono text-xs text-fg-muted">
+                      {c.total}
+                      <span className="text-fg-subtle"> / {c.worked}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2.5 text-[11px] text-fg-subtle">
+              {tx('The second figure is how many of them have been started.')}
+            </p>
+          </Card>
+
+          {/* ------------------------- how far we got ------------------------- */}
+          <Card>
+            <SectionTitle
+              title={tx('How far we got with each account')}
+              hint={tx('Meetings held, from the sheet and from everything logged since.')}
+            />
+            <ul className="space-y-2.5">
+              {d.reach.map((r) => (
+                <li key={r.meetings} className="flex items-center gap-3">
+                  <span className="w-40 shrink-0 text-sm text-fg">
+                    {r.meetings === 0
+                      ? tx('No meeting yet')
+                      : r.meetings === 3
+                        ? tx('Three meetings or more')
+                        : `${r.meetings} ${r.meetings === 1 ? tx('meeting') : tx('meetings')}`}
+                  </span>
+                  <span className="h-5 min-w-0 flex-1 overflow-hidden rounded-md bg-surface-3">
+                    <span
+                      className="block h-full rounded-e-[4px] bg-brand"
+                      style={{ width: `${(r.accounts / maxReach) * 100}%` }}
+                    />
+                  </span>
+                  <span className="w-24 shrink-0 text-end font-mono text-xs text-fg-muted">
+                    {r.accounts}
+                    <span className="text-fg-subtle"> · {pct(r.accounts, d.totals.targets)}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+
+          {/* ------------------------- work recorded ------------------------- */}
           <Card>
             <SectionTitle
               title={tx('Work recorded')}
@@ -153,7 +291,7 @@ export default function CrmDashboardPage() {
                 </Select>
               }
             />
-            <div className="flex flex-wrap items-end gap-6">
+            <div className="mb-4 flex flex-wrap items-end gap-6">
               <div>
                 <p className="text-3xl font-bold text-fg">{actions}</p>
                 <p className="mt-0.5 text-xs text-fg-muted">
@@ -168,15 +306,42 @@ export default function CrmDashboardPage() {
                 <div className="flex flex-wrap gap-1.5">
                   {Object.entries(d.activity.byType)
                     .filter(([k]) => !['stage_change', 'assignment', 'system'].includes(k))
-                    .slice(0, 8)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 9)
                     .map(([k, n]) => (
                       <Badge key={k} tone="neutral">
-                        {k.replace(/_/g, ' ')} {n}
+                        {label(TYPE_LABELS, k)} {n}
                       </Badge>
                     ))}
                 </div>
               </div>
             </div>
+
+            {/* Four weeks, one bar a day. */}
+            {d.trend.length > 0 ? (
+              <div>
+                <p className="mb-1.5 text-[11px] text-fg-subtle">{tx('The last four weeks')}</p>
+                <div className="flex h-20 items-end gap-0.5">
+                  {d.trend.map((x) => (
+                    <span
+                      key={x._id}
+                      title={`${x._id} · ${x.n} ${tx('actions')} · ${x.visits} ${tx('visits')}`}
+                      className="min-w-0 flex-1 rounded-t-[3px] bg-brand transition-colors hover:bg-brand-hover"
+                      style={{ height: `${Math.max(3, (x.n / maxTrend) * 100)}%` }}
+                    />
+                  ))}
+                </div>
+                <p className="mt-1 flex justify-between text-[10px] text-fg-subtle">
+                  <span>{d.trend[0]?._id}</span>
+                  <span>{d.trend[d.trend.length - 1]?._id}</span>
+                </p>
+              </div>
+            ) : (
+              <p className="rounded-lg bg-surface-2 px-3 py-2 text-[11px] leading-relaxed text-fg-muted">
+                {tx('Nothing has been logged in the last four weeks, so there is no trend to draw yet.')}
+              </p>
+            )}
+
             {d.activity.undated > 0 && (
               <p className="mt-3 rounded-lg bg-surface-2 px-3 py-2 text-[11px] leading-relaxed text-fg-muted">
                 {tx('Plus')} {d.activity.undated}{' '}
@@ -185,39 +350,7 @@ export default function CrmDashboardPage() {
             )}
           </Card>
 
-          {/* --------------------------- sectors --------------------------- */}
-          <Card>
-            <SectionTitle
-              title={tx('By sector')}
-              hint={tx('Click a sector to open the accounts in it.')}
-            />
-            <ul className="space-y-2.5">
-              {d.byCategory.map((c) => (
-                <li key={c.key}>
-                  <Link
-                    href={`/admin/crm/current?category=${c.key}`}
-                    className="group flex items-center gap-3"
-                  >
-                    <span className="w-40 shrink-0 truncate text-sm text-fg group-hover:text-brand">
-                      {ar ? c.labelAr : c.labelEn}
-                    </span>
-                    <span className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-3">
-                      <span
-                        className="block h-full rounded-e-[4px] bg-brand"
-                        style={{ width: `${(c.total / maxCat) * 100}%` }}
-                      />
-                    </span>
-                    <span className="w-28 shrink-0 text-end font-mono text-xs text-fg-muted">
-                      {c.total}
-                      <span className="text-fg-subtle"> · {c.worked} {tx('worked')}</span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          {/* --------------------------- the six steps --------------------------- */}
+          {/* ------------------------- the six steps ------------------------- */}
           <Card>
             <SectionTitle
               title={tx('How far accounts get')}
@@ -227,7 +360,7 @@ export default function CrmDashboardPage() {
               {d.funnel.map((f, i) => (
                 <li key={f.key} className="flex items-center gap-3">
                   <span className="w-44 shrink-0 truncate text-sm text-fg">
-                    {i + 1}. {STEP_LABELS[f.key] ? (ar ? STEP_LABELS[f.key][1] : STEP_LABELS[f.key][0]) : f.key}
+                    {i + 1}. {label(STEP_LABELS, f.key)}
                   </span>
                   <span className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-3">
                     <span
@@ -235,13 +368,16 @@ export default function CrmDashboardPage() {
                       style={{ width: `${(f.accounts / maxFunnel) * 100}%` }}
                     />
                   </span>
-                  <span className="w-12 shrink-0 text-end font-mono text-xs text-fg-muted">{f.accounts}</span>
+                  <span className="w-20 shrink-0 text-end font-mono text-xs text-fg-muted">
+                    {f.accounts}
+                    <span className="text-fg-subtle"> · {pct(f.accounts, d.totals.targets)}</span>
+                  </span>
                 </li>
               ))}
             </ul>
           </Card>
 
-          {/* --------------------------- the visit mix --------------------------- */}
+          {/* ------------------------- the visit mix ------------------------- */}
           {d.mix.length > 0 && (
             <Card>
               <SectionTitle
@@ -254,7 +390,7 @@ export default function CrmDashboardPage() {
                   {tx('Actual')}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-sm bg-surface-3 ring-1 ring-line" />
+                  <span className="h-2.5 w-0.5 bg-fg" />
                   {tx('Target')}
                 </span>
               </p>
@@ -285,7 +421,7 @@ export default function CrmDashboardPage() {
           )}
         </div>
 
-        {/* --------------------------- right column --------------------------- */}
+        {/* ------------------------- right column ------------------------- */}
         <div className="space-y-5">
           <Card>
             <SectionTitle
@@ -318,11 +454,18 @@ export default function CrmDashboardPage() {
           </Card>
 
           <Card>
-            <SectionTitle title={tx('By city')} hint={tx('Click a city to open its accounts.')} />
+            <SectionTitle
+              title={tx('Share by city')}
+              hint={tx('Of the target list. Click a city to open it.')}
+            />
             <ul className="space-y-2">
-              {d.byCity.slice(0, 8).map((c) => (
+              {d.byCity.slice(0, 10).map((c) => (
                 <li key={c.key}>
-                  <Link href={`/admin/crm/current?city=${c.key}`} className="group flex items-center gap-2.5">
+                  <Link
+                    href={`/admin/crm/current?stage=all&list=target&city=${c.key}`}
+                    className="group flex items-center gap-2.5"
+                    title={`${c.total} ${tx('accounts')}`}
+                  >
                     <span className="w-24 shrink-0 truncate text-xs text-fg group-hover:text-brand">
                       {ar ? c.labelAr : c.labelEn}
                     </span>
@@ -332,11 +475,37 @@ export default function CrmDashboardPage() {
                         style={{ width: `${(c.total / maxCity) * 100}%` }}
                       />
                     </span>
-                    <span className="w-8 shrink-0 text-end font-mono text-[11px] text-fg-muted">{c.total}</span>
+                    <span className="w-16 shrink-0 text-end font-mono text-[11px] text-fg-muted">
+                      {c.total} · {c.sharePct}%
+                    </span>
                   </Link>
                 </li>
               ))}
             </ul>
+          </Card>
+
+          <Card>
+            <SectionTitle
+              title={tx('What accounts asked for')}
+              hint={tx('Counted from the history, so a request made on a visit shows here too.')}
+            />
+            <dl className="space-y-2.5 text-sm">
+              <Figure
+                label={tx('Sample requests')}
+                value={d.requests.samples}
+                note={`${d.requests.sampleAccounts} ${tx('accounts')}`}
+              />
+              <Figure
+                label={tx('Pricing requests')}
+                value={d.requests.pricing}
+                note={`${d.requests.pricingAccounts} ${tx('accounts')}`}
+              />
+              <Figure
+                label={tx('Ordered')}
+                value={d.totals.withOrders}
+                note={tx('accounts with an order')}
+              />
+            </dl>
           </Card>
 
           {d.attention.length > 0 && (
@@ -367,35 +536,53 @@ export default function CrmDashboardPage() {
             </Card>
           )}
 
+          {/* ------------------------- the log ------------------------- */}
           <Card>
-            <SectionTitle title={tx('Latest')} />
+            <SectionTitle
+              title={tx('Activity log')}
+              hint={tx('Everything logged, newest first.')}
+              actions={
+                <Link href="/admin/crm/feedback" className="text-xs font-medium text-brand hover:underline">
+                  {tx('Complaints')}
+                </Link>
+              }
+            />
             {d.recent.length === 0 ? (
               <p className="text-sm text-fg-subtle">{tx('Nothing recorded yet.')}</p>
             ) : (
-              <ul className="space-y-2">
-                {d.recent.slice(0, 10).map((ev) => (
-                  <li key={ev._id} className="text-xs">
+              <ol className="relative space-y-2.5 border-s border-line ps-3.5">
+                {d.recent.map((ev) => (
+                  <li key={ev._id} className="relative">
+                    <span className="absolute -start-[1.19rem] top-2 h-1.5 w-1.5 rounded-full bg-brand" />
                     <Link
                       href={ev.accountId?._id ? `/admin/crm/accounts/${ev.accountId._id}` : '/admin/crm'}
-                      className="group block rounded-lg px-2 py-1.5 hover:bg-surface-2"
+                      className="group block"
                     >
-                      <span className="flex items-center justify-between gap-2">
+                      <p className="flex flex-wrap items-center gap-1.5 text-xs">
+                        <Badge tone={ev.type === 'complaint' ? 'danger' : 'brand'}>
+                          {label(TYPE_LABELS, ev.type)}
+                        </Badge>
                         <span className="min-w-0 truncate font-medium text-fg group-hover:text-brand">
                           {ev.accountId ? pick(ev.accountId.name, ev.accountId.nameAr) : '—'}
                         </span>
-                        <span className="shrink-0 text-fg-subtle">{ev.type.replace(/_/g, ' ')}</span>
-                      </span>
-                      <span className="mt-0.5 block text-fg-subtle">
+                      </p>
+                      {ev.body && (
+                        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-fg-muted">{ev.body}</p>
+                      )}
+                      <p className="mt-0.5 text-[10px] text-fg-subtle">
                         {ev.byName || '—'}
                         {' · '}
-                        {new Date(ev.at).toLocaleDateString(ar ? 'ar-SA' : 'en-GB', {
-                          day: 'numeric', month: 'short',
-                        })}
-                      </span>
+                        {/* The sheet recorded that these happened, never when. */}
+                        {ev.backfilled
+                          ? tx('From the sheet — date unknown')
+                          : new Date(ev.at).toLocaleDateString(ar ? 'ar-SA' : 'en-GB', {
+                              day: 'numeric', month: 'short',
+                            })}
+                      </p>
                     </Link>
                   </li>
                 ))}
-              </ul>
+              </ol>
             )}
           </Card>
         </div>
@@ -404,44 +591,42 @@ export default function CrmDashboardPage() {
   );
 }
 
-/** The header, with the two exports management asks for. */
-function PageHead({
-  title, subtitle, onExport, onPdf, exportLabel, printLabel,
-}: {
-  title: string; subtitle: string; onExport: () => void; onPdf: () => void;
-  exportLabel: string; printLabel: string;
-}) {
-  return (
-    <div className="mb-5 flex flex-wrap items-start justify-between gap-3 print:mb-2">
-      <div className="min-w-0 flex-1">
-        <h1 className="text-xl font-bold leading-tight text-fg sm:text-2xl">{title}</h1>
-        <p className="mt-1 max-w-3xl text-sm text-fg-muted">{subtitle}</p>
-      </div>
-      <div className="flex shrink-0 flex-wrap items-center gap-2 print:hidden">
-        <Button variant="outline" icon={Download} onClick={onExport}>{exportLabel}</Button>
-        <Button variant="outline" icon={Printer} onClick={onPdf}>{printLabel}</Button>
-      </div>
-    </div>
-  );
+/** A share, written the way a reader expects to see one. */
+function pct(part: number, whole: number): string {
+  if (!whole) return '—';
+  return `${Math.round((part / whole) * 100)}%`;
 }
 
 function Tile({
-  label, value, icon: Icon, href, tone = 'neutral',
+  label, value, note, icon: Icon, href, tone = 'neutral',
 }: {
-  label: string; value: number; icon: React.ElementType; href?: string;
-  tone?: 'neutral' | 'brand' | 'ok' | 'warn';
+  label: string; value: number; note?: string; icon: React.ElementType;
+  href?: string; tone?: 'neutral' | 'brand' | 'ok' | 'warn';
 }) {
   const ring =
     tone === 'brand' ? 'border-brand' : tone === 'ok' ? 'border-ok' : tone === 'warn' ? 'border-warn' : 'border-line';
   const inner = (
-    <div className={`rounded-xl border ${ring} bg-surface p-4 transition-colors hover:border-brand`}>
+    <div className={`h-full rounded-xl border ${ring} bg-surface p-4 transition-colors hover:border-brand`}>
       <div className="mb-2 flex items-start justify-between gap-2">
-        <Icon size={16} className="text-fg-subtle" />
-        {href && <ArrowRight size={13} className="rtl-flip text-fg-subtle" />}
+        <Icon size={15} className="text-fg-subtle" />
+        {href && <ArrowRight size={12} className="rtl-flip text-fg-subtle" />}
       </div>
-      <p className="text-2xl font-bold text-fg">{value}</p>
-      <p className="mt-0.5 text-[11px] leading-snug text-fg-muted">{label}</p>
+      <p className="text-2xl font-bold leading-none text-fg">{value}</p>
+      <p className="mt-1 text-[11px] font-medium leading-snug text-fg">{label}</p>
+      {note && <p className="mt-0.5 text-[11px] leading-snug text-fg-subtle">{note}</p>}
     </div>
   );
   return href ? <Link href={href}>{inner}</Link> : inner;
+}
+
+function Figure({ label, value, note }: { label: string; value: number; note: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 border-b border-line/30 pb-2.5 last:border-b-0 last:pb-0">
+      <dt className="text-xs text-fg-muted">{label}</dt>
+      <dd className="text-end">
+        <span className="text-sm font-semibold text-fg">{value}</span>
+        <span className="ms-1.5 text-[11px] text-fg-subtle">{note}</span>
+      </dd>
+    </div>
+  );
 }

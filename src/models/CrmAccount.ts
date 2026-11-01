@@ -74,6 +74,18 @@ export interface ICrmAccount extends Document {
    * ways ("DeLile" against "مؤسسة دي لايل التجارية" carrying the brand DeLile),
    * and an order arriving later names it a third way.
    */
+  /**
+   * On the sales team's target list — the accounts in the "Visited" sheet that
+   * the team committed to working, as opposed to the wider prospect pool the
+   * SFDA list provides.
+   *
+   * The two are counted separately on purpose: mixing 200 untouched prospects
+   * into "what share of our accounts are distributors" answers a question
+   * nobody asked, because the prospect pool reflects whatever the regulator
+   * happened to publish rather than any decision the business made.
+   */
+  targetList: boolean;
+
   nameKey: string;
   matchKeys: string[];
 
@@ -122,6 +134,7 @@ const CrmAccountSchema = new Schema<ICrmAccount>(
     customerId: { type: Schema.Types.ObjectId, ref: 'User' },
     orderIds: [{ type: Schema.Types.ObjectId, ref: 'Order' }],
 
+    targetList: { type: Boolean, default: false, index: true },
     nameKey: { type: String, required: true, index: true },
     matchKeys: { type: [String], default: [], index: true },
 

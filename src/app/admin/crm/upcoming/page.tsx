@@ -1,6 +1,8 @@
 'use client';
 
-import { PageHeader } from '@/components/admin/ui';
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { PageHeader, Spinner } from '@/components/admin/ui';
 import AccountsTable from '@/components/admin/crm/AccountsTable';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -11,8 +13,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
  * against an account here moves it to the ones being worked, which is why there
  * is no "move" control: the move is a consequence of the work.
  */
-export default function UpcomingClientsPage() {
+function UpcomingClientsInner() {
   const { t, tx } = useLanguage();
+  // A dashboard tile links here with ?list=target, so the page opens exactly
+  // the rows the tile counted.
+  const list = useSearchParams().get('list');
   return (
     <div>
       <PageHeader
@@ -23,9 +28,18 @@ export default function UpcomingClientsPage() {
       />
       <AccountsTable
         stage="upcoming"
+        list={list === 'target' ? 'target' : list === 'pool' ? 'pool' : undefined}
         emptyTitle={tx('Every target has been worked')}
         emptyHint={tx('Nothing is waiting. Add an account, or look at the ones in progress.')}
       />
     </div>
+  );
+}
+
+export default function UpcomingClientsPage() {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <UpcomingClientsInner />
+    </Suspense>
   );
 }

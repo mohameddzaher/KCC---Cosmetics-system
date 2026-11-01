@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import User from '@/models/User';
 import { can } from '@/lib/roles';
 
@@ -55,11 +56,31 @@ export async function visibleOwnerIds(user: Viewer | null | undefined): Promise<
   return [...seen];
 }
 
+/**
+ * The same ids as real ObjectIds.
+ *
+ * `find()` casts a string id against the schema, but an aggregation pipeline
+ * is not cast at all: a `$match` on `{ byId: { $in: ['65f…'] } }` silently
+ * matches nothing, and a manager's screen reads as a team that did no work.
+ * Every scope below is used in both kinds of query, so they all hand back
+ * ObjectIds and neither kind can be wrong.
+ */
+function asIds(ids: string[]): Types.ObjectId[] {
+  return ids.filter((id) => Types.ObjectId.isValid(id)).map((id) => new Types.ObjectId(id));
+}
+
+/** The viewer's branch as ObjectIds — empty when they see everything. */
+export async function visibleOwnerObjectIds(
+  user: Viewer | null | undefined
+): Promise<Types.ObjectId[]> {
+  return asIds(await visibleOwnerIds(user));
+}
+
 /** Conditions to fold into an account query for this viewer. */
 export async function accountScope(
   user: Viewer | null | undefined
 ): Promise<Record<string, unknown>> {
-  const ids = await visibleOwnerIds(user);
+  const ids = asIds(await visibleOwnerIds(user));
   if (ids.length === 0) return {};
   return {
     $or: [
@@ -74,7 +95,7 @@ export async function accountScope(
 export async function activityScope(
   user: Viewer | null | undefined
 ): Promise<Record<string, unknown>> {
-  const ids = await visibleOwnerIds(user);
+  const ids = asIds(await visibleOwnerIds(user));
   if (ids.length === 0) return {};
   return { byId: { $in: ids } };
 }

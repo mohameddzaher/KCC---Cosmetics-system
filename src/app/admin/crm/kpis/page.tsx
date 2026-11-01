@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Download, Gauge, Printer, Target } from 'lucide-react';
+import { ClipboardCheck, Download, Gauge, Printer, Target } from 'lucide-react';
 import {
   AutoGrid, Badge, Button, Card, DataTable, ErrorNote, SectionTitle, Select,
   Spinner, Td, Th,
@@ -41,6 +41,8 @@ interface Person {
   weeklyClientAttainmentPct: number | null;
   mix: Array<{ key: string; labelEn: string; labelAr: string; targetPct: number; visits: number; actualPct: number }>;
   accountsOwned: Record<string, number>;
+  /** The sales sheet's own record: visited and done, with no date attached. */
+  carried: { visits: number; done: number; hold: number; accounts: number };
   complaints: number;
   suggestions: number;
   callsWithChecklist: number;
@@ -60,7 +62,10 @@ interface Kpi {
     sectorMix: Array<{ key: string; labelEn: string; labelAr: string; sharePct: number }>;
     visitChecklist: Array<{ key: string; labelEn: string; labelAr: string; required?: boolean }>;
   };
-  team: { visits: number; actions: number; accountsSeen: number };
+  team: {
+    visits: number; actions: number; accountsSeen: number;
+    carriedVisits: number; carriedDone: number;
+  };
   people: Person[];
 }
 
@@ -149,6 +154,14 @@ function KpisInner() {
           value={`${d.targets.dailyVisits.min}–${d.targets.dailyVisits.max}`}
           icon={Target}
         />
+        {d.team.carriedVisits > 0 && (
+          <Stat
+            label={tx('Visited on the sheet')}
+            value={d.team.carriedVisits}
+            icon={ClipboardCheck}
+            note={`${d.team.carriedDone} ${tx('done')} · ${tx('no date recorded')}`}
+          />
+        )}
       </AutoGrid>
 
       <Card padded={false} className="mb-5">
@@ -169,6 +182,13 @@ function KpisInner() {
                     {p.visitsPerDay}/{tx('day')} · {p.visits} {tx('visits')} · {p.accountsSeen} {tx('accounts')}
                   </span>
                 </p>
+                {p.carried.visits > 0 && (
+                  <p className="mb-1 text-[11px] text-fg-subtle">
+                    {tx('Plus, from the sales sheet:')} {p.carried.visits} {tx('visits')} ·{' '}
+                    {p.carried.done} {tx('done')} ·{' '}
+                    {p.carried.accounts} {tx('accounts')} — {tx('no date, so outside the bar')}
+                  </p>
+                )}
                 <span className="relative block h-3 overflow-hidden rounded-full bg-surface-3">
                   <span
                     className="absolute inset-y-0 start-0 rounded-e-[4px] bg-brand"
@@ -198,6 +218,8 @@ function KpisInner() {
             <Th align="center">{tx('Active days')}</Th>
             <Th align="center">{tx('Per day')}</Th>
             <Th align="center">{tx('Attainment')}</Th>
+            <Th align="center">{tx('Visited on the sheet')}</Th>
+            <Th align="center">{tx('Done')}</Th>
             <Th align="center">{tx('Owns')}</Th>
           </tr>
         </thead>
@@ -223,6 +245,12 @@ function KpisInner() {
                 >
                   {p.dailyAttainmentPct}%
                 </Badge>
+              </Td>
+              <Td align="center" className="font-mono text-xs text-fg-muted">
+                {p.carried.visits || '—'}
+              </Td>
+              <Td align="center" className="font-mono text-xs text-fg-muted">
+                {p.carried.done || '—'}
               </Td>
               <Td align="center" className="text-xs text-fg-muted">
                 {Object.entries(p.accountsOwned).map(([s, n]) => `${s} ${n}`).join(' · ') || '—'}
@@ -379,12 +407,17 @@ function KpisInner() {
   );
 }
 
-function Stat({ label, value, icon: Icon }: { label: string; value: number | string; icon: React.ElementType }) {
+function Stat({
+  label, value, icon: Icon, note,
+}: {
+  label: string; value: number | string; icon: React.ElementType; note?: string;
+}) {
   return (
     <div className="rounded-xl border border-line bg-surface p-4">
       <Icon size={16} className="mb-2 text-fg-subtle" />
       <p className="text-2xl font-bold text-fg">{value}</p>
       <p className="mt-0.5 text-[11px] leading-snug text-fg-muted">{label}</p>
+      {note && <p className="mt-0.5 text-[11px] leading-snug text-fg-subtle">{note}</p>}
     </div>
   );
 }

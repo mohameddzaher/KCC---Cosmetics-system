@@ -37,6 +37,11 @@ export async function GET(req: NextRequest) {
     const city = p.get('city');
     if (city && city !== 'all') filter.city = city;
 
+    // So a dashboard tile can open exactly the rows it counted.
+    const list = p.get('list');
+    if (list === 'target') filter.targetList = true;
+    if (list === 'pool') filter.targetList = { $ne: true };
+
     const owner = p.get('owner');
     if (owner === 'unassigned') filter.ownerId = { $exists: false };
     else if (owner && owner !== 'all') filter.ownerId = owner;

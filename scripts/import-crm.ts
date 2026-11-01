@@ -25,6 +25,7 @@ import * as fs from 'fs';
 import CrmAccount from '../src/models/CrmAccount';
 import CrmActivity from '../src/models/CrmActivity';
 import CrmTarget from '../src/models/CrmTarget';
+import User from '../src/models/User';
 import { matchKeysFor, primaryKey } from '../src/lib/crmMatch';
 import { canonicalCategory, canonicalCity } from '../src/lib/crmVocab';
 
@@ -33,6 +34,15 @@ dotenv.config();
 
 const file = process.argv[2];
 const dry = process.argv.includes('--dry');
+/**
+ * Who made the visits the sheet records. The sheet names nobody, but somebody
+ * made them, and a KPI screen that credits them to "the import" tells the
+ * commercial manager nothing. Pass --credit <email> to attribute them.
+ */
+const creditEmail = (() => {
+  const i = process.argv.indexOf('--credit');
+  return i > -1 ? process.argv[i + 1] : undefined;
+})();
 
 if (!file) {
   console.error('Usage: npx tsx scripts/import-crm.ts <path-to-json> [--dry]');
@@ -59,7 +69,7 @@ function fill<T>(current: T | undefined | null, incoming: T | undefined | null):
 }
 
 const stats = {
-  created: 0, merged: 0, meetings: 0, skipped: 0,
+  created: 0, merged: 0, meetings: 0, skipped: 0, credited: 0,
   byStage: {} as Record<string, number>,
 };
 
@@ -68,6 +78,7 @@ async function upsertAccount(row: {
   brands?: string[]; links?: string[];
   keyPerson?: { name?: string; position?: string; phone?: string };
   stage?: string; feedback?: string; finalStatus?: string; requirement?: string;
+  targetList?: boolean;
 }) {
   // An Arabic-named company is filed under its brand when it has one, with the
   // Arabic kept alongside. With no brand the Arabic name IS the name, and
@@ -103,6 +114,9 @@ async function upsertAccount(row: {
       phone: fill(existing.keyPerson?.phone, row.keyPerson?.phone),
       email: existing.keyPerson?.email,
     };
+    // Appearing on the target list is a fact about the account that the
+    // prospect list cannot take away.
+    if (row.targetList) existing.targetList = true;
     // A sheet never demotes an account that has been worked.
     if (row.stage && existing.stage === 'upcoming' && row.stage !== 'upcoming') {
       existing.stage = row.stage;
@@ -125,6 +139,7 @@ async function upsertAccount(row: {
     links: row.links || [],
     keyPerson: row.keyPerson,
     stage: row.stage || 'upcoming',
+    targetList: !!row.targetList,
     feedback: row.feedback,
     finalStatus: row.finalStatus,
     requirement: row.requirement,
@@ -138,7 +153,11 @@ async function upsertAccount(row: {
 }
 
 /** One row per meeting the sheet ticked, written once however often this runs. */
-async function backfillMeetings(accountId: unknown, meetings: string[]) {
+async function backfillMeetings(
+  accountId: unknown,
+  meetings: string[],
+  credit?: { id: unknown; name: string }
+) {
   for (let i = 0; i < meetings.length; i++) {
     const word = meetings[i].trim().toLowerCase();
     const index = i + 1;
@@ -147,7 +166,17 @@ async function backfillMeetings(accountId: unknown, meetings: string[]) {
     const existing = await CrmActivity.findOne({
       accountId, type: 'meeting', meetingIndex: index, backfilled: true,
     });
-    if (existing) continue;
+    if (existing) {
+      // Already recorded. If it was imported before anyone was credited, the
+      // attribution can still be filled in without writing the row twice.
+      if (credit && !existing.byId) {
+        existing.byId = credit.id as never;
+        existing.byName = credit.name;
+        await existing.save();
+        stats.credited++;
+      }
+      continue;
+    }
 
     await CrmActivity.create({
       accountId,
@@ -156,7 +185,8 @@ async function backfillMeetings(accountId: unknown, meetings: string[]) {
       body: `Meeting ${index}: ${meetings[i]} (from the sales sheet; date not recorded)`,
       outcome: word === 'hold' ? 'hold' : 'done',
       backfilled: true,
-      byName: 'Imported from CRM sheet',
+      byId: credit?.id,
+      byName: credit?.name || 'Imported from CRM sheet',
       meta: { source: 'CRM data.xlsx', sheet: 'Visited' },
     });
     stats.meetings++;
@@ -170,6 +200,14 @@ async function main() {
 
   await mongoose.connect(process.env.MONGODB_URI as string);
   console.log(`database: ${mongoose.connection.db?.databaseName}${dry ? '  (DRY RUN)' : ''}\n`);
+
+  let credit: { id: unknown; name: string } | undefined;
+  if (creditEmail) {
+    const who = await User.findOne({ email: creditEmail.toLowerCase() }).select('name').lean();
+    if (!who) throw new Error(`No user with the email ${creditEmail}`);
+    credit = { id: (who as { _id: unknown })._id, name: (who as { name: string }).name };
+    console.log(`crediting the sheet's visits to ${credit.name}`);
+  }
 
   /* ---- the targets and the process, from the KPIs sheet ---- */
   if (!dry) {
@@ -194,6 +232,7 @@ async function main() {
       category: canonicalCategory(v.category),
       city: canonicalCity(v.city),
       stage,
+      targetList: true,
       feedback: v.feedback,
       finalStatus: v.finalStatus,
       requirement: v.requirement,
@@ -201,7 +240,7 @@ async function main() {
     if (!account) continue;
 
     if (meetings.length > 0) {
-      await backfillMeetings((account as { _id: unknown })._id, meetings);
+      await backfillMeetings((account as { _id: unknown })._id, meetings, credit);
       if (!dry) {
         await CrmAccount.findByIdAndUpdate((account as { _id: unknown })._id, {
           $set: {
@@ -237,6 +276,7 @@ async function main() {
   console.log(`\naccounts created : ${stats.created}`);
   console.log(`accounts merged  : ${stats.merged}   (the same company in both sheets)`);
   console.log(`meetings recorded: ${stats.meetings}   (marked undated)`);
+  if (creditEmail) console.log(`meetings credited  : ${stats.credited}`);
   console.log(`rows skipped     : ${stats.skipped}`);
   if (!dry) {
     console.log(`\ntotal accounts   : ${await CrmAccount.countDocuments()}`);

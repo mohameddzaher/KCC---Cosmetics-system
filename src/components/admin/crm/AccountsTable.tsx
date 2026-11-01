@@ -41,10 +41,13 @@ export interface AccountRow {
 
 export default function AccountsTable({
   stage,
+  list,
   emptyTitle,
   emptyHint,
 }: {
   stage: 'upcoming' | 'current' | 'hold' | 'won' | 'lost' | 'all';
+  /** 'target' for the committed list, 'pool' for the wider prospect list. */
+  list?: 'target' | 'pool';
   emptyTitle: string;
   emptyHint?: string;
 }) {
@@ -66,11 +69,12 @@ export default function AccountsTable({
   /** The filters in force, shared by the list and its export. */
   const query = useCallback(() => {
     const p = new URLSearchParams({ stage, sort, limit: '200' });
+    if (list) p.set('list', list);
     if (q.trim()) p.set('q', q.trim());
     if (category !== 'all') p.set('category', category);
     if (city !== 'all') p.set('city', city);
     return p;
-  }, [stage, sort, q, category, city]);
+  }, [stage, list, sort, q, category, city]);
 
   const load = useCallback(async () => {
     try {
