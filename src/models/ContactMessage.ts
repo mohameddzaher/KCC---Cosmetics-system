@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface IContactMessage extends Document {
   name: string;
@@ -24,6 +25,8 @@ const ContactMessageSchema = new Schema<IContactMessage>(
   },
   { timestamps: true }
 );
+
+ContactMessageSchema.plugin(auditTrail);
 
 const ContactMessage = mongoose.models.ContactMessage || mongoose.model<IContactMessage>('ContactMessage', ContactMessageSchema);
 export default ContactMessage;

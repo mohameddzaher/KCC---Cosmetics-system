@@ -3,8 +3,10 @@ import { getSession } from '@/lib/auth';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { can } from '@/lib/roles';
+import { recordAudit } from '@/lib/audit/context';
+import { audited } from '@/lib/audit';
 
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, 'cms.manage')) {
@@ -58,9 +60,13 @@ export async function POST(req: NextRequest) {
     const filepath = path.join(uploadDir, filename);
 
     await writeFile(filepath, buffer);
+    recordAudit({
+      action: 'upload', entity: 'File', entityLabel: filename,
+      details: { originalName: file.name, type: file.type, bytes: file.size },
+    });
 
     return NextResponse.json({ url: `/uploads/${filename}` });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to upload file' }, { status: 500 });
   }
-}
+});

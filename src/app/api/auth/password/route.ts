@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
 import { getSession, hashPassword, verifyPassword } from '@/lib/auth';
+import { audited } from '@/lib/audit';
 
 // PUT /api/auth/password -> change the signed-in user's own password
-export async function PUT(req: NextRequest) {
+export const PUT = audited(async function PUT(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
@@ -37,4 +38,4 @@ export async function PUT(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to update password' }, { status: 500 });
   }
-}
+});

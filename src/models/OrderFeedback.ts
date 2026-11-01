@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 /**
  * OrderFeedback — what the customer thought once the order actually arrived.
@@ -64,6 +65,8 @@ const OrderFeedbackSchema = new Schema<IOrderFeedback>(
 OrderFeedbackSchema.index({ orderId: 1 }, { unique: true });
 OrderFeedbackSchema.index({ userId: 1, createdAt: -1 });
 OrderFeedbackSchema.index({ rating: 1 });
+
+OrderFeedbackSchema.plugin(auditTrail);
 
 const OrderFeedback =
   mongoose.models.OrderFeedback ||

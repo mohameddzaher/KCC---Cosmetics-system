@@ -4,6 +4,8 @@ import path from 'path';
 import crypto from 'crypto';
 import { getSession } from '@/lib/auth';
 import { rateLimit } from '@/lib/rateLimit';
+import { audited } from '@/lib/audit';
+import { recordAudit } from '@/lib/audit/context';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +51,7 @@ function sniff(type: string, b: Buffer): boolean {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     // Ordering is limited to provisioned customers, so an upload always has a session.
     const user = await getSession();
@@ -85,6 +87,7 @@ export async function POST(req: NextRequest) {
     // for the path, only echoed back for display.
     const stored = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}.${ALLOWED[file.type]}`;
     await writeFile(path.join(dir, stored), buffer);
+    recordAudit({ action: 'upload', entity: 'File', entityLabel: stored, details: { originalName: file.name, type: file.type, bytes: file.size } });
 
     return NextResponse.json({
       url: `/api/files/quiz/${stored}`,
@@ -95,4 +98,4 @@ export async function POST(req: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Failed to upload file';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

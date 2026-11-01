@@ -7,9 +7,10 @@ import {
 } from 'lucide-react';
 import {
   ArabicTextArea, AutoGrid, Badge, Button, Card, DataTable, EmptyState, ErrorNote,
-  Field, Modal, PageHeader, SectionTitle, Select, Spinner, Td, TextArea, TextInput, Th,
+  Field, Modal, PageHeader, SectionTitle, Select, PageSkeleton, Td, TextArea, TextInput, Th,
 } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useApi } from '@/lib/useApi';
 import { downloadFile } from '@/lib/download';
 
 /**
@@ -67,9 +68,7 @@ export default function CataloguePage() {
   const { t, tx, locale } = useLanguage();
   const ar = locale === 'ar';
 
-  const [d, setD] = useState<Payload | null>(null);
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [actionError, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [q, setQ] = useState('');
@@ -80,30 +79,25 @@ export default function CataloguePage() {
 
   const [editing, setEditing] = useState<Partial<Item> | null>(null);
 
-  const load = useCallback(async () => {
-    try {
-      const p = new URLSearchParams();
-      if (q.trim()) p.set('q', q.trim());
-      if (category !== 'all') p.set('category', category);
-      if (status !== 'all') p.set('status', status);
-      if (pack !== 'all') p.set('package', pack);
-      if (costed !== 'all') p.set('costed', costed);
-
-      const r = await fetch(`/api/crm/catalogue?${p}`, { cache: 'no-store' });
-      if (!r.ok) throw new Error((await r.json()).error || 'Could not load the catalogue');
-      setD(await r.json());
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Load failed');
-    } finally {
-      setReady(true);
-    }
+  const query = useCallback(() => {
+    const p = new URLSearchParams();
+    if (q.trim()) p.set('q', q.trim());
+    if (category !== 'all') p.set('category', category);
+    if (status !== 'all') p.set('status', status);
+    if (pack !== 'all') p.set('package', pack);
+    if (costed !== 'all') p.set('costed', costed);
+    return `/api/crm/catalogue?${p}`;
   }, [q, category, status, pack, costed]);
 
+  const [settled, setSettled] = useState(query);
   useEffect(() => {
-    const timer = setTimeout(load, q ? 250 : 0);
+    const timer = setTimeout(() => setSettled(query()), q ? 250 : 0);
     return () => clearTimeout(timer);
-  }, [load, q]);
+  }, [query, q]);
+
+  const { data, ready, error: loadError, reload: load } = useApi<Payload>(settled);
+  const d = data ?? null;
+  const error = actionError || loadError;
 
   async function save() {
     if (!editing) return;
@@ -151,7 +145,7 @@ export default function CataloguePage() {
     downloadFile(`/api/crm/export?${p}`).catch((e) => setError(e.message));
   };
 
-  if (!ready) return <Spinner />;
+  if (!ready) return <PageSkeleton tiles={4} rows={10} />;
   if (error && !d) return <ErrorNote>{error}</ErrorNote>;
   if (!d) return null;
 

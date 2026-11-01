@@ -8,9 +8,11 @@ import {
 } from 'lucide-react';
 import {
   ArabicInput, Badge, Button, Card, ErrorNote, Field, Modal, PageHeader,
-  SectionTitle, Select, Spinner, TextArea, TextInput,
+  SectionTitle, Select, PageSkeleton, TextArea, TextInput,
 } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useApi } from '@/lib/useApi';
+import { AuditTrail } from '@/components/admin/audit';
 import { CRM_CATEGORIES, CRM_CITIES } from '@/lib/crmVocab';
 import { STEP_ORDER } from '@/lib/crmProgress';
 import LogActionModal from '@/components/admin/crm/LogActionModal';
@@ -72,35 +74,22 @@ export default function CrmAccountPage({ params }: { params: Promise<{ id: strin
   const ar = locale === 'ar';
   const { id } = use(params);
 
-  const [data, setData] = useState<Detail | null>(null);
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data: loaded, ready, error: loadError, reload: load } = useApi<Detail>(`/api/crm/accounts/${id}`);
+  const data = loaded ?? null;
+  const [actionError, setError] = useState<string | null>(null);
+  const error = actionError || loadError;
   const [logging, setLogging] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [owners, setOwners] = useState<Array<{ _id: string; name: string; role: string }>>([]);
   const [form, setForm] = useState<Record<string, string>>({});
 
-  const load = useCallback(async () => {
-    try {
-      const r = await fetch(`/api/crm/accounts/${id}`, { cache: 'no-store' });
-      if (!r.ok) throw new Error((await r.json()).error || 'Could not load the account');
-      setData(await r.json());
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Load failed');
-    } finally {
-      setReady(true);
-    }
-  }, [id]);
-
   useEffect(() => {
-    load();
     fetch('/api/users?role=', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : []))
       .then((u) => setOwners(Array.isArray(u) ? u : u?.users || []))
       .catch(() => setOwners([]));
-  }, [load]);
+  }, []);
 
   function openEdit() {
     const a = data?.account || {};
@@ -165,7 +154,7 @@ export default function CrmAccountPage({ params }: { params: Promise<{ id: strin
     }
   }
 
-  if (!ready) return <Spinner />;
+  if (!ready) return <PageSkeleton tiles={3} rows={8} />;
   if (error && !data) return <ErrorNote>{error}</ErrorNote>;
   if (!data) return null;
 
@@ -417,6 +406,10 @@ export default function CrmAccountPage({ params }: { params: Promise<{ id: strin
           load();
         }}
       />
+
+      <div className="mt-4">
+        <AuditTrail entity="CrmAccount" entityId={id} />
+      </div>
 
       {/* ------------------------- editing the facts ------------------------- */}
       <Modal

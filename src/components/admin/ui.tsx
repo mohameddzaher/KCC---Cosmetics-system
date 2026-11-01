@@ -157,6 +157,28 @@ export function Spinner({ label }: { label?: string }) {
   );
 }
 
+/**
+ * The shape of the page, while it has nothing to show yet. It only appears the
+ * first time a screen is opened; after that the last answer is shown instead.
+ */
+export function PageSkeleton({ tiles = 0, rows = 6 }: { tiles?: number; rows?: number }) {
+  const bar = 'animate-pulse rounded-lg bg-surface-2';
+  return (
+    <div aria-busy="true" aria-live="polite">
+      <div className={`mb-2 h-7 w-56 ${bar}`} />
+      <div className={`mb-6 h-4 w-80 max-w-full ${bar}`} />
+      {tiles > 0 && (
+        <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-6">
+          {Array.from({ length: tiles }, (_, i) => <div key={i} className={`h-24 ${bar}`} />)}
+        </div>
+      )}
+      <div className="space-y-2 rounded-xl border border-line bg-surface p-4">
+        {Array.from({ length: rows }, (_, i) => <div key={i} className={`h-9 ${bar}`} />)}
+      </div>
+    </div>
+  );
+}
+
 export function ErrorNote({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-2 rounded-lg border border-danger bg-danger-soft px-3 py-2.5 text-sm text-danger-soft-fg">

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface ITestimonial extends Document {
   name: { en: string; ar: string };
@@ -39,6 +40,8 @@ const TestimonialSchema = new Schema<ITestimonial>(
   { timestamps: true }
 );
 TestimonialSchema.index({ status: 1, enabled: 1 });
+
+TestimonialSchema.plugin(auditTrail);
 
 const Testimonial = mongoose.models.Testimonial || mongoose.model<ITestimonial>('Testimonial', TestimonialSchema);
 export default Testimonial;

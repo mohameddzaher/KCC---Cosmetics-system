@@ -4,10 +4,11 @@ import ContactMessage from '@/models/ContactMessage';
 import { getSession } from '@/lib/auth';
 import { rateLimit } from '@/lib/rateLimit';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     const limited = rateLimit(req, 'contact', 5, 10 * 60 * 1000);
     if (limited) return limited;
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
     // Never leak internal error details to unauthenticated callers.
     return NextResponse.json({ error: 'Failed to submit your message. Please try again.' }, { status: 500 });
   }
-}
+});
 
 export async function GET(req: NextRequest) {
   try {
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
 }
 
 // DELETE /api/contact?id=... -> admin remove a message
-export async function DELETE(req: NextRequest) {
+export const DELETE = audited(async function DELETE(req: NextRequest) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, 'inbox.act')) {
@@ -69,4 +70,4 @@ export async function DELETE(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to delete' }, { status: 500 });
   }
-}
+});

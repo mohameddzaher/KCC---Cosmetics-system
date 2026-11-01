@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface ISeoPage extends Document {
   page: string;
@@ -47,6 +48,8 @@ const SeoPageSchema = new Schema<ISeoPage>(
 );
 
 SeoPageSchema.index({ page: 1 }, { unique: true });
+
+SeoPageSchema.plugin(auditTrail);
 
 const SeoPage = mongoose.models.SeoPage || mongoose.model<ISeoPage>('SeoPage', SeoPageSchema);
 export default SeoPage;

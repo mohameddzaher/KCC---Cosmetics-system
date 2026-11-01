@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface IExpense extends Document {
   category: string;
@@ -32,6 +33,8 @@ const ExpenseSchema = new Schema<IExpense>(
 
 ExpenseSchema.index({ category: 1 });
 ExpenseSchema.index({ date: -1 });
+
+ExpenseSchema.plugin(auditTrail);
 
 const Expense = mongoose.models.Expense || mongoose.model<IExpense>('Expense', ExpenseSchema);
 export default Expense;

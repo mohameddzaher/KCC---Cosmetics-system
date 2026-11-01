@@ -1,15 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   AlertTriangle, Check, Download, Lightbulb, MessageSquareWarning, Printer, Search,
 } from 'lucide-react';
 import {
   AutoGrid, Badge, Button, Card, DataTable, EmptyState, ErrorNote, Field, Modal,
-  PageHeader, SectionTitle, Select, Spinner, Td, TextArea, TextInput, Th,
+  PageHeader, SectionTitle, Select, PageSkeleton, Td, TextArea, TextInput, Th,
 } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useApi } from '@/lib/useApi';
 import { downloadFile } from '@/lib/download';
 import { CRM_CATEGORIES } from '@/lib/crmVocab';
 
@@ -43,10 +44,7 @@ export default function CrmFeedbackPage() {
   const { t, tx, pick, locale } = useLanguage();
   const ar = locale === 'ar';
 
-  const [rows, setRows] = useState<Row[]>([]);
-  const [byType, setByType] = useState<Record<string, { total: number; handled: number }>>({});
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [actionError, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [type, setType] = useState('complaint,suggestion');
@@ -57,31 +55,28 @@ export default function CrmFeedbackPage() {
   const [resolving, setResolving] = useState<Row | null>(null);
   const [outcome, setOutcome] = useState('');
 
-  const load = useCallback(async () => {
-    try {
-      const p = new URLSearchParams({ type, limit: '500' });
-      if (handled !== 'all') p.set('handled', handled);
-      if (from) p.set('from', from);
-      if (to) p.set('to', to);
-      if (q.trim()) p.set('q', q.trim());
-
-      const r = await fetch(`/api/crm/activities?${p}`, { cache: 'no-store' });
-      if (!r.ok) throw new Error((await r.json()).error || 'Could not load');
-      const d = await r.json();
-      setRows(d.items || []);
-      setByType(d.byType || {});
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Load failed');
-    } finally {
-      setReady(true);
-    }
+  const query = useCallback(() => {
+    const p = new URLSearchParams({ type, limit: '500' });
+    if (handled !== 'all') p.set('handled', handled);
+    if (from) p.set('from', from);
+    if (to) p.set('to', to);
+    if (q.trim()) p.set('q', q.trim());
+    return `/api/crm/activities?${p}`;
   }, [type, handled, from, to, q]);
 
+  const [settled, setSettled] = useState(query);
   useEffect(() => {
-    const timer = setTimeout(load, q ? 250 : 0);
+    const timer = setTimeout(() => setSettled(query()), q ? 250 : 0);
     return () => clearTimeout(timer);
-  }, [load, q]);
+  }, [query, q]);
+
+  const { data, ready, error: loadError, reload: load } = useApi<{
+    items?: Row[];
+    byType?: Record<string, { total: number; handled: number }>;
+  }>(settled);
+  const rows = useMemo(() => data?.items ?? [], [data]);
+  const byType = data?.byType ?? {};
+  const error = actionError || loadError;
 
   async function markHandled() {
     if (!resolving) return;
@@ -114,7 +109,7 @@ export default function CrmFeedbackPage() {
     downloadFile(`/api/crm/export?${p}`).catch((e) => setError(e.message));
   };
 
-  if (!ready) return <Spinner />;
+  if (!ready) return <PageSkeleton tiles={4} rows={6} />;
   if (error && rows.length === 0) return <ErrorNote>{error}</ErrorNote>;
 
   return (

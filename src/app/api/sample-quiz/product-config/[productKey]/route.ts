@@ -3,6 +3,7 @@ import connectDB from '@/lib/db';
 import ProductSpecConfig from '@/models/ProductSpecConfig';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,7 @@ async function requireAdmin() {
  *
  * Admin — upsert the configuration for a product.
  */
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ productKey: string }> }) {
+export const PUT = audited(async function PUT(req: NextRequest, { params }: { params: Promise<{ productKey: string }> }) {
   try {
     if (!(await requireAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     await connectDB();
@@ -57,4 +58,4 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ prod
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

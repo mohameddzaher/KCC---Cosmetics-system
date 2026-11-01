@@ -10,6 +10,7 @@ import PortfolioItem from '@/models/PortfolioItem';
 import FAQ from '@/models/FAQ';
 import NewsPost from '@/models/NewsPost';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +28,7 @@ const MODELS: Record<string, any> = {
 
 type Ctx = { params: Promise<{ type: string; id: string }> };
 
-export async function PUT(req: NextRequest, context: Ctx) {
+export const PUT = audited(async function PUT(req: NextRequest, context: Ctx) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, REQUIRED_PERM)) {
@@ -50,9 +51,9 @@ export async function PUT(req: NextRequest, context: Ctx) {
     }
     return NextResponse.json({ error: error.message || 'Failed to update' }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(req: NextRequest, context: Ctx) {
+export const DELETE = audited(async function DELETE(req: NextRequest, context: Ctx) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, REQUIRED_PERM)) {
@@ -71,4 +72,4 @@ export async function DELETE(req: NextRequest, context: Ctx) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to delete' }, { status: 500 });
   }
-}
+});

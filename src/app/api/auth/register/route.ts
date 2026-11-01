@@ -5,13 +5,14 @@ import { hashPassword, createToken, AUTH_COOKIE_NAME, AUTH_MAX_AGE_SECONDS, Sess
 import { generateReferralCode } from '@/lib/api-helpers';
 import { rateLimit } from '@/lib/rateLimit';
 import { sendEventEmail, adminUrl } from '@/lib/mailer';
+import { audited } from '@/lib/audit';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Public self-registration is disabled — accounts are provisioned by KCC only.
 const SELF_REGISTRATION_ENABLED = false;
 
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     if (!SELF_REGISTRATION_ENABLED) {
       return NextResponse.json(
@@ -99,4 +100,4 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Registration failed' }, { status: 500 });
   }
-}
+});

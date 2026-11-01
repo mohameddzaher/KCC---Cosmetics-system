@@ -9,6 +9,7 @@ import { can } from '@/lib/roles';
 import { matchKeysFor } from '@/lib/crmMatch';
 import { canonicalCategory, canonicalCity } from '@/lib/crmVocab';
 import { mayOpenAccount } from '@/lib/crmScope';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,7 +70,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
  * to `current` is the business of logging an action, not of a dropdown — the
  * whole point is that the stage follows the work.
  */
-export async function PUT(req: NextRequest, context: RouteContext) {
+export const PUT = audited(async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!can(user?.role, 'crm.edit')) {
@@ -84,6 +85,9 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     const account = await CrmAccount.findById(id);
     if (!account) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+    if (!(await mayOpenAccount(user, account))) {
+      return NextResponse.json({ error: 'This account belongs to another rep.' }, { status: 403 });
+    }
 
     const body = await req.json();
     const before = { stage: account.stage, ownerName: account.ownerName };
@@ -158,10 +162,10 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});
 
 /** Archived, not erased: the history is the record of work done. */
-export async function DELETE(_req: NextRequest, context: RouteContext) {
+export const DELETE = audited(async function DELETE(_req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!can(user?.role, 'crm.edit')) {
@@ -172,6 +176,12 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
+    }
+
+    const existing = await CrmAccount.findById(id).select('ownerId').lean();
+    if (!existing) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+    if (!(await mayOpenAccount(user, existing as { ownerId?: unknown }))) {
+      return NextResponse.json({ error: 'This account belongs to another rep.' }, { status: 403 });
     }
 
     const account = await CrmAccount.findByIdAndUpdate(id, { $set: { active: false } }, { new: true });
@@ -191,4 +201,4 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

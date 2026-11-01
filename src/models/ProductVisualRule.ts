@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 interface IConditions {
   productType: string;
@@ -33,6 +34,8 @@ const ProductVisualRuleSchema = new Schema<IProductVisualRule>(
   },
   { timestamps: true }
 );
+
+ProductVisualRuleSchema.plugin(auditTrail);
 
 const ProductVisualRule = mongoose.models.ProductVisualRule || mongoose.model<IProductVisualRule>('ProductVisualRule', ProductVisualRuleSchema);
 export default ProductVisualRule;

@@ -9,6 +9,7 @@ import {
   PACKAGING_STEP_KEY,
   buildStepSequence,
 } from '@/lib/sample-quiz/packagingParts';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,7 +91,7 @@ export async function GET() {
   }
 }
 
-export async function PUT(req: NextRequest) {
+export const PUT = audited(async function PUT(req: NextRequest) {
   try {
     if (!(await requireManage())) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -131,4 +132,4 @@ export async function PUT(req: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

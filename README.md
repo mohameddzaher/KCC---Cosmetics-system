@@ -32,6 +32,26 @@ npm run seed
 
 ---
 
+## Audit log
+
+Every change is recorded at `/admin/audit` (permission `audit.view`): who, when, from which IP and device, and the exact fields with their old and new values.
+
+- A route that writes wraps its handler in `audited()` from `src/lib/audit`.
+- A model gets `Schema.plugin(auditTrail)`; that reads the document before and after each write, so routes record nothing themselves.
+- For something that is not a document change (a login, an export, a file) call `recordAudit()`.
+- `npm test` fails if a new route or model is left outside this.
+
+Secrets are never stored, only the fact that they changed. Entries cannot be edited or deleted. Scripts run outside a request and are not recorded.
+
+## Tests
+
+```bash
+npm test           # unit tests, plus model hooks against a throwaway MongoDB
+npm run test:e2e   # production build, real HTTP, throwaway MongoDB
+```
+
+Both need `mongod` on the PATH. Neither can reach the live database.
+
 ## Environment variables
 
 The full list lives in [`.env.example`](./.env.example). Required:

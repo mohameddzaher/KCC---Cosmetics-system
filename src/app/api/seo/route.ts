@@ -4,6 +4,7 @@ import SeoGlobal from '@/models/SeoGlobal';
 import SeoPage from '@/models/SeoPage';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export async function GET(req: NextRequest) {
   try {
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, 'seo.manage')) {
@@ -72,4 +73,4 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to update SEO config' }, { status: 500 });
   }
-}
+});

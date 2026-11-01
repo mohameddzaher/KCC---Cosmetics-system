@@ -4,6 +4,7 @@ import SpecOptionMaster from '@/models/SpecOptionMaster';
 import ProductSpecConfig from '@/models/ProductSpecConfig';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -121,7 +122,7 @@ export async function GET(req: NextRequest) {
  * keeps its own allow-list, so a new library entry that is not added to those
  * lists exists everywhere and is offered nowhere.
  */
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     if (!(await requireManage())) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -174,7 +175,7 @@ export async function POST(req: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});
 
 /**
  * PUT — edit an option's labels or meta, reorder a library, or retitle it.
@@ -184,7 +185,7 @@ export async function POST(req: NextRequest) {
  * with it; renaming it would orphan both, and the orders cannot be rewritten
  * because they record what the customer actually chose.
  */
-export async function PUT(req: NextRequest) {
+export const PUT = audited(async function PUT(req: NextRequest) {
   try {
     if (!(await requireManage())) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -246,7 +247,7 @@ export async function PUT(req: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE — remove an option from a library, and from every product that
@@ -256,7 +257,7 @@ export async function PUT(req: NextRequest) {
  * resolves to nothing: the spec would count one more choice than it can show.
  * Past orders keep the raw value — they are a record, not a live reference.
  */
-export async function DELETE(req: NextRequest) {
+export const DELETE = audited(async function DELETE(req: NextRequest) {
   try {
     if (!(await requireManage())) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -299,4 +300,4 @@ export async function DELETE(req: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

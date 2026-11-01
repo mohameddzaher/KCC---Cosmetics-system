@@ -5,9 +5,10 @@ import { GripVertical, Plus, Trash2 } from 'lucide-react';
 import { SortableList } from '@/components/admin/SortableList';
 import {
   ArabicInput, Button, Card, ErrorNote, Field, PageHeader, SaveButton,
-  SectionTitle, Spinner, TextInput, Toggle,
+  SectionTitle, PageSkeleton, TextInput, Toggle,
 } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useApi } from '@/lib/useApi';
 import { CRM_CATEGORIES } from '@/lib/crmVocab';
 
 /**
@@ -42,36 +43,27 @@ const slug = (s: string) =>
 export default function CrmSettingsPage() {
   const { t, tx, pick } = useLanguage();
   const [d, setD] = useState<Targets | null>(null);
-  const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [actionError, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    try {
-      const r = await fetch('/api/crm/targets', { cache: 'no-store' });
-      if (!r.ok) throw new Error((await r.json()).error || 'Could not load the settings');
-      const j = await r.json();
-      setD({
-        dailyVisits: j.dailyVisits || { min: 4, max: 5 },
-        weeklyClients: j.weeklyClients || { min: 20, max: 25 },
-        visitsPerAccountWeekly: j.visitsPerAccountWeekly ?? 1,
-        visitsPerAccountMonthly: j.visitsPerAccountMonthly ?? 4,
-        visitChecklist: (j.visitChecklist || []).slice().sort((a: Item, b: Item) => a.order - b.order),
-        sectorMix: j.sectorMix || [],
-      });
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Load failed');
-    } finally {
-      setReady(true);
-    }
-  }, []);
+  const { data, ready, error: loadError, reload: load } = useApi<Partial<Targets>>('/api/crm/targets');
+  const error = actionError || loadError;
 
+  // A form holds its own copy. An answer arriving mid-edit must not overwrite
+  // what is being typed, so it only lands while nothing is unsaved.
   useEffect(() => {
-    load();
-  }, [load]);
+    if (!data || dirty) return;
+    setD({
+      dailyVisits: data.dailyVisits || { min: 4, max: 5 },
+      weeklyClients: data.weeklyClients || { min: 20, max: 25 },
+      visitsPerAccountWeekly: data.visitsPerAccountWeekly ?? 1,
+      visitsPerAccountMonthly: data.visitsPerAccountMonthly ?? 4,
+      visitChecklist: (data.visitChecklist || []).slice().sort((a: Item, b: Item) => a.order - b.order),
+      sectorMix: data.sectorMix || [],
+    });
+  }, [data, dirty]);
 
   function patch(next: Partial<Targets>) {
     setD((prev) => (prev ? { ...prev, ...next } : prev));
@@ -103,7 +95,7 @@ export default function CrmSettingsPage() {
     }
   }
 
-  if (!ready) return <Spinner />;
+  if (!ready) return <PageSkeleton rows={8} />;
   if (error && !d) return <ErrorNote>{error}</ErrorNote>;
   if (!d) return null;
 

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 /**
  * SpecOptionMaster — the master library of every option available in
@@ -72,6 +73,8 @@ const SpecOptionMasterSchema = new Schema<ISpecOptionMaster>(
   },
   { timestamps: true }
 );
+
+SpecOptionMasterSchema.plugin(auditTrail);
 
 const SpecOptionMaster =
   mongoose.models.SpecOptionMaster ||

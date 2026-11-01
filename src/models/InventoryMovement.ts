@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface IInventoryMovement extends Document {
   itemId: Types.ObjectId;
@@ -37,6 +38,8 @@ const InventoryMovementSchema = new Schema<IInventoryMovement>(
 InventoryMovementSchema.index({ itemId: 1 });
 InventoryMovementSchema.index({ type: 1 });
 InventoryMovementSchema.index({ createdAt: -1 });
+
+InventoryMovementSchema.plugin(auditTrail);
 
 const InventoryMovement = mongoose.models.InventoryMovement || mongoose.model<IInventoryMovement>('InventoryMovement', InventoryMovementSchema);
 export default InventoryMovement;

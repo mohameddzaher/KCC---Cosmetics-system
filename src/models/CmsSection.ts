@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface ICmsSection extends Document {
   type: string;
@@ -49,6 +50,8 @@ const CmsSectionSchema = new Schema<ICmsSection>(
 CmsSectionSchema.index({ type: 1 });
 CmsSectionSchema.index({ slug: 1 }, { unique: true });
 CmsSectionSchema.index({ order: 1 });
+
+CmsSectionSchema.plugin(auditTrail);
 
 const CmsSection = mongoose.models.CmsSection || mongoose.model<ICmsSection>('CmsSection', CmsSectionSchema);
 export default CmsSection;

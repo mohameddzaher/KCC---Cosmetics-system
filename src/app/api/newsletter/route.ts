@@ -4,6 +4,8 @@ import mongoose from 'mongoose';
 import { rateLimit } from '@/lib/rateLimit';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
+import { auditTrail } from '@/lib/audit/plugin';
 
 // Simple newsletter subscriber schema
 const subscriberSchema = new mongoose.Schema(
@@ -15,10 +17,12 @@ const subscriberSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+subscriberSchema.plugin(auditTrail);
+
 const Subscriber =
   mongoose.models.Subscriber || mongoose.model('Subscriber', subscriberSchema);
 
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     const limited = rateLimit(req, 'newsletter', 5, 10 * 60 * 1000);
     if (limited) return limited;
@@ -42,7 +46,7 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Failed to subscribe. Please try again.' }, { status: 500 });
   }
-}
+});
 
 // GET -> admin list of subscribers
 export async function GET() {
@@ -60,7 +64,7 @@ export async function GET() {
 }
 
 // DELETE /api/newsletter?id=... -> admin remove a subscriber
-export async function DELETE(req: NextRequest) {
+export const DELETE = audited(async function DELETE(req: NextRequest) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, 'cms.manage')) {
@@ -76,4 +80,4 @@ export async function DELETE(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to delete' }, { status: 500 });
   }
-}
+});

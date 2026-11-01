@@ -4,6 +4,7 @@ import connectDB from '@/lib/db';
 import CmsSection from '@/models/CmsSection';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -34,7 +35,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export const PUT = audited(async function PUT(
   req: NextRequest,
   context: RouteContext
 ) {
@@ -77,9 +78,9 @@ export async function PUT(
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(
+export const DELETE = audited(async function DELETE(
   req: NextRequest,
   context: RouteContext
 ) {
@@ -109,4 +110,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
+});

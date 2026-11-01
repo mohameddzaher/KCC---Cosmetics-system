@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export type ActivityType =
   | 'note'
@@ -48,6 +49,8 @@ const CustomerActivitySchema = new Schema<ICustomerActivity>(
 CustomerActivitySchema.index({ customerId: 1, createdAt: -1 });
 CustomerActivitySchema.index({ type: 1 });
 CustomerActivitySchema.index({ dueDate: 1, done: 1 });
+
+CustomerActivitySchema.plugin(auditTrail);
 
 const CustomerActivity =
   mongoose.models.CustomerActivity ||

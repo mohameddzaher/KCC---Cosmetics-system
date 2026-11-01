@@ -4,6 +4,7 @@ import InventoryItem from '@/models/InventoryItem';
 import { getSession } from '@/lib/auth';
 import { escapeRegex } from '@/lib/api-helpers';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export async function GET(req: NextRequest) {
   try {
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, 'inventory.manage')) {
@@ -51,4 +52,4 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to create inventory item' }, { status: 500 });
   }
-}
+});

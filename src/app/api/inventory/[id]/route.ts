@@ -4,6 +4,7 @@ import connectDB from '@/lib/db';
 import InventoryItem from '@/models/InventoryItem';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   }
 }
 
-export async function PUT(req: NextRequest, context: RouteContext) {
+export const PUT = audited(async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, REQUIRED_PERM)) {
@@ -49,9 +50,9 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     }
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(req: NextRequest, context: RouteContext) {
+export const DELETE = audited(async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, REQUIRED_PERM)) {
@@ -68,4 +69,4 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
-}
+});

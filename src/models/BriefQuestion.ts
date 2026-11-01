@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 /**
  * BriefQuestion — every admin-authored question in the Sample Quiz.
@@ -143,6 +144,8 @@ const BriefQuestionSchema = new Schema<IBriefQuestion>(
 BriefQuestionSchema.index({ scope: 1, scopeKey: 1, questionKey: 1 }, { unique: true });
 BriefQuestionSchema.index({ scope: 1, scopeKey: 1, order: 1 });
 BriefQuestionSchema.index({ active: 1 });
+
+BriefQuestionSchema.plugin(auditTrail);
 
 const BriefQuestion =
   mongoose.models.BriefQuestion ||

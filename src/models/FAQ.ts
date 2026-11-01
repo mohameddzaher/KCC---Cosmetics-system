@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface IFAQ extends Document {
   question: { en: string; ar: string };
@@ -26,6 +27,8 @@ const FAQSchema = new Schema<IFAQ>(
   },
   { timestamps: true }
 );
+
+FAQSchema.plugin(auditTrail);
 
 const FAQ = mongoose.models.FAQ || mongoose.model<IFAQ>('FAQ', FAQSchema);
 export default FAQ;

@@ -4,6 +4,7 @@ import CrmTarget from '@/models/CrmTarget';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { DEFAULT_VISIT_CHECKLIST } from '@/lib/crmProgress';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,7 +49,7 @@ export async function GET() {
   }
 }
 
-export async function PUT(req: NextRequest) {
+export const PUT = audited(async function PUT(req: NextRequest) {
   try {
     const user = await getSession();
     // The commercial manager owns how the team is asked to work — the visit
@@ -121,4 +122,4 @@ export async function PUT(req: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

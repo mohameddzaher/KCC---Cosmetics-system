@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface ISurveyResponse extends Document {
   userId: Types.ObjectId;
@@ -23,6 +24,8 @@ const SurveyResponseSchema = new Schema<ISurveyResponse>(
 
 SurveyResponseSchema.index({ userId: 1 });
 SurveyResponseSchema.index({ templateId: 1 });
+
+SurveyResponseSchema.plugin(auditTrail);
 
 const SurveyResponse = mongoose.models.SurveyResponse || mongoose.model<ISurveyResponse>('SurveyResponse', SurveyResponseSchema);
 export default SurveyResponse;

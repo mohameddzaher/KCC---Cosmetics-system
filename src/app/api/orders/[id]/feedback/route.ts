@@ -7,6 +7,7 @@ import Notification from '@/models/Notification';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { statusMeta } from '@/lib/orderWorkflow';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,7 +61,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 }
 
 /** Customer submits (or revises) their feedback. */
-export async function POST(req: NextRequest, context: RouteContext) {
+export const POST = audited(async function POST(req: NextRequest, context: RouteContext) {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -136,10 +137,10 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});
 
 /** Staff replies to the customer's feedback. */
-export async function PUT(req: NextRequest, context: RouteContext) {
+export const PUT = audited(async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const session = await getSession();
     if (!session || !can(session.role, 'orders.edit')) {
@@ -170,4 +171,4 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

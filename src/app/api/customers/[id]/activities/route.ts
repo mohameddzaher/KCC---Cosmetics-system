@@ -5,6 +5,7 @@ import CustomerActivity from '@/models/CustomerActivity';
 import User from '@/models/User';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 }
 
 // POST -> add a note / log a call / create a follow-up task
-export async function POST(req: NextRequest, context: RouteContext) {
+export const POST = audited(async function POST(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, WRITE_PERM)) {
@@ -68,4 +69,4 @@ export async function POST(req: NextRequest, context: RouteContext) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
-}
+});

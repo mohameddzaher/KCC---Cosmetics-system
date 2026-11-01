@@ -11,6 +11,7 @@ import {
 import OrderWorkflow from '@/components/admin/OrderWorkflow';
 import OrderAssignments from '@/components/admin/OrderAssignments';
 import OrderFeedbackPanel from '@/components/admin/OrderFeedbackPanel';
+import { AuditTrail } from '@/components/admin/audit';
 import { usePermission } from '@/contexts/AuthContext';
 import { statusBadgeClass, statusLabel } from '@/lib/orderWorkflow';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -216,6 +217,7 @@ export default function OrderDetailPage() {
 
           {/* The customer's verdict once it landed, plus our reply. */}
           <OrderFeedbackPanel orderId={orderId} />
+          <AuditTrail entity="Order" entityId={orderId} />
 
           {can('orders.assign') && (
             <OrderAssignments

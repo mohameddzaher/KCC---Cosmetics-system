@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 /**
  * A Super Admin's overrides to what a role can reach.
@@ -28,6 +29,8 @@ const RolePermissionSchema = new Schema<IRolePermission>(
   },
   { timestamps: true }
 );
+
+RolePermissionSchema.plugin(auditTrail);
 
 const RolePermission =
   mongoose.models.RolePermission ||

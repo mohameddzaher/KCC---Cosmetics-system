@@ -9,6 +9,7 @@ import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { computeTotals } from '@/lib/orderTotals';
 import { claimPromo, discountFor, evaluatePromo, releasePromo } from '@/lib/promo';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 /** Money may still move while the order is waiting to be paid, and not after. */
 const OPEN_STATUSES = new Set(['Quotation Sent', 'Awaiting Payment']);
 
-export async function POST(req: NextRequest, context: RouteContext) {
+export const POST = audited(async function POST(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -150,4 +151,4 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

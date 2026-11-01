@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import RolePermission from '@/models/RolePermission';
-import AuditLog from '@/models/AuditLog';
 import { getSession } from '@/lib/auth';
 import { invalidateRolePermissions, loadRolePermissions } from '@/lib/rolePermissions';
 import {
@@ -15,6 +14,7 @@ import {
   type Permission,
   type Role,
 } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,7 +53,7 @@ export async function GET() {
   });
 }
 
-export async function PUT(req: NextRequest) {
+export const PUT = audited(async function PUT(req: NextRequest) {
   const user = await getSession();
   if (user?.role !== 'SUPER_ADMIN') {
     return NextResponse.json(
@@ -102,21 +102,9 @@ export async function PUT(req: NextRequest) {
   invalidateRolePermissions();
   await loadRolePermissions(true);
 
-  try {
-    await AuditLog.create({
-      userId: user.id,
-      action: reset ? 'role.permissions.reset' : 'role.permissions.update',
-      entity: 'RolePermission',
-      entityId: role,
-      details: reset ? { role } : { role, count: (body.permissions as string[]).length },
-    });
-  } catch {
-    /* the change stands whether or not it could be logged */
-  }
-
   return NextResponse.json({
     role,
     permissions: effectiveRolePermissions(role),
     customised: isRoleCustomised(role),
   });
-}
+});

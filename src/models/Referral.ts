@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface IReferral extends Document {
   referrerId: Types.ObjectId;
@@ -27,6 +28,8 @@ const ReferralSchema = new Schema<IReferral>(
   },
   { timestamps: true }
 );
+
+ReferralSchema.plugin(auditTrail);
 
 const Referral = mongoose.models.Referral || mongoose.model<IReferral>('Referral', ReferralSchema);
 export default Referral;

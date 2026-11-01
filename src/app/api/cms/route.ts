@@ -3,6 +3,7 @@ import connectDB from '@/lib/db';
 import CmsSection from '@/models/CmsSection';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export async function GET(req: NextRequest) {
   try {
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, 'cms.manage')) {
@@ -63,4 +64,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

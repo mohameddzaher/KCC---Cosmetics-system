@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 /**
  * Category — the admin-editable product taxonomy that drives the sample quiz.
@@ -54,6 +55,8 @@ const CategorySchema = new Schema<ICategory>(
 
 CategorySchema.index({ slug: 1 }, { unique: true });
 CategorySchema.index({ order: 1 });
+
+CategorySchema.plugin(auditTrail);
 
 const Category =
   mongoose.models.Category || mongoose.model<ICategory>('Category', CategorySchema);

@@ -3,6 +3,7 @@ import connectDB from '@/lib/db';
 import BriefQuestion from '@/models/BriefQuestion';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const PUT = audited(async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     if (!(await requireAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     await connectDB();
@@ -38,9 +39,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const DELETE = audited(async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     if (!(await requireAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     await connectDB();
@@ -52,4 +53,4 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

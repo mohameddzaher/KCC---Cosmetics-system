@@ -7,6 +7,7 @@ import { can } from '@/lib/roles';
 import mongoose from 'mongoose';
 import SiteSettings from '@/models/SiteSettings';
 import Order from '@/models/Order';
+import { audited } from '@/lib/audit';
 
 export async function GET(req: NextRequest) {
   try {
@@ -69,7 +70,7 @@ async function earnedSoFar(referrerId: string): Promise<number> {
   return rows[0]?.total || 0;
 }
 
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     const user = await getSession();
     if (!user) {
@@ -190,4 +191,4 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to apply referral' }, { status: 500 });
   }
-}
+});

@@ -7,9 +7,10 @@ import {
   FlaskConical, Layers, Printer, Tag, TrendingUp, Users2,
 } from 'lucide-react';
 import {
-  AutoGrid, Badge, Button, Card, ErrorNote, SectionTitle, Select, Spinner,
+  AutoGrid, Badge, Button, Card, ErrorNote, SectionTitle, Select, PageSkeleton,
 } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useApi } from '@/lib/useApi';
 import { downloadFile } from '@/lib/download';
 
 /**
@@ -86,27 +87,12 @@ const TYPE_LABELS: Record<string, [string, string]> = {
 export default function CrmDashboardPage() {
   const { t, tx, pick, locale } = useLanguage();
   const ar = locale === 'ar';
-  const [d, setD] = useState<Dash | null>(null);
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data, ready, error: loadError } = useApi<Dash>('/api/crm/dashboard');
+  const d = data ?? null;
+  const [exportError, setError] = useState<string | null>(null);
+  const error = exportError || loadError;
   const [period, setPeriod] = useState<'today' | 'week' | 'month'>('week');
 
-  const load = useCallback(async () => {
-    try {
-      const r = await fetch('/api/crm/dashboard', { cache: 'no-store' });
-      if (!r.ok) throw new Error((await r.json()).error || 'Could not load the dashboard');
-      setD(await r.json());
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Load failed');
-    } finally {
-      setReady(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const label = (map: Record<string, [string, string]>, key: string) =>
     map[key] ? (ar ? map[key][1] : map[key][0]) : key.replace(/_/g, ' ');
@@ -122,7 +108,7 @@ export default function CrmDashboardPage() {
       setError(e.message)
     );
 
-  if (!ready) return <Spinner />;
+  if (!ready) return <PageSkeleton tiles={6} rows={8} />;
   if (error && !d) return <ErrorNote>{error}</ErrorNote>;
   if (!d) return null;
 

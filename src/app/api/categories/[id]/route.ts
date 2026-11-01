@@ -6,6 +6,7 @@ import Category from '@/models/Category';
 import { getSession } from '@/lib/auth';
 import { reconcileCategoryConfigs, pruneCategoryConfigs } from '@/lib/categoryReconcile';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
 // PUT -> replace name/order/active and the full subcategories+items tree, then
 // reconcile ProductSpecConfig so the quiz stays in sync. The main slug is immutable.
-export async function PUT(req: NextRequest, context: RouteContext) {
+export const PUT = audited(async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, REQUIRED_PERM)) {
@@ -74,10 +75,10 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
-}
+});
 
 // DELETE -> remove the category and prune its product spec configs
-export async function DELETE(req: NextRequest, context: RouteContext) {
+export const DELETE = audited(async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, REQUIRED_PERM)) {
@@ -98,4 +99,4 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
-}
+});

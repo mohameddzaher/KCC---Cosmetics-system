@@ -4,6 +4,7 @@ import KnowledgeArticle from '@/models/KnowledgeArticle';
 import { getSession } from '@/lib/auth';
 import { escapeRegex } from '@/lib/api-helpers';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export async function GET(req: NextRequest) {
   try {
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, 'knowledge.manage')) {
@@ -80,4 +81,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

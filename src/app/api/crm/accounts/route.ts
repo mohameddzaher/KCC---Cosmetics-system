@@ -6,6 +6,7 @@ import { can } from '@/lib/roles';
 import { matchKeysFor, primaryKey } from '@/lib/crmMatch';
 import { canonicalCategory, canonicalCity } from '@/lib/crmVocab';
 import { accountScope } from '@/lib/crmScope';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,6 +66,9 @@ export async function GET(req: NextRequest) {
 
     const [items, total, stageFacets] = await Promise.all([
       CrmAccount.find(filter)
+        // What the table draws. The notes, links and match keys of 200 accounts
+        // were two thirds of this response and never reached the screen.
+        .select('name nameAr category city segment brands keyPerson stage ownerId ownerName steps visitCount meetingCount activityCount lastActionAt')
         .populate('ownerId', 'name role')
         .sort(sort)
         .skip((page - 1) * limit)
@@ -93,7 +97,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     const user = await getSession();
     if (!can(user?.role, 'crm.edit')) {
@@ -152,4 +156,4 @@ export async function POST(req: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

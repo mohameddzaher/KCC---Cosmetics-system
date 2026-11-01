@@ -6,9 +6,11 @@ import CrmActivity from '@/models/CrmActivity';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { CRM_ACTIVITY_TYPES, CRM_INTEREST } from '@/models/CrmActivity';
+import { mayOpenAccount } from '@/lib/crmScope';
 import {
   countersForActivity, isEngagement, stageAfterActivity, stepForActivity,
 } from '@/lib/crmProgress';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,6 +39,12 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
     }
 
+    const account = await CrmAccount.findById(id).select('ownerId').lean();
+    if (!account) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+    if (!(await mayOpenAccount(user, account as { ownerId?: unknown }))) {
+      return NextResponse.json({ error: 'This account belongs to another rep.' }, { status: 403 });
+    }
+
     const activities = await CrmActivity.find({ accountId: id })
       .sort({ at: -1, createdAt: -1 })
       .limit(500)
@@ -51,7 +59,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   }
 }
 
-export async function POST(req: NextRequest, context: RouteContext) {
+export const POST = audited(async function POST(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!can(user?.role, 'crm.edit')) {
@@ -66,6 +74,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     const account = await CrmAccount.findById(id);
     if (!account) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+    if (!(await mayOpenAccount(user, account))) {
+      return NextResponse.json({ error: 'This account belongs to another rep.' }, { status: 403 });
+    }
 
     const body = await req.json();
     const type = String(body.type || 'note');
@@ -161,4 +172,4 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

@@ -4,6 +4,7 @@ import User from '@/models/User';
 import { getSession, hashPassword } from '@/lib/auth';
 import { can, ROLES, STAFF_ROLES } from '@/lib/roles';
 import { generateReferralCode } from '@/lib/api-helpers';
+import { audited } from '@/lib/audit';
 
 const ALL_ROLES: string[] = [...ROLES];
 const PRIVILEGED_ROLES = ['SUPER_ADMIN', 'ADMIN'];
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/users  -> create a user with a role
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session || !can(session.role, 'users.manage')) {
@@ -98,4 +99,4 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ error: error.message || 'Failed to create user' }, { status: 500 });
   }
-}
+});

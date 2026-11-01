@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface INewsPost extends Document {
   title: { en: string; ar: string };
@@ -41,6 +42,8 @@ const NewsPostSchema = new Schema<INewsPost>(
 NewsPostSchema.index({ slug: 1 }, { unique: true });
 NewsPostSchema.index({ status: 1 });
 NewsPostSchema.index({ publishedAt: -1 });
+
+NewsPostSchema.plugin(auditTrail);
 
 const NewsPost = mongoose.models.NewsPost || mongoose.model<INewsPost>('NewsPost', NewsPostSchema);
 export default NewsPost;

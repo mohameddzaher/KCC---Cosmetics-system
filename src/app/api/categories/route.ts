@@ -4,6 +4,7 @@ import connectDB from '@/lib/db';
 import Category from '@/models/Category';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,7 @@ export async function GET() {
 }
 
 // POST /api/categories -> create a new main category
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, REQUIRED_PERM)) {
@@ -57,4 +58,4 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ error: error.message || 'Failed to create category' }, { status: 500 });
   }
-}
+});

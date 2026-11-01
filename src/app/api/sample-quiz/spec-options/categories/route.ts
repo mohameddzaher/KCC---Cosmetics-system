@@ -4,6 +4,7 @@ import SpecOptionMaster from '@/models/SpecOptionMaster';
 import ProductSpecConfig from '@/models/ProductSpecConfig';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +46,7 @@ async function requireManage() {
   return can(session?.role, 'sampleQuiz.manage');
 }
 
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     if (!(await requireManage())) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -120,9 +121,9 @@ export async function POST(req: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(req: NextRequest) {
+export const DELETE = audited(async function DELETE(req: NextRequest) {
   try {
     if (!(await requireManage())) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -160,4 +161,4 @@ export async function DELETE(req: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

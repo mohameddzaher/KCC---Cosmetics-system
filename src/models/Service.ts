@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface IService extends Document {
   title: { en: string; ar: string };
@@ -30,6 +31,8 @@ const ServiceSchema = new Schema<IService>(
 );
 
 ServiceSchema.index({ order: 1 });
+
+ServiceSchema.plugin(auditTrail);
 
 const Service = mongoose.models.Service || mongoose.model<IService>('Service', ServiceSchema);
 export default Service;

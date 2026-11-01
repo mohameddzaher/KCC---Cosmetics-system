@@ -3,6 +3,7 @@ import connectDB from '@/lib/db';
 import BriefQuestion from '@/models/BriefQuestion';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,7 @@ export const dynamic = 'force-dynamic';
  *
  * Used by the drag-and-drop UI to persist a new sort in one call.
  */
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     const session = await getSession();
     if (!can(session?.role, 'sampleQuiz.manage')) {
@@ -41,4 +42,4 @@ export async function POST(req: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

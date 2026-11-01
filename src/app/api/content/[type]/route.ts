@@ -9,6 +9,7 @@ import PortfolioItem from '@/models/PortfolioItem';
 import FAQ from '@/models/FAQ';
 import NewsPost from '@/models/NewsPost';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ type: s
 }
 
 // POST /api/content/[type] -> create (admin only)
-export async function POST(req: NextRequest, context: { params: Promise<{ type: string }> }) {
+export const POST = audited(async function POST(req: NextRequest, context: { params: Promise<{ type: string }> }) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, REQUIRED_PERM)) {
@@ -81,4 +82,4 @@ export async function POST(req: NextRequest, context: { params: Promise<{ type: 
     }
     return NextResponse.json({ error: error.message || 'Failed to create' }, { status: 500 });
   }
-}
+});

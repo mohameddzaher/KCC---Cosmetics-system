@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
 import { ROLES, type Role } from '@/lib/roles';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export type UserRole = Role;
 export type CustomerStage = 'lead' | 'prospect' | 'active' | 'vip' | 'inactive' | 'churned';
@@ -87,6 +88,8 @@ UserSchema.index({ referralCode: 1 }, { unique: true });
 UserSchema.index({ role: 1 });
 UserSchema.index({ accountManagerId: 1 });
 UserSchema.index({ stage: 1 });
+
+UserSchema.plugin(auditTrail);
 
 const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 export default User;

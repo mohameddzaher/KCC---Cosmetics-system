@@ -4,6 +4,9 @@ import connectDB from '@/lib/db';
 import CrmActivity from '@/models/CrmActivity';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import CrmAccount from '@/models/CrmAccount';
+import { mayOpenAccount } from '@/lib/crmScope';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +18,7 @@ type RouteContext = { params: Promise<{ id: string }> };
  * The outcome is written beside it rather than replacing what was said: the
  * complaint stays on the record, with what was done about it underneath.
  */
-export async function PUT(req: NextRequest, context: RouteContext) {
+export const PUT = audited(async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!can(user?.role, 'crm.edit')) {
@@ -26,6 +29,13 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
+    }
+
+    const activity = await CrmActivity.findById(id).select('accountId').lean();
+    if (!activity) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    const account = await CrmAccount.findById((activity as { accountId?: unknown }).accountId).select('ownerId').lean();
+    if (!(await mayOpenAccount(user, account as { ownerId?: unknown } | null))) {
+      return NextResponse.json({ error: 'This account belongs to another rep.' }, { status: 403 });
     }
 
     const body = await req.json();
@@ -49,4 +59,4 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

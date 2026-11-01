@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface IPromoUsage extends Document {
   promoCodeId: Types.ObjectId;
@@ -20,6 +21,8 @@ const PromoUsageSchema = new Schema<IPromoUsage>(
   },
   { timestamps: true }
 );
+
+PromoUsageSchema.plugin(auditTrail);
 
 const PromoUsage = mongoose.models.PromoUsage || mongoose.model<IPromoUsage>('PromoUsage', PromoUsageSchema);
 export default PromoUsage;

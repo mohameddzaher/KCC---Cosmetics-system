@@ -5,12 +5,13 @@ import ProductCode from '@/models/ProductCode';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { readBody } from '../route';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function PUT(req: NextRequest, context: RouteContext) {
+export const PUT = audited(async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!can(user?.role, 'crm.edit')) {
@@ -40,10 +41,10 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});
 
 /** Archived rather than erased: a code that shipped stays traceable. */
-export async function DELETE(_req: NextRequest, context: RouteContext) {
+export const DELETE = audited(async function DELETE(_req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!can(user?.role, 'crm.edit')) {
@@ -63,4 +64,4 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

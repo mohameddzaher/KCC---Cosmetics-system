@@ -6,9 +6,10 @@ import { useSearchParams } from 'next/navigation';
 import { ClipboardCheck, Download, Gauge, Printer, Target } from 'lucide-react';
 import {
   AutoGrid, Badge, Button, Card, DataTable, ErrorNote, SectionTitle, Select,
-  Spinner, Td, Th,
+  PageSkeleton, Spinner, Td, Th,
 } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useApi } from '@/lib/useApi';
 import { downloadFile } from '@/lib/download';
 
 /**
@@ -76,28 +77,13 @@ function KpisInner() {
   const focus = params.get('rep') || '';
 
   const [period, setPeriod] = useState<'day' | 'week' | 'month'>('week');
-  const [d, setD] = useState<Kpi | null>(null);
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data, ready, error: loadError } = useApi<Kpi>(`/api/crm/kpis?period=${period}`);
+  const d = data ?? null;
+  const [exportError, setError] = useState<string | null>(null);
+  const error = exportError || loadError;
 
-  const load = useCallback(async () => {
-    try {
-      const r = await fetch(`/api/crm/kpis?period=${period}`, { cache: 'no-store' });
-      if (!r.ok) throw new Error((await r.json()).error || 'Could not load the KPIs');
-      setD(await r.json());
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Load failed');
-    } finally {
-      setReady(true);
-    }
-  }, [period]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  if (!ready) return <Spinner />;
+  if (!ready) return <PageSkeleton tiles={4} rows={6} />;
   if (error && !d) return <ErrorNote>{error}</ErrorNote>;
   if (!d) return null;
 

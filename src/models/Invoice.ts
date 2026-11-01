@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 interface IInvoiceItem {
   description: string;
@@ -59,6 +60,8 @@ const InvoiceSchema = new Schema<IInvoice>(
 InvoiceSchema.index({ invoiceNumber: 1 }, { unique: true });
 InvoiceSchema.index({ userId: 1 });
 InvoiceSchema.index({ status: 1 });
+
+InvoiceSchema.plugin(auditTrail);
 
 const Invoice = mongoose.models.Invoice || mongoose.model<IInvoice>('Invoice', InvoiceSchema);
 export default Invoice;

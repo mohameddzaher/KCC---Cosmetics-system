@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface ISiteSettings extends Document {
   key: string;
@@ -113,6 +114,8 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
 );
 
 SiteSettingsSchema.index({ key: 1 }, { unique: true });
+
+SiteSettingsSchema.plugin(auditTrail);
 
 const SiteSettings =
   mongoose.models.SiteSettings ||

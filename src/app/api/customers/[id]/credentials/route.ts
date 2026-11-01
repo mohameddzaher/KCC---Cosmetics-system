@@ -5,6 +5,7 @@ import User from '@/models/User';
 import CustomerActivity from '@/models/CustomerActivity';
 import { getSession, hashPassword } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 type RouteContext = { params: Promise<{ id: string }> };
 const REQUIRED_PERM = 'customers.credentials' as const;
@@ -12,7 +13,7 @@ const REQUIRED_PERM = 'customers.credentials' as const;
 // PUT /api/customers/[id]/credentials
 // Super-admin / admin sets the customer's login email (username) + password so
 // the customer can sign in and place requests. The customer stays role=CUSTOMER.
-export async function PUT(req: NextRequest, context: RouteContext) {
+export const PUT = audited(async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const session = await getSession();
     if (!session || !can(session.role, REQUIRED_PERM)) {
@@ -71,4 +72,4 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     }
     return NextResponse.json({ error: error.message || 'Failed to update credentials' }, { status: 500 });
   }
-}
+});

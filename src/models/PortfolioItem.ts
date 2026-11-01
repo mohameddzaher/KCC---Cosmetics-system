@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface IPortfolioItem extends Document {
   title: { en: string; ar: string };
@@ -39,6 +40,8 @@ const PortfolioItemSchema = new Schema<IPortfolioItem>(
 );
 
 PortfolioItemSchema.index({ slug: 1 }, { unique: true });
+
+PortfolioItemSchema.plugin(auditTrail);
 
 const PortfolioItem = mongoose.models.PortfolioItem || mongoose.model<IPortfolioItem>('PortfolioItem', PortfolioItemSchema);
 export default PortfolioItem;

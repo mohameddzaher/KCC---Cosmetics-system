@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 import { ORDER_STATUSES } from '@/lib/orderWorkflow';
+import { auditTrail } from '@/lib/audit/plugin';
 
 interface IAttachment {
   name: string;
@@ -189,6 +190,8 @@ OrderSchema.index({ 'assignments.accountManagerId': 1 });
 OrderSchema.index({ 'assignments.factoryUserId': 1 });
 OrderSchema.index({ 'assignments.logisticsUserId': 1 });
 OrderSchema.index({ status: 1, createdAt: -1 });
+
+OrderSchema.plugin(auditTrail);
 
 const Order = mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);
 export default Order;

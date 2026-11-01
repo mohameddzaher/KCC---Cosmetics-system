@@ -5,6 +5,7 @@ import connectDB from './db';
 import User from '@/models/User';
 import { isAdminRole, isStaffRole, can, type Permission, type Role } from './roles';
 import { loadRolePermissions } from './rolePermissions';
+import { setAuditActor } from './audit/context';
 
 /**
  * Never fall back to a hardcoded secret in production — that would let anyone
@@ -64,12 +65,45 @@ export async function getSession(): Promise<SessionUser | null> {
   const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
   if (!token) return null;
 
+  const claimed = await verifyToken(token);
+  if (!claimed) return null;
+
   // Every route that checks a permission calls this first, so it is the one
   // place to make sure the Super Admin's role configuration is loaded before
-  // the synchronous `can()` is asked anything. Cached; see rolePermissions.ts.
-  await loadRolePermissions();
+  // the synchronous `can()` is asked anything. See rolePermissions.ts.
+  const [, current] = await Promise.all([loadRolePermissions(), currentUser(claimed)]);
+  if (!current) return null;
 
-  return verifyToken(token);
+  setAuditActor(current);
+  return current;
+}
+
+/**
+ * The token says who this person was when they signed in; only the database
+ * knows who they are now. Trusting the token meant a disabled account kept
+ * working — and because /api/auth/me reissues it, kept working indefinitely —
+ * and a demoted one kept its old role.
+ *
+ * If the database cannot be reached the token stands: nothing else on the page
+ * would work either, and throwing here would read as being signed out.
+ */
+async function currentUser(claimed: SessionUser): Promise<SessionUser | null> {
+  try {
+    await connectDB();
+    const doc = await User.findById(claimed.id).select('name email role company languagePref isActive').lean();
+    const live = doc as (Omit<SessionUser, 'id'> & { isActive?: boolean }) | null;
+    if (!live || live.isActive === false) return null;
+    return {
+      id: claimed.id,
+      email: live.email,
+      name: live.name,
+      role: live.role,
+      company: live.company,
+      languagePref: live.languagePref,
+    };
+  } catch {
+    return claimed;
+  }
 }
 
 export async function requireAuth(roles?: string[]): Promise<SessionUser> {

@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Download, Phone, Plus, Printer, Search } from 'lucide-react';
 import {
-  Badge, Button, Card, DataTable, EmptyState, ErrorNote, Select, Spinner, Td, Th, TextInput,
+  Badge, Button, Card, DataTable, EmptyState, ErrorNote, Select, PageSkeleton, Td, Th, TextInput,
 } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useApi } from '@/lib/useApi';
 import { downloadFile } from '@/lib/download';
 import { CRM_CATEGORIES, CRM_CITIES } from '@/lib/crmVocab';
 import { STEP_ORDER } from '@/lib/crmProgress';
@@ -54,10 +55,7 @@ export default function AccountsTable({
   const { tx, pick, locale } = useLanguage();
   const ar = locale === 'ar';
 
-  const [items, setItems] = useState<AccountRow[]>([]);
-  const [total, setTotal] = useState(0);
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [actionError, setError] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
 
   const [q, setQ] = useState('');
@@ -76,34 +74,24 @@ export default function AccountsTable({
     return p;
   }, [stage, list, sort, q, category, city]);
 
-  const load = useCallback(async () => {
-    try {
-      const p = query();
-
-      const r = await fetch(`/api/crm/accounts?${p}`, { cache: 'no-store' });
-      if (!r.ok) throw new Error('Could not load the accounts');
-      const d = await r.json();
-      setItems(Array.isArray(d.items) ? d.items : []);
-      setTotal(d.total || 0);
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Load failed');
-    } finally {
-      setReady(true);
-    }
-  }, [query]);
-
+  // The search box settles before asking, so a word typed is one request.
+  const [settled, setSettled] = useState(() => `/api/crm/accounts?${query()}`);
   useEffect(() => {
-    const t = setTimeout(load, q ? 250 : 0);
+    const t = setTimeout(() => setSettled(`/api/crm/accounts?${query()}`), q ? 250 : 0);
     return () => clearTimeout(t);
-  }, [load, q]);
+  }, [query, q]);
+
+  const { data, ready, error: loadError, reload: load } = useApi<{ items: AccountRow[]; total: number }>(settled);
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const error = actionError || loadError;
 
   const cities = useMemo(
     () => CRM_CITIES.filter((c) => c.key !== 'other').concat(CRM_CITIES.filter((c) => c.key === 'other')),
     []
   );
 
-  if (!ready) return <Spinner />;
+  if (!ready) return <PageSkeleton rows={10} />;
 
   return (
     <div>

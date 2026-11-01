@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface IPromoCode extends Document {
   code: string;
@@ -32,6 +33,8 @@ const PromoCodeSchema = new Schema<IPromoCode>(
 );
 
 PromoCodeSchema.index({ code: 1 }, { unique: true });
+
+PromoCodeSchema.plugin(auditTrail);
 
 const PromoCode = mongoose.models.PromoCode || mongoose.model<IPromoCode>('PromoCode', PromoCodeSchema);
 export default PromoCode;

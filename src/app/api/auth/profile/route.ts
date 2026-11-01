@@ -5,6 +5,7 @@ import {
   getSession, createToken, SessionUser,
   AUTH_COOKIE_NAME, AUTH_MAX_AGE_SECONDS,
 } from '@/lib/auth';
+import { audited } from '@/lib/audit';
 
 // GET /api/auth/profile -> full profile of the signed-in user
 export async function GET() {
@@ -25,7 +26,7 @@ export async function GET() {
 }
 
 // PUT /api/auth/profile -> update the signed-in user's own profile details
-export async function PUT(req: NextRequest) {
+export const PUT = audited(async function PUT(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
@@ -91,4 +92,4 @@ export async function PUT(req: NextRequest) {
     }
     return NextResponse.json({ error: error.message || 'Failed to update profile' }, { status: 500 });
   }
-}
+});

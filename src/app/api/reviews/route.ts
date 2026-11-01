@@ -3,11 +3,12 @@ import connectDB from '@/lib/db';
 import Testimonial from '@/models/Testimonial';
 import { getSession } from '@/lib/auth';
 import { rateLimit } from '@/lib/rateLimit';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
 // POST /api/reviews -> public review submission (held for admin approval)
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     const limited = rateLimit(req, 'reviews', 3, 10 * 60 * 1000);
     if (limited) return limited;
@@ -41,4 +42,4 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to submit review' }, { status: 500 });
   }
-}
+});

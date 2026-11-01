@@ -3,6 +3,7 @@ import connectDB from '@/lib/db';
 import ProductCode from '@/models/ProductCode';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -155,7 +156,7 @@ export function readBody(body: Record<string, unknown>): Record<string, unknown>
   return doc;
 }
 
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     const user = await getSession();
     if (!can(user?.role, 'crm.edit')) {
@@ -181,4 +182,4 @@ export async function POST(req: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

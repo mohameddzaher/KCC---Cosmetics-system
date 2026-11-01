@@ -8,9 +8,10 @@ import {
 } from 'lucide-react';
 import {
   AutoGrid, Badge, Button, Card, ErrorNote, Modal, PageHeader, SectionTitle,
-  Select, Spinner, TextInput,
+  Select, PageSkeleton, TextInput,
 } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useApi } from '@/lib/useApi';
 import { downloadFile } from '@/lib/download';
 
 /**
@@ -65,9 +66,7 @@ export default function JourneyPlanPage() {
 
   const [weekStart, setWeekStart] = useState(() => sundayOf(new Date()));
   const [rep, setRep] = useState('all');
-  const [d, setD] = useState<Payload | null>(null);
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [actionError, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   /** Which day is having an account added to it. */
@@ -80,24 +79,15 @@ export default function JourneyPlanPage() {
     [weekStart]
   );
 
-  const load = useCallback(async () => {
-    try {
-      const p = new URLSearchParams({ from: iso(weekStart), to: iso(days[6]) });
-      if (rep !== 'all') p.set('owner', rep);
-      const r = await fetch(`/api/crm/plan?${p}`, { cache: 'no-store' });
-      if (!r.ok) throw new Error((await r.json()).error || 'Could not load the plan');
-      setD(await r.json());
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Load failed');
-    } finally {
-      setReady(true);
-    }
+  const planUrl = useMemo(() => {
+    const p = new URLSearchParams({ from: iso(weekStart), to: iso(days[6]) });
+    if (rep !== 'all') p.set('owner', rep);
+    return `/api/crm/plan?${p}`;
   }, [weekStart, days, rep]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { data, ready, error: loadError, reload: load } = useApi<Payload>(planUrl);
+  const d = data ?? null;
+  const error = actionError || loadError;
 
   const search = useCallback(async (term: string) => {
     if (!term.trim()) return setFound([]);
@@ -146,7 +136,7 @@ export default function JourneyPlanPage() {
     }));
   }
 
-  if (!ready) return <Spinner />;
+  if (!ready) return <PageSkeleton rows={7} />;
   if (error && !d) return <ErrorNote>{error}</ErrorNote>;
   if (!d) return null;
 

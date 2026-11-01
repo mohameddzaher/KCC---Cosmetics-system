@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   Loader2, ArrowLeft, CheckSquare, Square, CalendarClock,
   ListTodo, AlertTriangle,
 } from 'lucide-react';
 import ContactActions from '@/components/admin/ContactActions';
-import { useLivePoll } from '@/lib/useLivePoll';
+import { useApi } from '@/lib/useApi';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const FILTERS = [
@@ -18,23 +18,11 @@ const FILTERS = [
 
 export default function CrmTasksPage() {
   const { tx } = useLanguage();
-  const [tasks, setTasks] = useState<any[]>([]);
   const [filter, setFilter] = useState('open');
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    try {
-      const res = await fetch(`/api/crm/tasks?status=${filter}`, { cache: 'no-store' });
-      const data = res.ok ? await res.json() : [];
-      setTasks(Array.isArray(data) ? data : []);
-    } finally {
-      setLoading(false);
-    }
-  }, [filter]);
-
-  useEffect(() => { load(); }, [load]);
-  useLivePoll(useCallback(() => load(true), [load]), 20000);
+  const { data, ready, reload } = useApi<any[]>(`/api/crm/tasks?status=${filter}`, { poll: 20000 });
+  const tasks = Array.isArray(data) ? data : [];
+  const loading = !ready;
+  const load = reload;
 
   const toggle = async (task: any) => {
     const cid = task.customerId?._id;
@@ -43,7 +31,7 @@ export default function CrmTasksPage() {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ done: !task.done }),
     });
-    load(true);
+    load();
   };
 
   const isOverdue = (t: any) => t.dueDate && !t.done && new Date(t.dueDate) < new Date();

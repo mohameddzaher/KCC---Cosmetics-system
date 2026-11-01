@@ -3,6 +3,7 @@ import connectDB from '@/lib/db';
 import SiteSettings from '@/models/SiteSettings';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 const defaultSettings = {
   key: 'main',
@@ -62,7 +63,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function PUT(req: NextRequest) {
+export const PUT = audited(async function PUT(req: NextRequest) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, 'settings.manage')) {
@@ -104,4 +105,4 @@ export async function PUT(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 /**
  * A rep's journey plan — which accounts he intends to call on, which day.
@@ -55,6 +56,8 @@ const CrmVisitPlanSchema = new Schema<ICrmVisitPlan>(
 /** One plan per rep per day. */
 CrmVisitPlanSchema.index({ ownerId: 1, date: 1 }, { unique: true });
 CrmVisitPlanSchema.index({ date: 1 });
+
+CrmVisitPlanSchema.plugin(auditTrail);
 
 const CrmVisitPlan =
   mongoose.models.CrmVisitPlan ||

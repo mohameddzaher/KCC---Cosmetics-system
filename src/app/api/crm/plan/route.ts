@@ -6,6 +6,7 @@ import User from '@/models/User';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { seesEveryAccount, visibleOwnerIds } from '@/lib/crmScope';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -161,7 +162,7 @@ export async function GET(req: NextRequest) {
 }
 
 /** Set (or clear) one rep's plan for one day. */
-export async function PUT(req: NextRequest) {
+export const PUT = audited(async function PUT(req: NextRequest) {
   try {
     const user = await getSession();
     if (!can(user?.role, 'crm.edit')) {
@@ -212,4 +213,4 @@ export async function PUT(req: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

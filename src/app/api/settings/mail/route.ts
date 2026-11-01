@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { mailerStatus, sendTestEmail } from '@/lib/mailer';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,7 @@ export async function GET() {
 }
 
 /** POST — send a test message, so "it works" is something you can verify. */
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   const user = await getSession();
   if (!can(user?.role, 'settings.manage')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -38,4 +39,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: result.error || 'Send failed' }, { status: 502 });
   }
   return NextResponse.json({ sent: true, to });
-}
+});

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import ContactActions from '@/components/admin/ContactActions';
 import CrmPanel, { stageMeta } from '@/components/admin/CrmPanel';
+import { AuditTrail } from '@/components/admin/audit';
 import CustomerCredentials from '@/components/admin/CustomerCredentials';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -422,6 +423,7 @@ export default function CustomerDetailPage() {
 
           {/* CRM: stage, manager, tags, activity timeline */}
           <CrmPanel customer={customer} managers={managers} activities={activities} onChange={loadCustomer} />
+          <div className="mt-6"><AuditTrail entity="User" entityId={customer._id} /></div>
 
           {/* Referral Info */}
           <div className="bg-surface border border-line rounded-xl p-5">

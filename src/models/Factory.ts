@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface IFactory extends Document {
   name: { en: string; ar: string };
@@ -43,6 +44,8 @@ const FactorySchema = new Schema<IFactory>(
   },
   { timestamps: true }
 );
+
+FactorySchema.plugin(auditTrail);
 
 const Factory = mongoose.models.Factory || mongoose.model<IFactory>('Factory', FactorySchema);
 export default Factory;

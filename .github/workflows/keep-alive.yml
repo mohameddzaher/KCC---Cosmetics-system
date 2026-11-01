@@ -1,27 +1,41 @@
 name: keep-render-awake
 
-# Render's free tier sleeps after ~15 min of inactivity, causing a slow
-# ~40s cold start that makes the site feel "not opening". This pings it
-# every 10 minutes so the first real visitor always gets an instant load.
+# Render's free tier sleeps after ~15 min without traffic, and waking takes
+# 25-40s. Whoever opens the site next pays for that.
 #
-# NOTE: GitHub only runs scheduled workflows from the DEFAULT branch (main),
-# so this takes effect once merged to main. You can also trigger it manually
-# from the Actions tab (Run workflow).
+# A `*/10` cron does not prevent it: GitHub treats schedules as best effort, and
+# this one was really running every 4-6 hours. So the run itself does the pinging,
+# for as long as a job may last, then starts its successor. The schedule stays
+# only to restart the chain if a run ever dies.
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '17 */5 * * *'
   workflow_dispatch:
+
+# A new run replaces the one in progress, so there is only ever one pinger.
+concurrency:
+  group: keep-render-awake
+  cancel-in-progress: true
+
+permissions:
+  actions: write
+  contents: read
 
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 355
     steps:
-      - name: Ping Render deployment
+      - name: Ping every 5 minutes for 5h45m
         run: |
-          for url in \
-            "https://kcc-cosmetics-system.onrender.com/" \
-            "https://kcc-cosmetics-system.onrender.com/api/auth/me"; do
-            echo "Pinging $url"
-            curl -sS -m 90 -o /dev/null -w "  -> %{http_code} in %{time_total}s\n" "$url" || echo "  -> ping failed (ignored)"
+          for i in $(seq 1 69); do
+            curl -sS -m 90 -o /dev/null -w "$(date -u +%H:%M) %{http_code} in %{time_total}s\n" \
+              "https://kcc-cosmetics-system.onrender.com/api/health" || echo "ping failed (ignored)"
+            sleep 300
           done
+
+      - name: Start the next run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run keep-alive.yml --repo "$GITHUB_REPOSITORY" --ref main

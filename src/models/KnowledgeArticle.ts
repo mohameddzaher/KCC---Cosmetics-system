@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface IKnowledgeArticle extends Document {
   question: { en: string; ar: string };
@@ -31,6 +32,8 @@ const KnowledgeArticleSchema = new Schema<IKnowledgeArticle>(
 
 KnowledgeArticleSchema.index({ keywords: 1 });
 KnowledgeArticleSchema.index({ category: 1 });
+
+KnowledgeArticleSchema.plugin(auditTrail);
 
 const KnowledgeArticle = mongoose.models.KnowledgeArticle || mongoose.model<IKnowledgeArticle>('KnowledgeArticle', KnowledgeArticleSchema);
 export default KnowledgeArticle;

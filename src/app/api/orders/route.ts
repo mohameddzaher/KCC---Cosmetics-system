@@ -14,6 +14,7 @@ import { linkOrderToCrm } from '@/lib/crmLink';
 import { scopeFilterForRole } from '@/lib/orderWorkflow';
 import { generateOrderNumber } from '@/lib/api-helpers';
 import { sendEventEmail, adminUrl } from '@/lib/mailer';
+import { audited } from '@/lib/audit';
 
 const toNonNegNumber = (v: unknown) => {
   const n = Number(v);
@@ -97,7 +98,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = audited(async function POST(req: NextRequest) {
   try {
     // Ordering is restricted to accounts we created — no guests, no self-signup.
     const user = await getSession();
@@ -279,4 +280,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

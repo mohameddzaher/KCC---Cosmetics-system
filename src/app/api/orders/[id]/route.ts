@@ -4,6 +4,7 @@ import connectDB from '@/lib/db';
 import Order from '@/models/Order';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -54,7 +55,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export const PUT = audited(async function PUT(
   req: NextRequest,
   context: RouteContext
 ) {
@@ -165,10 +166,10 @@ export async function PUT(
       { status: 500 }
     );
   }
-}
+});
 
 // DELETE /api/orders/[id] -> admins only
-export async function DELETE(req: NextRequest, context: RouteContext) {
+export const DELETE = audited(async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, 'orders.delete')) {
@@ -191,4 +192,4 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
       { status: 500 }
     );
   }
-}
+});

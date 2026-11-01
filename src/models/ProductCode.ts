@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 /**
  * The code catalogue — the sales team's price book.
@@ -92,6 +93,8 @@ const ProductCodeSchema = new Schema<IProductCode>(
 
 ProductCodeSchema.index({ category: 1, product: 1 });
 ProductCodeSchema.index({ product: 'text', code: 'text', ingredients: 'text' });
+
+ProductCodeSchema.plugin(auditTrail);
 
 const ProductCode =
   mongoose.models.ProductCode || mongoose.model<IProductCode>('ProductCode', ProductCodeSchema);

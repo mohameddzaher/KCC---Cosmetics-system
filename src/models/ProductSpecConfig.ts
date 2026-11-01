@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import type { SpecCategoryKey } from './SpecOptionMaster';
+import { auditTrail } from '@/lib/audit/plugin';
 
 /**
  * ProductSpecConfig — per-product (level-3 item) spec configuration.
@@ -69,6 +70,8 @@ const ProductSpecConfigSchema = new Schema<IProductSpecConfig>(
 
 ProductSpecConfigSchema.index({ productKey: 1 }, { unique: true });
 ProductSpecConfigSchema.index({ mainSlug: 1, subSlug: 1 });
+
+ProductSpecConfigSchema.plugin(auditTrail);
 
 const ProductSpecConfig =
   mongoose.models.ProductSpecConfig ||

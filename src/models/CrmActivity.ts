@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 /**
  * Everything that has happened to a target account — the history the team and
@@ -113,6 +114,8 @@ CrmActivitySchema.index({ accountId: 1, at: -1 });
 CrmActivitySchema.index({ byId: 1, at: -1 });
 CrmActivitySchema.index({ type: 1, at: -1 });
 CrmActivitySchema.index({ dueDate: 1, done: 1 });
+
+CrmActivitySchema.plugin(auditTrail);
 
 const CrmActivity =
   mongoose.models.CrmActivity || mongoose.model<ICrmActivity>('CrmActivity', CrmActivitySchema);

@@ -4,12 +4,13 @@ import connectDB from '@/lib/db';
 import Expense from '@/models/Expense';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { audited } from '@/lib/audit';
 
 type RouteContext = { params: Promise<{ id: string }> };
 const READ_PERM = 'accounting.view' as const;
 const WRITE_PERM = 'accounting.manage' as const;
 
-export async function PUT(req: NextRequest, context: RouteContext) {
+export const PUT = audited(async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, WRITE_PERM)) {
@@ -27,9 +28,9 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(req: NextRequest, context: RouteContext) {
+export const DELETE = audited(async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!user || !can(user.role, WRITE_PERM)) {
@@ -46,4 +47,4 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
-}
+});

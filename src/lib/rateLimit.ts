@@ -15,9 +15,14 @@ function sweep(now: number) {
 }
 
 export function clientIp(req: NextRequest): string {
+  // The edge's own header first. The start of x-forwarded-for is whatever the
+  // client chose to send, so trusting it would let anyone sidestep the limit
+  // here and sign the audit log with a made-up address.
+  const edge = req.headers.get('cf-connecting-ip') || req.headers.get('x-nf-client-connection-ip');
+  if (edge) return edge.trim();
   const xff = req.headers.get('x-forwarded-for');
   if (xff) return xff.split(',')[0].trim();
-  return req.headers.get('x-real-ip') || req.headers.get('x-nf-client-connection-ip') || 'unknown';
+  return req.headers.get('x-real-ip') || 'unknown';
 }
 
 /**

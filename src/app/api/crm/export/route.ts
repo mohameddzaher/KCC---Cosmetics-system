@@ -12,6 +12,7 @@ import { categoryMeta, cityMeta } from '@/lib/crmVocab';
 import { STEP_ORDER } from '@/lib/crmProgress';
 import { computeKpis } from '../kpis/route';
 import { computePlans } from '../plan/route';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +41,7 @@ function sheetFor(what: string, p: URLSearchParams) {
   };
 }
 
-export async function GET(req: NextRequest) {
+export const GET = audited(async function GET(req: NextRequest) {
   try {
     const user = await getSession();
     if (!can(user?.role, 'crm.view')) {
@@ -410,4 +411,4 @@ export async function GET(req: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+}, { action: 'export', entity: 'CrmReport' });

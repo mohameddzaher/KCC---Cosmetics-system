@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface IPayment extends Document {
   invoiceId: Types.ObjectId;
@@ -33,6 +34,8 @@ const PaymentSchema = new Schema<IPayment>(
 
 PaymentSchema.index({ invoiceId: 1 });
 PaymentSchema.index({ userId: 1 });
+
+PaymentSchema.plugin(auditTrail);
 
 const Payment = mongoose.models.Payment || mongoose.model<IPayment>('Payment', PaymentSchema);
 export default Payment;

@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { DEFAULT_VISIT_CHECKLIST } from '@/lib/crmProgress';
+import { auditTrail } from '@/lib/audit/plugin';
 
 /**
  * The sales targets and the process, as the KPIs sheet lays them out.
@@ -136,6 +137,8 @@ const CrmTargetSchema = new Schema<ICrmTarget>(
   },
   { timestamps: true }
 );
+
+CrmTargetSchema.plugin(auditTrail);
 
 const CrmTarget =
   mongoose.models.CrmTarget || mongoose.model<ICrmTarget>('CrmTarget', CrmTargetSchema);

@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 import type { CrmStage, CrmStep } from '@/lib/crmProgress';
+import { auditTrail } from '@/lib/audit/plugin';
 
 /**
  * A target account — a company the sales team is working, not a registered user.
@@ -148,6 +149,8 @@ CrmAccountSchema.index({ stage: 1, lastActionAt: -1 });
 CrmAccountSchema.index({ category: 1, city: 1 });
 CrmAccountSchema.index({ ownerId: 1, stage: 1 });
 CrmAccountSchema.index({ name: 'text', nameAr: 'text', brands: 'text' });
+
+CrmAccountSchema.plugin(auditTrail);
 
 const CrmAccount =
   mongoose.models.CrmAccount || mongoose.model<ICrmAccount>('CrmAccount', CrmAccountSchema);

@@ -5,6 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
+import { keepApiCache } from '@/lib/useApi';
 
 /**
  * All client-side context providers live here so that the root layout can stay
@@ -23,17 +24,18 @@ export default function Providers({
    */
   initialLocale?: 'en' | 'ar';
 }) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 30 * 1000,
-            refetchOnWindowFocus: false,
-          },
+  const [queryClient] = useState(() => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: 30 * 1000,
+          refetchOnWindowFocus: false,
         },
-      })
-  );
+      },
+    });
+    keepApiCache(client);
+    return client;
+  });
 
   return (
     <QueryClientProvider client={queryClient}>

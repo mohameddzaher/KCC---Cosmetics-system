@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface IClientLogo extends Document {
   name: string;
@@ -20,6 +21,8 @@ const ClientLogoSchema = new Schema<IClientLogo>(
   },
   { timestamps: true }
 );
+
+ClientLogoSchema.plugin(auditTrail);
 
 const ClientLogo = mongoose.models.ClientLogo || mongoose.model<IClientLogo>('ClientLogo', ClientLogoSchema);
 export default ClientLogo;

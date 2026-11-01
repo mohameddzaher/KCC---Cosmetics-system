@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface ISeoGlobal extends Document {
   titleTemplate: { en: string; ar: string };
@@ -28,6 +29,8 @@ const SeoGlobalSchema = new Schema<ISeoGlobal>(
   },
   { timestamps: true }
 );
+
+SeoGlobalSchema.plugin(auditTrail);
 
 const SeoGlobal = mongoose.models.SeoGlobal || mongoose.model<ISeoGlobal>('SeoGlobal', SeoGlobalSchema);
 export default SeoGlobal;

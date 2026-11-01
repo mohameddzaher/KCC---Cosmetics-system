@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Loader2, Plus, Search, X, Users2, UserCheck, ListTodo,
@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import ContactActions from '@/components/admin/ContactActions';
 import { STAGES, stageMeta } from '@/components/admin/CrmPanel';
-import { useLivePoll } from '@/lib/useLivePoll';
+import { useApi } from '@/lib/useApi';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const emptyForm = {
@@ -18,10 +18,13 @@ const emptyForm = {
 
 export default function CrmPipelinePage() {
   const { tx } = useLanguage();
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [managers, setManagers] = useState<any[]>([]);
-  const [openTasks, setOpenTasks] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const contacts = useApi<any[]>('/api/customers', { poll: 20000 });
+  const staff = useApi<any[]>('/api/users?role=', { poll: 20000 });
+  const open = useApi<any[]>('/api/crm/tasks?status=open', { poll: 20000 });
+  const customers = useMemo(() => (Array.isArray(contacts.data) ? contacts.data : []), [contacts.data]);
+  const managers = Array.isArray(staff.data) ? staff.data : [];
+  const openTasks = Array.isArray(open.data) ? open.data.length : 0;
+  const loading = !contacts.ready;
   const [search, setSearch] = useState('');
   const [managerFilter, setManagerFilter] = useState('all');
   const [dragId, setDragId] = useState<string | null>(null);
@@ -31,33 +34,9 @@ export default function CrmPipelinePage() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
-  const load = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    try {
-      const [cRes, mRes, tRes] = await Promise.allSettled([
-        fetch('/api/customers', { cache: 'no-store' }),
-        fetch('/api/users?role=', { cache: 'no-store' }),
-        fetch('/api/crm/tasks?status=open', { cache: 'no-store' }),
-      ]);
-      if (cRes.status === 'fulfilled' && cRes.value.ok) {
-        const data = await cRes.value.json();
-        setCustomers(Array.isArray(data) ? data : []);
-      }
-      if (mRes.status === 'fulfilled' && mRes.value.ok) {
-        const data = await mRes.value.json();
-        setManagers(Array.isArray(data) ? data : []);
-      }
-      if (tRes.status === 'fulfilled' && tRes.value.ok) {
-        const data = await tRes.value.json();
-        setOpenTasks(Array.isArray(data) ? data.length : 0);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-  useLivePoll(useCallback(() => load(true), [load]), 20000);
+  const load = async () => {
+    await Promise.all([contacts.reload(), open.reload()]);
+  };
 
   const managerId = (c: any) =>
     typeof c.accountManagerId === 'object' && c.accountManagerId ? c.accountManagerId._id : c.accountManagerId || '';
@@ -84,12 +63,12 @@ export default function CrmPipelinePage() {
     const current = customers.find((c) => c._id === id);
     if (!current || current.stage === stage) return;
     // optimistic
-    setCustomers((prev) => prev.map((c) => (c._id === id ? { ...c, stage } : c)));
+    contacts.patch((prev) => (prev || []).map((c) => (c._id === id ? { ...c, stage } : c)));
     const res = await fetch(`/api/customers/${id}`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stage }),
     });
-    if (!res.ok) load(true);
+    if (!res.ok) load();
   };
 
   const onDrop = (stage: string) => {
@@ -107,7 +86,7 @@ export default function CrmPipelinePage() {
         body: JSON.stringify({ ...form, accountManagerId: form.accountManagerId || undefined }),
       });
       if (!res.ok) { const e = await res.json(); alert(e.error || 'Failed to create contact'); return; }
-      setShowForm(false); setForm(emptyForm); load(true);
+      setShowForm(false); setForm(emptyForm); load();
     } finally {
       setSaving(false);
     }

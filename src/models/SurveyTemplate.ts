@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 interface IBilingualText {
   en: string;
@@ -110,6 +111,8 @@ const SurveyTemplateSchema = new Schema<ISurveyTemplate>(
 
 SurveyTemplateSchema.index({ type: 1 });
 SurveyTemplateSchema.index({ isActive: 1 });
+
+SurveyTemplateSchema.plugin(auditTrail);
 
 const SurveyTemplate = mongoose.models.SurveyTemplate || mongoose.model<ISurveyTemplate>('SurveyTemplate', SurveyTemplateSchema);
 export default SurveyTemplate;

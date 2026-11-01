@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface ITeamMember extends Document {
   name: string;
@@ -25,6 +26,8 @@ const TeamMemberSchema = new Schema<ITeamMember>(
   },
   { timestamps: true }
 );
+
+TeamMemberSchema.plugin(auditTrail);
 
 const TeamMember = mongoose.models.TeamMember || mongoose.model<ITeamMember>('TeamMember', TeamMemberSchema);
 export default TeamMember;

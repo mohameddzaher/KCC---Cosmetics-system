@@ -11,6 +11,7 @@ import {
 import { sendEventEmail, sendCustomerEmail, adminUrl, publicUrl } from '@/lib/mailer';
 import { formatCurrency } from '@/lib/money';
 import { computeTotals } from '@/lib/orderTotals';
+import { audited } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,7 +51,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   }
 }
 
-export async function POST(req: NextRequest, context: RouteContext) {
+export const POST = audited(async function POST(req: NextRequest, context: RouteContext) {
   try {
     const user = await getSession();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -222,4 +223,4 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface ICertificate extends Document {
   title: { en: string; ar: string };
@@ -33,6 +34,8 @@ const CertificateSchema = new Schema<ICertificate>(
   },
   { timestamps: true }
 );
+
+CertificateSchema.plugin(auditTrail);
 
 const Certificate = mongoose.models.Certificate || mongoose.model<ICertificate>('Certificate', CertificateSchema);
 export default Certificate;

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { auditTrail } from '@/lib/audit/plugin';
 
 export interface IInventoryItem extends Document {
   sku: string;
@@ -36,6 +37,8 @@ const InventoryItemSchema = new Schema<IInventoryItem>(
 );
 
 InventoryItemSchema.index({ sku: 1 }, { unique: true });
+
+InventoryItemSchema.plugin(auditTrail);
 
 const InventoryItem = mongoose.models.InventoryItem || mongoose.model<IInventoryItem>('InventoryItem', InventoryItemSchema);
 export default InventoryItem;

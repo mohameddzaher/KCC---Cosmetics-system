@@ -8,6 +8,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import NotificationBell from '@/components/admin/NotificationBell';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import { can, isStaffRole, roleLabel, type Permission } from '@/lib/roles';
+import { useQueryClient } from '@tanstack/react-query';
+import { CRM_FIRST_REQUEST, prefetchApi, useCrmWarmup } from '@/lib/useApi';
 import {
   BookOpen,
   Brain,
@@ -21,6 +23,7 @@ import {
   FileText,
   Gauge,
   Globe,
+  History,
   Inbox,
   Layers,
   LayoutDashboard,
@@ -116,6 +119,7 @@ const NAV_GROUPS: NavGroup[] = [
     key: 'system',
     items: [
       { key: 'users', href: '/admin/users', icon: ShieldCheck, permission: 'users.view' },
+      { key: 'audit', href: '/admin/audit', icon: History, permission: 'audit.view' },
       { key: 'settings', href: '/admin/settings', icon: Settings, permission: 'settings.manage' },
     ],
   },
@@ -131,6 +135,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const queryClient = useQueryClient();
+  useCrmWarmup(queryClient, !!user && canDo('crm.view'));
 
   useEffect(() => {
     try {
@@ -279,6 +285,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       href={item.href}
                       title={collapsed ? t(`admin.${item.key}`) : undefined}
                       aria-current={active ? 'page' : undefined}
+                      onMouseEnter={() => {
+                        const url = CRM_FIRST_REQUEST[item.href];
+                        if (url) prefetchApi(queryClient, url);
+                      }}
                       className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                         active
                           ? 'bg-brand-soft text-brand-soft-fg'
