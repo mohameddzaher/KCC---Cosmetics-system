@@ -127,6 +127,7 @@ export function redactBody(value: unknown, depth = 0): unknown {
 const LABEL_FIELDS = [
   'orderNumber', 'invoiceNumber', 'name', 'nameEn', 'titleEn', 'title',
   'code', 'email', 'label', 'labelEn', 'slug', 'key', 'role', 'productKey', 'questionKey',
+  'product', 'description', 'category', 'type',
 ];
 
 /** The word a person would use for this document. */

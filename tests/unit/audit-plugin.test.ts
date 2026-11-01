@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import mongoose, { Schema } from 'mongoose';
 import { hasMongod, startMongod } from '../helpers';
 import { auditStorage, type AuditStore } from '../../src/lib/audit/context';
-import { auditTrail } from '../../src/lib/audit/plugin';
+import { auditTrail, refPathsOf } from '../../src/lib/audit/plugin';
 import AuditLog from '../../src/models/AuditLog';
 
 /** Against a real MongoDB: a mocked driver would prove nothing about the hooks. */
@@ -120,6 +120,18 @@ test('outside a request nothing is recorded and nothing is slowed', { skip }, as
   const w = await Widget.create({ name: 'A' });
   await Widget.updateOne({ _id: w._id }, { stage: 'x' });
   assert.equal(auditStorage.getStore(), undefined);
+});
+
+test('references are read from the schema, however deep', { skip }, async () => {
+  const s = new Schema({
+    userId: { type: Schema.Types.ObjectId, ref: 'User' },
+    orderIds: [{ type: Schema.Types.ObjectId, ref: 'Order' }],
+    assignments: { factoryUserId: { type: Schema.Types.ObjectId, ref: 'User' } },
+    log: { type: [new Schema({ byId: { type: Schema.Types.ObjectId, ref: 'User' } }, { _id: false })] },
+  });
+  assert.deepEqual(refPathsOf(s), {
+    userId: 'User', orderIds: 'Order', 'assignments.factoryUserId': 'User', 'log.$.byId': 'User',
+  });
 });
 
 test('audit rows cannot be edited or deleted', { skip }, async () => {

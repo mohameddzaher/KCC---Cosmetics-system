@@ -6,15 +6,14 @@ import { can } from '@/lib/roles';
 import { buildXlsx, type XlsxColumn } from '@/lib/xlsx';
 import { audited } from '@/lib/audit';
 import { auditFilter, withActor } from '@/lib/audit/query';
+import {
+  describe, fieldLabel, headlineChanges, subjectTitle, valueText,
+  type Describable, type DescribableChange,
+} from '@/lib/audit/describe';
 
 export const dynamic = 'force-dynamic';
 
 const MAX_ROWS = 20000;
-
-function text(v: unknown): string {
-  if (v === null || v === undefined || v === '') return '—';
-  return typeof v === 'object' ? JSON.stringify(v) : String(v);
-}
 
 /** The log as a workbook. Taking it out of the system is itself logged. */
 export const GET = audited(async function GET(req: NextRequest) {
@@ -33,16 +32,18 @@ export const GET = audited(async function GET(req: NextRequest) {
 
     const rows = docs.map((d) => {
       const r = withActor(d as Record<string, unknown>) as Record<string, any>;
+      const what = describe(r as Describable, 'en');
       return {
         at: new Date(r.createdAt).toISOString().replace('T', ' ').slice(0, 19),
         who: r.actorName || 'Visitor',
         email: r.actorEmail || '',
         role: r.actorRole || '',
-        action: r.action,
-        entity: r.entity,
-        record: r.entityLabel || r.entityId || '',
-        changes: (r.changes || [])
-          .map((c: { field: string; from?: unknown; to?: unknown }) => `${c.field}: ${text(c.from)} → ${text(c.to)}`)
+        summary: [what.what, what.target].filter(Boolean).join(' '),
+        concerns: (r.subjects || [])
+          .map((x: { field: string; model: string; label?: string }) => `${subjectTitle(x, 'en')}: ${x.label}`)
+          .join('\n'),
+        changes: headlineChanges(r.changes || [] as DescribableChange[])
+          .map((c: DescribableChange) => `${fieldLabel(c.field, 'en')}: ${valueText(c.field, c.from, 'en', c.fromLabel)} → ${valueText(c.field, c.to, 'en', c.toLabel)}`)
           .join('\n')
           .slice(0, 30000),
         outcome: r.outcome || 'success',
@@ -57,9 +58,8 @@ export const GET = audited(async function GET(req: NextRequest) {
       { header: 'Who', key: 'who', width: 22 },
       { header: 'Email', key: 'email', width: 26 },
       { header: 'Role', key: 'role', width: 16 },
-      { header: 'Action', key: 'action', width: 14 },
-      { header: 'Entity', key: 'entity', width: 18 },
-      { header: 'Record', key: 'record', width: 28 },
+      { header: 'What they did', key: 'summary', width: 40 },
+      { header: 'Concerning', key: 'concerns', width: 32 },
       { header: 'What changed', key: 'changes', width: 70 },
       { header: 'Result', key: 'outcome', width: 10 },
       { header: 'Error', key: 'error', width: 28 },

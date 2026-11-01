@@ -20,14 +20,25 @@ export function auditFilter(p: URLSearchParams): Record<string, unknown> {
   if (to && !Number.isNaN(Date.parse(to))) range.$lte = new Date(`${to}T23:59:59.999`);
   if (Object.keys(range).length > 0) filter.createdAt = range;
 
+  const all: Array<Record<string, unknown>> = [];
+
+  // Everything concerning one record: changes to it, and to anything pointing at it.
+  const subject = p.get('subject');
+  if (subject) all.push({ $or: [{ entityId: subject }, { 'subjects.id': subject }] });
+
   const q = (p.get('q') || '').trim();
   if (q) {
     const rx = new RegExp(escapeRegex(q), 'i');
-    filter.$or = [
-      { entityLabel: rx }, { actorName: rx }, { actorEmail: rx },
-      { path: rx }, { entityId: rx }, { ip: rx }, { 'changes.field': rx },
-    ];
+    all.push({
+      $or: [
+        { entityLabel: rx }, { actorName: rx }, { actorEmail: rx },
+        { path: rx }, { entityId: rx }, { ip: rx },
+        { 'subjects.label': rx }, { 'changes.field': rx },
+        { 'changes.fromLabel': rx }, { 'changes.toLabel': rx },
+      ],
+    });
   }
+  if (all.length > 0) filter.$and = all;
   return filter;
 }
 

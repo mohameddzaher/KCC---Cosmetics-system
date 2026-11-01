@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Types } from 'mongoose';
 import { MASK, MAX_CHANGES, diffDocuments, flatten, isSensitive, labelOf, redactBody } from '../../src/lib/audit/diff';
+import { describe, deviceText, fieldLabel, headlineChanges, recordHref, valueText } from '../../src/lib/audit/describe';
 
 const field = (r: ReturnType<typeof diffDocuments>, name: string) => r.changes.find((c) => c.field === name);
 
@@ -75,4 +76,45 @@ test('finds the word a person would use for a record', () => {
   assert.equal(labelOf({ orderNumber: 'SMP-1', name: 'x' }), 'SMP-1');
   assert.equal(labelOf({ name: 'Nahdi' }), 'Nahdi');
   assert.equal(labelOf({ other: 1 }), undefined);
+});
+
+test('an entry reads as a sentence, in either language', () => {
+  const order = { action: 'update', entity: 'Order', entityLabel: 'SMP-1', changes: [{ field: 'status', from: 'Submitted', to: 'Shipped' }] };
+  assert.deepEqual(describe(order, 'en'), { what: 'Changed order', target: 'SMP-1', note: undefined });
+  assert.equal(describe(order, 'ar').what, 'تعديل الطلب');
+  assert.equal(describe({ ...order, outcome: 'denied' }, 'ar').what, 'محاولة تعديل الطلب');
+  assert.equal(describe({ action: 'login', entity: 'Session', entityLabel: 'a@b.c' }, 'en').what, 'Signed in');
+  assert.ok(describe({ action: 'update', entity: 'Order', changes: [] }, 'en').note);
+});
+
+test('fields and values are in words, ids become names', () => {
+  assert.equal(fieldLabel('keyPerson.name', 'ar'), 'الشخص المسؤول');
+  assert.equal(fieldLabel('assignments.accountManagerId', 'en'), 'Assignment: Account manager');
+  assert.equal(fieldLabel('someNewField', 'en'), 'Some new field');
+  assert.equal(valueText('status', 'Shipped', 'ar'), 'تم الشحن');
+  assert.equal(valueText('stage', 'current', 'ar'), 'حالي');
+  assert.equal(valueText('isActive', false, 'ar'), 'لا');
+  assert.equal(valueText('ownerId', '65f0', 'en', 'Amr'), 'Amr');
+  assert.equal(valueText('x', null, 'en'), '—');
+});
+
+test('the order log does not repeat the status change it records', () => {
+  const lines = headlineChanges([{ field: 'status' }, { field: 'timeline.3.to' }, { field: 'ownerName' }]);
+  assert.deepEqual(lines.map((c) => c.field), ['status']);
+});
+
+test('records link to their own pages, and a customer is not a staff member', () => {
+  assert.equal(recordHref('Order', 'x'), '/admin/orders/x');
+  assert.equal(recordHref('User', 'x', 'CUSTOMER'), '/admin/customers/x');
+  assert.equal(recordHref('User', 'x', 'SALES'), '/admin/users');
+  assert.equal(recordHref('Session', 'x'), undefined);
+});
+
+test('a browser string becomes a device', () => {
+  const mac = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36';
+  assert.equal(deviceText(mac, 'en'), 'Chrome on Mac');
+  assert.equal(deviceText(mac, 'ar'), 'Chrome على Mac');
+  assert.equal(deviceText('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Version/17.0 Mobile Safari/604.1', 'en'), 'Safari on iOS');
+  assert.equal(deviceText(undefined, 'en'), '—');
+  assert.equal(deviceText('node', 'en'), 'node');
 });

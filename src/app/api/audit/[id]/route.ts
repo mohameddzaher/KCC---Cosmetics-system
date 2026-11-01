@@ -29,7 +29,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     const { requestId } = row as { requestId?: string };
     const related = requestId
       ? await AuditLog.find({ requestId, _id: { $ne: id } })
-        .select('action entity entityId entityLabel createdAt')
+        .select('action entity entityId entityLabel outcome createdAt')
         .sort({ _id: 1 })
         .lean()
       : [];

@@ -29,7 +29,14 @@ export interface IAuditLog extends Document {
   entity: string;
   entityId?: string;
   entityLabel?: string;
-  changes?: Array<{ field: string; from?: unknown; to?: unknown }>;
+  entityRole?: string;
+  /**
+   * What else this concerns: the customer of an order, the account of a visit,
+   * the item of a stock movement. Names are copied so they survive the record
+   * being renamed or deleted.
+   */
+  subjects?: Array<{ field: string; model: string; id: string; label?: string; role?: string }>;
+  changes?: Array<{ field: string; from?: unknown; to?: unknown; fromLabel?: string; toLabel?: string }>;
   truncated?: boolean;
   details?: unknown;
 
@@ -60,7 +67,15 @@ const AuditLogSchema = new Schema<IAuditLog>(
     entity: { type: String, required: true, trim: true },
     entityId: { type: String, trim: true },
     entityLabel: { type: String, trim: true },
-    changes: { type: [{ _id: false, field: String, from: Schema.Types.Mixed, to: Schema.Types.Mixed }], default: undefined },
+    entityRole: { type: String },
+    subjects: {
+      type: [{ _id: false, field: String, model: String, id: String, label: String, role: String }],
+      default: undefined,
+    },
+    changes: {
+      type: [{ _id: false, field: String, from: Schema.Types.Mixed, to: Schema.Types.Mixed, fromLabel: String, toLabel: String }],
+      default: undefined,
+    },
     truncated: { type: Boolean },
     details: { type: Schema.Types.Mixed },
 
@@ -87,6 +102,7 @@ AuditLogSchema.index({ entity: 1, entityId: 1, createdAt: -1 });
 AuditLogSchema.index({ action: 1, createdAt: -1 });
 AuditLogSchema.index({ outcome: 1, createdAt: -1 });
 AuditLogSchema.index({ requestId: 1 });
+AuditLogSchema.index({ 'subjects.id': 1, createdAt: -1 });
 
 /** A record that can be edited proves nothing, so the model refuses to. */
 function refuse() {

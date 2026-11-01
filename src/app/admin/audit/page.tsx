@@ -1,14 +1,14 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Fragment, Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Download, History, Search, ShieldX, X } from 'lucide-react';
 import {
-  AutoGrid, Badge, Button, Card, DataTable, EmptyState, ErrorNote, Field, PageHeader,
-  PageSkeleton, Select, Spinner, Td, TextInput, Th,
+  AutoGrid, Button, Card, EmptyState, ErrorNote, Field, PageHeader,
+  PageSkeleton, Select, Spinner, TextInput,
 } from '@/components/admin/ui';
 import RequirePermission from '@/components/admin/RequirePermission';
-import { ACTION_KEYS, AuditDetail, OutcomeBadge, useAuditWords, type AuditRow } from '@/components/admin/audit';
+import { ACTION_KEYS, AuditDetail, AuditEntry, useAuditWords, type AuditRow } from '@/components/admin/audit';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { downloadFile } from '@/lib/download';
 import { useApi } from '@/lib/useApi';
@@ -37,7 +37,10 @@ function AuditInner() {
   const [q, setQ] = useState('');
   const [userId, setUserId] = useState('all');
   const [entity, setEntity] = useState(params.get('entity') || 'all');
-  const [entityId, setEntityId] = useState(params.get('entityId') || '');
+  /** One record, followed through everything that touched it. */
+  const [focus, setFocus] = useState<{ id: string; label?: string } | null>(
+    params.get('subject') ? { id: params.get('subject') as string } : null
+  );
   const [action, setAction] = useState('all');
   const [outcome, setOutcome] = useState('all');
   const [from, setFrom] = useState('');
@@ -51,13 +54,13 @@ function AuditInner() {
     if (q.trim()) p.set('q', q.trim());
     if (userId !== 'all') p.set('userId', userId);
     if (entity !== 'all') p.set('entity', entity);
-    if (entityId) p.set('entityId', entityId);
+    if (focus) p.set('subject', focus.id);
     if (action !== 'all') p.set('action', action);
     if (outcome !== 'all') p.set('outcome', outcome);
     if (from) p.set('from', from);
     if (to) p.set('to', to);
     return p;
-  }, [q, userId, entity, entityId, action, outcome, from, to]);
+  }, [q, userId, entity, focus, action, outcome, from, to]);
 
   const makeUrl = () => {
     const p = new URLSearchParams(filters);
@@ -80,7 +83,7 @@ function AuditInner() {
   }
 
   function clearFilters() {
-    setQ(''); setUserId('all'); setEntity('all'); setEntityId('');
+    setQ(''); setUserId('all'); setEntity('all'); setFocus(null);
     setAction('all'); setOutcome('all'); setFrom(''); setTo(''); setPage(1);
   }
 
@@ -88,6 +91,14 @@ function AuditInner() {
 
   const items = data?.items ?? [];
   const pages = data?.pages ?? 1;
+  const person = data?.actors.find((a) => a.id === userId);
+
+  /** Newest first, broken by the person's own calendar day. */
+  const days = [...items.reduce((m, r) => {
+    const key = new Date(r.createdAt).toDateString();
+    m.set(key, [...(m.get(key) || []), r]);
+    return m;
+  }, new Map<string, AuditRow[]>())];
 
   return (
     <div>
@@ -136,7 +147,7 @@ function AuditInner() {
               <TextInput
                 value={q}
                 onChange={(e) => filter(setQ)(e.target.value)}
-                placeholder={tx('Record, person, field, IP…')}
+                placeholder={tx('Customer, order, product, person, IP…')}
                 className="ps-10 text-sm"
               />
             </div>
@@ -154,7 +165,7 @@ function AuditInner() {
             </Select>
           </Field>
           <Field label={tx('Record type')}>
-            <Select value={entity} onChange={(e) => { filter(setEntity)(e.target.value); setEntityId(''); }}>
+            <Select value={entity} onChange={(e) => filter(setEntity)(e.target.value)}>
               <option value="all">{tx('All types')}</option>
               {data?.entities.map((e) => <option key={e} value={e}>{words.entity(e)}</option>)}
             </Select>
@@ -177,61 +188,39 @@ function AuditInner() {
             <Button variant="ghost" icon={X} onClick={clearFilters}>{tx('Clear filters')}</Button>
           </div>
         </div>
-        {entityId && (
-          <p className="mt-3 text-xs text-fg-muted">
-            {tx('Showing the history of one record.')}{' '}
-            <button type="button" className="underline" onClick={() => filter(setEntityId)('')}>{tx('Show all')}</button>
-          </p>
+        {(focus || person) && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3 text-xs text-fg-muted">
+            {person && <span>{tx('Everything done by')} <b className="text-fg">{person.name}</b></span>}
+            {focus && <span>{tx('Everything concerning')} <b className="text-fg">{focus.label || tx('this record')}</b></span>}
+            <button type="button" className="underline" onClick={clearFilters}>{tx('Show all')}</button>
+          </div>
         )}
       </Card>
 
       {items.length === 0 ? (
         <EmptyState icon={History} title={tx('Nothing matches these filters')} />
       ) : (
-        <DataTable>
-          <thead>
-            <tr>
-              <Th>{tx('When')}</Th>
-              <Th>{tx('Who')}</Th>
-              <Th>{tx('Action')}</Th>
-              <Th>{tx('Record')}</Th>
-              <Th>{tx('What changed')}</Th>
-              <Th>{tx('Result')}</Th>
-              <Th>IP</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((r) => {
-              const a = words.action(r.action);
-              return (
-                <tr key={r._id} onClick={() => setOpen(r._id)} className="cursor-pointer border-t border-line hover:bg-surface-2">
-                  <Td className="whitespace-nowrap text-xs text-fg-muted">{words.when(r.createdAt)}</Td>
-                  <Td>
-                    <p className="font-medium text-fg">{r.actorName || tx('Visitor (not signed in)')}</p>
-                    {r.actorEmail && <p className="text-[11px] text-fg-subtle">{r.actorEmail}</p>}
-                  </Td>
-                  <Td><Badge tone={a.tone}>{a.label}</Badge></Td>
-                  <Td>
-                    <p className="text-fg">{words.entity(r.entity)}</p>
-                    {r.entityLabel && <p className="max-w-[14rem] truncate text-[11px] text-fg-subtle">{r.entityLabel}</p>}
-                  </Td>
-                  <Td>
-                    {r.changes && r.changes.length > 0 ? (
-                      <p dir="ltr" className="max-w-[18rem] truncate text-start font-mono text-[11px] text-fg-muted">
-                        {r.changes.slice(0, 4).map((c) => c.field).join(', ')}
-                        {r.changes.length > 4 && ` +${r.changes.length - 4}`}
-                      </p>
-                    ) : (
-                      <span className="text-fg-subtle">{r.error ? <span className="text-danger-soft-fg">{r.error}</span> : '—'}</span>
-                    )}
-                  </Td>
-                  <Td><OutcomeBadge outcome={r.outcome} /></Td>
-                  <Td className="whitespace-nowrap font-mono text-[11px] text-fg-muted">{r.ip || '—'}</Td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </DataTable>
+        <div className="overflow-hidden rounded-xl border border-line bg-surface">
+          {days.map(([day, rows]) => (
+            <Fragment key={day}>
+              <div className="flex items-center justify-between border-b border-line bg-surface-2 px-4 py-2 text-xs font-semibold text-fg-muted">
+                <span>{words.day(rows[0].createdAt)}</span>
+                <span className="font-normal">{rows.length}</span>
+              </div>
+              <ul className="divide-y divide-line">
+                {rows.map((r) => (
+                  <AuditEntry
+                    key={r._id}
+                    row={r}
+                    onOpen={setOpen}
+                    onFocus={(s) => { setFocus({ id: s.id, label: s.label }); setPage(1); }}
+                    onActor={(row) => { if (row.userId) filter(setUserId)(String(row.userId)); }}
+                  />
+                ))}
+              </ul>
+            </Fragment>
+          ))}
+        </div>
       )}
 
       <div className="mt-4 flex items-center justify-between gap-3 text-sm text-fg-muted">
@@ -247,7 +236,7 @@ function AuditInner() {
         id={open}
         onClose={() => setOpen(null)}
         onOpen={setOpen}
-        onHistory={(e, id) => { setEntity(e); setEntityId(id); setPage(1); setOpen(null); }}
+        onHistory={(id, label) => { setFocus({ id, label }); setPage(1); setOpen(null); }}
       />
     </div>
   );

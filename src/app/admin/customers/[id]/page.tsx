@@ -423,7 +423,7 @@ export default function CustomerDetailPage() {
 
           {/* CRM: stage, manager, tags, activity timeline */}
           <CrmPanel customer={customer} managers={managers} activities={activities} onChange={loadCustomer} />
-          <div className="mt-6"><AuditTrail entity="User" entityId={customer._id} /></div>
+          <div className="mt-6"><AuditTrail entityId={customer._id} /></div>
 
           {/* Referral Info */}
           <div className="bg-surface border border-line rounded-xl p-5">

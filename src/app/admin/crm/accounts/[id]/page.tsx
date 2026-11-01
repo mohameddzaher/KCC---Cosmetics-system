@@ -408,7 +408,7 @@ export default function CrmAccountPage({ params }: { params: Promise<{ id: strin
       />
 
       <div className="mt-4">
-        <AuditTrail entity="CrmAccount" entityId={id} />
+        <AuditTrail entityId={id} />
       </div>
 
       {/* ------------------------- editing the facts ------------------------- */}

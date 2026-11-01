@@ -4,6 +4,7 @@ import connectDB from '@/lib/db';
 import AuditLog from '@/models/AuditLog';
 import { clientIp } from '@/lib/rateLimit';
 import { auditStorage, type AuditEvent, type AuditStore } from './context';
+import { enrich, targetOfRequest } from './enrich';
 import { redactBody } from './diff';
 
 export { recordAudit, setAuditActor } from './context';
@@ -28,12 +29,6 @@ export interface AuditOptions {
 function outcomeOf(status: number) {
   if (status === 401 || status === 403) return 'denied' as const;
   return status >= 400 ? ('failed' as const) : ('success' as const);
-}
-
-/** The route's own words for what it touched, from `/api/crm/accounts/123`. */
-function entityFromPath(path: string): string {
-  const parts = path.split('?')[0].split('/').filter(Boolean).slice(1);
-  return parts.filter((p) => !/^[0-9a-f]{24}$/i.test(p)).join('/') || 'api';
 }
 
 async function readBody(req: NextRequest): Promise<unknown> {
@@ -64,7 +59,8 @@ async function write(store: AuditStore, events: AuditEvent[], result: {
 }) {
   const { actor } = store;
   const durationMs = Date.now() - store.startedAt;
-  const rows = events.map((e, i) => ({
+  await enrich(events);
+  const rows = events.map(({ refPaths: _used, ...e }, i) => ({
     ...e,
     userId: actor?.id,
     actorName: actor?.name,
@@ -120,9 +116,11 @@ export function audited<C extends unknown[]>(
         error = e instanceof Error ? e.message.slice(0, 500) : 'Unhandled error';
         throw e;
       } finally {
+        // Nothing changed: refused, failed, or a save with nothing new in it.
+        // Still say what it was aimed at.
         const events: AuditEvent[] = store.events.length > 0
           ? store.events
-          : [{ action: options.action || 'request', entity: options.entity || entityFromPath(store.path) }];
+          : [targetOfRequest(store.method, store.path, options)];
         store.flushed = true;
         store.lateFlush = (late) => write(store, late, { status });
         await write(store, events, { status, error, body });

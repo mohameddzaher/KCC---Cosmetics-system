@@ -217,7 +217,7 @@ export default function OrderDetailPage() {
 
           {/* The customer's verdict once it landed, plus our reply. */}
           <OrderFeedbackPanel orderId={orderId} />
-          <AuditTrail entity="Order" entityId={orderId} />
+          <AuditTrail entityId={orderId} />
 
           {can('orders.assign') && (
             <OrderAssignments

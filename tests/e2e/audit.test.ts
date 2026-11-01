@@ -270,6 +270,49 @@ test('an older entry still names its author', opts, async () => {
   assert.equal(j.items[0].actorName, 'admin');
 });
 
+test('an entry names who and what it concerns, in words', opts, async () => {
+  await call(`/api/crm/accounts/${accountId}`, { as: 'admin', method: 'PUT', body: { ownerId: ids.repB, ownerName: 'repB' } });
+  const row = await logs().findOne({ entityId: accountId, action: 'update', 'changes.field': 'ownerId' });
+  assert.ok(row);
+  const owner = row.changes.find((c: { field: string }) => c.field === 'ownerId');
+  assert.equal(owner.fromLabel, 'repA');
+  assert.equal(owner.toLabel, 'repB');
+  assert.ok(row.subjects.some((s: { model: string; label: string }) => s.model === 'User' && s.label === 'repB'));
+
+  // A visit is about an account, and says which, though it never changed it.
+  const visit = await logs().findOne({ entity: 'CrmActivity', action: 'create' });
+  assert.equal(visit?.subjects.find((s: { field: string }) => s.field === 'accountId').label, 'Nahdi Pharmacy');
+  assert.ok(!visit?.subjects.some((s: { field: string }) => s.field === 'byId'), 'the actor is not repeated');
+});
+
+test('a refused attempt says what it was aimed at', opts, async () => {
+  const r = await call(`/api/crm/accounts/${accountId}`, { as: 'repA', method: 'PUT', body: { feedback: 'Trying' } });
+  assert.equal(r.status, 403);
+  const row = await logs().findOne({ actorName: 'repA', outcome: 'denied', entityId: accountId });
+  assert.equal(row?.entity, 'CrmAccount');
+  assert.equal(row?.entityLabel, 'Nahdi Pharmacy');
+  assert.equal(row?.action, 'update');
+});
+
+test('one record can be followed through everything that touched it', opts, async () => {
+  const j = await (await call(`/api/audit?subject=${accountId}&limit=200`, { as: 'admin' })).json();
+  const kinds = new Set(j.items.map((i: { entity: string }) => i.entity));
+  assert.ok(kinds.has('CrmAccount') && kinds.has('CrmActivity'), 'the account and the work on it');
+
+  const byName = await (await call('/api/audit?q=Nahdi&action=create&entity=CrmActivity', { as: 'admin' })).json();
+  assert.ok(byName.total >= 1, 'searching a name finds what concerns it');
+
+  const person = await (await call(`/api/audit?subject=${ids.repB}&q=Nahdi`, { as: 'admin' })).json();
+  assert.ok(person.total >= 1, 'a search and a record combine');
+});
+
+test('deleted records keep their name', opts, async () => {
+  const row = await logs().findOne({ entity: 'CustomerActivity', action: 'delete' });
+  assert.equal(row?.subjects?.length ?? 0, 0, 'the customer went first, so there was no name to keep');
+  const owner = await logs().findOne({ entity: 'User', action: 'delete' });
+  assert.equal(owner?.entityLabel, 'Temp Co');
+});
+
 test('exports are audited, the log included', opts, async () => {
   const r = await call('/api/audit/export?entity=CrmAccount', { as: 'admin' });
   assert.equal(r.status, 200);

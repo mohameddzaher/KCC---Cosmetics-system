@@ -20,6 +20,18 @@ export interface AuditChange {
   field: string;
   from?: unknown;
   to?: unknown;
+  /** The name behind an id, as it was at the time. */
+  fromLabel?: string;
+  toLabel?: string;
+}
+
+/** Someone or something this event concerns, beyond the record itself. */
+export interface AuditSubject {
+  field: string;
+  model: string;
+  id: string;
+  label?: string;
+  role?: string;
 }
 
 export interface AuditEvent {
@@ -27,6 +39,11 @@ export interface AuditEvent {
   entity: string;
   entityId?: string;
   entityLabel?: string;
+  /** Set for a User, because a customer and a member of staff open different pages. */
+  entityRole?: string;
+  subjects?: AuditSubject[];
+  /** Which changed fields hold ids, and of what. Used up before the row is saved. */
+  refPaths?: Record<string, string>;
   changes?: AuditChange[];
   /** More changes happened than one row keeps. */
   truncated?: boolean;
