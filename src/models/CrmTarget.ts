@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { DEFAULT_VISIT_CHECKLIST } from '@/lib/crmProgress';
 
 /**
  * The sales targets and the process, as the KPIs sheet lays them out.
@@ -42,6 +43,23 @@ export interface ICrmTarget extends Document {
     labelEn: string;
     labelAr: string;
     checklist: string[];
+  }>;
+
+  /**
+   * What a rep is expected to do on a visit — introduce themselves, cover the
+   * company, show the products, exchange cards.
+   *
+   * Owned by the commercial manager and editable, because it is how the company
+   * wants a call made and that changes. The rep ticks these while logging the
+   * visit, so what was actually covered is recorded per visit rather than
+   * assumed from the fact that a visit happened.
+   */
+  visitChecklist: Array<{
+    key: string;
+    order: number;
+    labelEn: string;
+    labelAr: string;
+    required: boolean;
   }>;
 
   /** The statuses the sheet's "status" column uses. */
@@ -96,6 +114,22 @@ const CrmTargetSchema = new Schema<ICrmTarget>(
         ),
       ],
       default: [],
+    },
+
+    visitChecklist: {
+      type: [
+        new Schema(
+          {
+            key: { type: String, required: true },
+            order: { type: Number, default: 0 },
+            labelEn: { type: String, default: '' },
+            labelAr: { type: String, default: '' },
+            required: { type: Boolean, default: false },
+          },
+          { _id: false }
+        ),
+      ],
+      default: () => DEFAULT_VISIT_CHECKLIST,
     },
 
     statusOptions: { type: [String], default: [] },

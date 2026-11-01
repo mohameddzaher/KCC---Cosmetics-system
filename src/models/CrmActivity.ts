@@ -27,6 +27,8 @@ export const CRM_ACTIVITY_TYPES = [
   'commercial',       // prices, quantities, payment discussed
   'sample_request',   // they asked for a sample (links to an order)
   'pricing_request',
+  'complaint',        // something the account raised against us
+  'suggestion',       // something they asked us to do differently
   'note',
   'task',
   'stage_change',
@@ -51,6 +53,12 @@ export interface ICrmActivity extends Document {
    * would read as the most productive day the team ever had.
    */
   backfilled?: boolean;
+
+  /**
+   * Which items of the visit checklist were actually covered. Keys, not labels,
+   * so renaming "Talk about KCC" does not rewrite history.
+   */
+  checklist?: string[];
 
   /** 1, 2, 3… for a meeting, so "third meeting" survives as a fact. */
   meetingIndex?: number;
@@ -81,6 +89,7 @@ const CrmActivitySchema = new Schema<ICrmActivity>(
     at: { type: Date, default: Date.now, index: true },
     backfilled: { type: Boolean, default: false, index: true },
 
+    checklist: { type: [String], default: undefined },
     meetingIndex: { type: Number },
     interest: { type: String },
     outcome: { type: String, trim: true },

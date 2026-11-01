@@ -3,6 +3,7 @@ import connectDB from '@/lib/db';
 import CrmTarget from '@/models/CrmTarget';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
+import { DEFAULT_VISIT_CHECKLIST } from '@/lib/crmProgress';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,11 +23,23 @@ export async function GET() {
     }
     await connectDB();
 
-    const doc = await CrmTarget.findOneAndUpdate(
+    let doc = (await CrmTarget.findOneAndUpdate(
       { key: 'main' },
       { $setOnInsert: { key: 'main' } },
       { upsert: true, new: true, setDefaultsOnInsert: true }
-    ).lean();
+    ).lean()) as Record<string, unknown> | null;
+
+    // A Mongoose default only applies when a document is inserted. This one was
+    // created before the checklist existed, so without filling it in here a rep
+    // would be shown no call structure at all.
+    const checklist = (doc?.visitChecklist as unknown[] | undefined) || [];
+    if (checklist.length === 0) {
+      doc = (await CrmTarget.findOneAndUpdate(
+        { key: 'main' },
+        { $set: { visitChecklist: DEFAULT_VISIT_CHECKLIST } },
+        { new: true }
+      ).lean()) as Record<string, unknown> | null;
+    }
 
     return NextResponse.json(doc, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
   } catch (error) {
@@ -38,9 +51,10 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   try {
     const user = await getSession();
-    // Changing a target changes how everyone's performance reads, so it sits
-    // with settings rather than with day-to-day CRM editing.
-    if (!can(user?.role, 'settings.manage')) {
+    // The commercial manager owns how the team is asked to work — the visit
+    // checklist, the targets, the sector split — so this is crm.edit rather
+    // than settings.manage, which he would not have.
+    if (!can(user?.role, 'crm.edit')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
@@ -80,6 +94,17 @@ export async function PUT(req: NextRequest) {
         labelAr: String(s.labelAr || ''),
         checklist: Array.isArray(s.checklist) ? s.checklist.map(String).filter(Boolean) : [],
       })).filter((s: { key: string }) => s.key);
+    }
+    if (Array.isArray(body.visitChecklist)) {
+      set.visitChecklist = body.visitChecklist
+        .map((c: Record<string, unknown>, i: number) => ({
+          key: String(c.key || '').trim() || `step-${i + 1}`,
+          order: Number(c.order) || i + 1,
+          labelEn: String(c.labelEn || '').trim(),
+          labelAr: String(c.labelAr || '').trim(),
+          required: !!c.required,
+        }))
+        .filter((c: { labelEn: string; labelAr: string }) => c.labelEn || c.labelAr);
     }
     if (Array.isArray(body.statusOptions)) {
       set.statusOptions = body.statusOptions.map(String).filter(Boolean);

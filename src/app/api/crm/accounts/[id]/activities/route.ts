@@ -94,6 +94,12 @@ export async function POST(req: NextRequest, context: RouteContext) {
       at,
       meetingIndex:
         type === 'meeting' ? (account.meetingCount || 0) + 1 : undefined,
+      // What the rep actually covered on the call, from the checklist the
+      // commercial manager set. Keys, so renaming an item later does not
+      // rewrite what was done.
+      checklist: Array.isArray(body.checklist)
+        ? body.checklist.map(String).filter(Boolean).slice(0, 50)
+        : undefined,
       interest: body.interest || undefined,
       outcome: typeof body.outcome === 'string' ? body.outcome.trim() : undefined,
       dueDate: body.dueDate ? new Date(body.dueDate) : undefined,

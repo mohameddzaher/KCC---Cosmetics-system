@@ -27,6 +27,15 @@ export interface IUser extends Document {
   source?: string;
   accountManagerId?: Types.ObjectId;
   lastContactedAt?: Date;
+  /**
+   * Who this person reports to. The commercial manager reads his regional
+   * reps' work through this, and a KPI screen can be read top-down rather than
+   * as one flat list of everybody.
+   */
+  managerId?: Types.ObjectId;
+  /** The territory a field rep covers — Riyadh, Jeddah, the Eastern Province. */
+  region?: string;
+
   /** Staff-only: department label shown in the team directory. */
   department?: string;
   /** Staff-only: free-text job title shown next to the role badge. */
@@ -65,6 +74,8 @@ const UserSchema = new Schema<IUser>(
     source: { type: String, trim: true },
     accountManagerId: { type: Schema.Types.ObjectId, ref: 'User' },
     lastContactedAt: { type: Date },
+    managerId: { type: Schema.Types.ObjectId, ref: 'User' },
+    region: { type: String, trim: true },
     department: { type: String, trim: true },
     jobTitle: { type: String, trim: true },
   },

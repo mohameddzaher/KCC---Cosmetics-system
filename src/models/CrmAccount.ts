@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import type { CrmStage, CrmStep } from '@/lib/crmProgress';
 
 /**
  * A target account — a company the sales team is working, not a registered user.
@@ -17,23 +18,14 @@ import mongoose, { Schema, Document, Types } from 'mongoose';
  * upcoming list empties itself as the team works.
  */
 
-export const CRM_STAGES = ['upcoming', 'current', 'hold', 'won', 'lost'] as const;
-export type CrmStage = (typeof CRM_STAGES)[number];
+export { CRM_STAGES, type CrmStage } from '@/lib/crmProgress';
 
 /**
  * The six steps of the sales process, from the KPIs sheet. Each is ticked by
  * logging the matching action, so an account's progress is a consequence of the
  * work recorded rather than a separate thing to remember to update.
  */
-export const CRM_STEPS = [
-  'scheduled',    // 1 — a meeting is booked
-  'introduced',   // 2 — KCC introduced: profile, what we provide, history
-  'accountInfo',  // 3 — volume, rank, best sellers, umbrella brands, prices
-  'keyPerson',    // 4 — name, position, department, phone
-  'feedback',     // 5 — interested / moderate / not, and why
-  'commercial',   // 6 — prices, quantities, payment method
-] as const;
-export type CrmStep = (typeof CRM_STEPS)[number];
+export { CRM_STEPS, type CrmStep } from '@/lib/crmProgress';
 
 export interface ICrmAccount extends Document {
   /** As written in the sheet; either script may be the one that is filled in. */
