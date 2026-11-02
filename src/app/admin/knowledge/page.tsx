@@ -5,6 +5,7 @@ import {
   Brain, Plus, Edit2, Trash2, Loader2, Search,
   X, ToggleLeft, ToggleRight, Tag, ExternalLink
 } from 'lucide-react';
+import ExportButton from '@/components/admin/ExportButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function KnowledgePage() {
@@ -206,6 +207,7 @@ export default function KnowledgePage() {
             {tx('Every answer the assistant gives comes from here. Edit one and the change is live immediately.')}
           </p>
         </div>
+        <ExportButton what="knowledge" />
         <a
           href="/ai-assistant"
           target="_blank"

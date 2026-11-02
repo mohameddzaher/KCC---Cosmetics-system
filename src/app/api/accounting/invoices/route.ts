@@ -7,7 +7,7 @@ import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { audited } from '@/lib/audit';
 import { escapeRegex } from '@/lib/api-helpers';
-import { AccountingError, activeInvoiceOf, ensureInvoice, nextInvoiceNumber, priceItems } from '@/lib/accounting';
+import { AccountingError, activeInvoiceOf, defaultDueDate, ensureInvoice, nextInvoiceNumber, priceItems } from '@/lib/accounting';
 import { OPEN_INVOICE_STATUSES } from '@/lib/invoiceStatus';
 
 export const dynamic = 'force-dynamic';
@@ -93,7 +93,7 @@ export const POST = audited(async function POST(req: NextRequest) {
         userId: order.userId,
         status: issue ? 'sent' : 'draft',
         issuedAt: issue ? new Date() : undefined,
-        dueDate: dueDate || new Date(Date.now() + 14 * 86400000),
+        dueDate: dueDate || (await defaultDueDate()),
         notes: typeof body.notes === 'string' ? body.notes : undefined,
       });
       return NextResponse.json(invoice, { status: 201 });

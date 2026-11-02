@@ -3,7 +3,7 @@ import connectDB from '@/lib/db';
 import CrmActivity from '@/models/CrmActivity';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
-import { activityScope } from '@/lib/crmScope';
+import { accountActivityScope } from '@/lib/crmScope';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     await connectDB();
 
     const p = req.nextUrl.searchParams;
-    const filter: Record<string, unknown> = { ...(await activityScope(user)) };
+    const filter: Record<string, unknown> = { ...(await accountActivityScope(user)) };
 
     const types = (p.get('type') || '').split(',').map((t) => t.trim()).filter(Boolean);
     if (types.length > 0) filter.type = { $in: types };

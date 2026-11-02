@@ -13,6 +13,7 @@ import { formatCurrency } from '@/lib/money';
 import { computeTotals } from '@/lib/orderTotals';
 import { audited } from '@/lib/audit';
 import { applyOrderMove } from '@/lib/accounting';
+import { recordOrderMove } from '@/lib/crmFlow';
 
 export const dynamic = 'force-dynamic';
 
@@ -157,6 +158,13 @@ export const POST = audited(async function POST(req: NextRequest, context: Route
     } catch (e) {
       console.error('[accounting] order move not applied', order.orderNumber, to, e);
       accountingWarning = 'The order moved, but its invoice could not be updated. Check it in Accounting.';
+    }
+
+    // The account hears about it, so the rep follows the client without chasing.
+    try {
+      await recordOrderMove(order, from, to, user, note || undefined);
+    } catch (e) {
+      console.error('[crm] order move not recorded', order.orderNumber, to, e);
     }
 
     // Tell the next desk it is their turn.

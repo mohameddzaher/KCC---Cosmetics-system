@@ -5,8 +5,8 @@
  * screen instead of replacing the page with a line of JSON — which is what
  * happens when an export is a plain link and the session has expired.
  */
-export async function downloadFile(url: string, fallbackName = 'export.xlsx'): Promise<void> {
-  const res = await fetch(url, { cache: 'no-store' });
+export async function downloadFile(url: string, fallbackName = 'export.xlsx', init?: RequestInit): Promise<void> {
+  const res = await fetch(url, { cache: 'no-store', ...init });
   if (!res.ok) {
     let message = 'The export failed.';
     try {

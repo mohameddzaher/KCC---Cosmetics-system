@@ -7,7 +7,7 @@ import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { buildXlsx, type XlsxColumn } from '@/lib/xlsx';
 import { buildPdf, hasUnrepresentable, type PdfColumn } from '@/lib/pdf';
-import { accountScope, activityScope } from '@/lib/crmScope';
+import { accountActivityScope, accountScope, activityScope } from '@/lib/crmScope';
 import { categoryMeta, cityMeta } from '@/lib/crmVocab';
 import { STEP_ORDER } from '@/lib/crmProgress';
 import { computeKpis } from '../kpis/route';

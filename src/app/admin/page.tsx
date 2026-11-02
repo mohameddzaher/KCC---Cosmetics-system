@@ -724,8 +724,8 @@ export default function AdminDashboard() {
               <BarChart data={analytics.revenueByMonth} barCategoryGap="20%">
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                 <XAxis dataKey="month" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v >= 1000 ? `${(v/1000).toFixed(0)}K` : v}`} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(value) => [`$${Number(value).toLocaleString()}`, '']} />
+                <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v))} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(value) => [`${CURRENCY} ${Number(value).toLocaleString()}`, '']} />
                 <Legend wrapperStyle={{ fontSize: '12px', color: '#94a3b8' }} iconSize={8} iconType="circle" />
                 <Bar dataKey="revenue" fill={KCC_GREEN} name={t('admin.paidRevenue')} radius={[4, 4, 0, 0]} />
                 <Bar dataKey="orderValue" fill={KCC_GREEN_LIGHT} name={t('admin.orderValue')} radius={[4, 4, 0, 0]} opacity={0.5} />

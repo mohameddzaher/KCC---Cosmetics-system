@@ -17,6 +17,7 @@ const defaultSettings = {
     companyName: { en: '', ar: '' },
     vatNumber: '',
     crNumber: '',
+    paymentTermsDays: 14,
     emails: { info: '', sales: '', support: '', hr: '', careers: '' },
     phones: { primary: '', secondary: '' },
     socialMedia: {
@@ -305,6 +306,20 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-fg-muted mb-1.5">
+                  <Building2 size={12} />{tx('Days to pay an invoice')}</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={settings.general.paymentTermsDays}
+                  onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, paymentTermsDays: Number(e.target.value) } }))}
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
+                />
+              </div>
+            </div>
+
             {/* Contact Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -458,7 +473,7 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Credit Amount ($)')}</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Credit Amount (SAR)')}</label>
                 <input
                   type="number"
                   value={settings.referral.creditAmount}
@@ -468,7 +483,7 @@ export default function SettingsPage() {
                 <p className="text-xs text-fg-subtle mt-1">{tx('Amount credited per successful referral')}</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Min Order for Credit ($)')}</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Min Order for Credit (SAR)')}</label>
                 <input
                   type="number"
                   value={settings.referral.minOrderForCredit}
@@ -478,7 +493,7 @@ export default function SettingsPage() {
                 <p className="text-xs text-fg-subtle mt-1">{tx('Referred user must place an order above this amount')}</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Max Credits Per User ($)')}</label>
+                <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Max Credits Per User (SAR)')}</label>
                 <input
                   type="number"
                   value={settings.referral.maxCreditsPerUser}

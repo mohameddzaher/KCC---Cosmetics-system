@@ -13,6 +13,8 @@ export interface ISiteSettings extends Document {
     /** Printed on tax invoices. */
     vatNumber: string;
     crNumber: string;
+    /** Days a customer has to pay an invoice. */
+    paymentTermsDays: number;
     emails: {
       info: string;
       sales: string;
@@ -76,6 +78,7 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
       },
       vatNumber: { type: String, default: '' },
       crNumber: { type: String, default: '' },
+      paymentTermsDays: { type: Number, default: 14 },
       emails: {
         info: { type: String, default: '' },
         sales: { type: String, default: '' },

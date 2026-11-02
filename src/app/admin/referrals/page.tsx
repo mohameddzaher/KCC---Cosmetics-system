@@ -6,7 +6,9 @@ import {
   CheckCircle, Clock, Plus, Edit2, Trash2, X,
 } from 'lucide-react';
 import { useLivePoll } from '@/lib/useLivePoll';
+import ExportButton from '@/components/admin/ExportButton';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatCurrency } from '@/lib/money';
 
 export default function ReferralsPage() {
   const { tx } = useLanguage();
@@ -171,7 +173,7 @@ export default function ReferralsPage() {
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-bold text-fg">${totalCredits}</p>
+            <p className="text-2xl font-bold text-fg">{formatCurrency(totalCredits)}</p>
             <p className="text-sm text-fg-muted mt-0.5">{tx('Total Credits Given')}</p>
           </div>
         </div>
@@ -189,6 +191,7 @@ export default function ReferralsPage() {
             className="w-full ps-9 pe-3 py-2.5 text-sm bg-surface border border-line rounded-xl text-fg placeholder:text-fg-subtle focus:border-kcc-green focus:outline-none"
           />
         </div>
+        <ExportButton what="referrals" shown={filteredReferrals.map((r) => r._id)} total={referrals.length} />
         <button type="button" onClick={openCreate}
           className="flex items-center gap-2 px-3.5 py-2.5 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors">
           <Plus size={16} />{tx('Add Referral')}</button>
@@ -217,7 +220,7 @@ export default function ReferralsPage() {
                 className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none disabled:opacity-50" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Credit Amount ($)')}</label>
+              <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Credit Amount (SAR)')}</label>
               <input type="number" aria-label={tx('Credit amount')} placeholder="0" value={form.creditAmount}
                 onChange={(e) => setForm(f => ({ ...f, creditAmount: Number(e.target.value) }))}
                 className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none" />
@@ -313,7 +316,7 @@ export default function ReferralsPage() {
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-end">
-                        <span className="text-sm font-medium text-fg">${ref.creditAmount || 0}</span>
+                        <span className="text-sm font-medium text-fg">{formatCurrency(ref.creditAmount || 0)}</span>
                       </td>
                       <td className="px-5 py-3.5">
                         {orderNumber ? (

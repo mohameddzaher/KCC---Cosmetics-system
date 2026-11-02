@@ -90,7 +90,7 @@ function Expenses() {
         backLabel={tx('Accounting')}
         actions={
           <>
-            <Button variant="outline" icon={Download} onClick={() => downloadFile(`/api/accounting/export?what=expenses&from=${period.from}&to=${period.to}`)}>{tx('Export to Excel')}</Button>
+            <Button variant="outline" icon={Download} onClick={() => downloadFile(`/api/accounting/export?what=expenses&from=${period.from}&to=${period.to}&category=${category}`)}>{tx('Export to Excel')}</Button>
             {manage && <Button icon={Plus} onClick={() => open()}>{tx('New Expense')}</Button>}
           </>
         }

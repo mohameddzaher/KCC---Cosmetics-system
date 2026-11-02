@@ -463,7 +463,7 @@ export default function OrderDetailPage() {
                   {promo.code}
                 </code>
                 <p className="text-xs text-fg-muted">
-                  {promo.type === 'percentage' ? `${promo.value}% off` : `$${promo.value} off`}
+                  {promo.type === 'percentage' ? `${promo.value}% off` : `${formatCurrency(promo.value)} off`}
                 </p>
               </div>
             </div>

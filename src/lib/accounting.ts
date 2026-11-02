@@ -3,6 +3,9 @@ import Counter from '@/models/Counter';
 import Invoice from '@/models/Invoice';
 import Order from '@/models/Order';
 import Payment from '@/models/Payment';
+import SiteSettings from '@/models/SiteSettings';
+import { zatcaQrSvg } from '@/lib/zatcaQr';
+import { recordMoney } from '@/lib/crmFlow';
 import { computeTotals } from '@/lib/orderTotals';
 import { ACTIVE_INVOICE_STATUSES, money2, statusFromPayments } from '@/lib/invoiceStatus';
 
@@ -16,8 +19,34 @@ import { ACTIVE_INVOICE_STATUSES, money2, statusFromPayments } from '@/lib/invoi
  * the moment a payment was deleted.
  */
 
-/** Days a customer has to pay when nothing says otherwise. */
+/** Days a customer has to pay, unless Settings says otherwise. */
 const DEFAULT_TERMS_DAYS = 14;
+
+export async function defaultDueDate(from = new Date()): Promise<Date> {
+  const settings = await SiteSettings.findOne({ key: 'main' }).select('general.paymentTermsDays').lean() as
+    { general?: { paymentTermsDays?: number } } | null;
+  const days = settings?.general?.paymentTermsDays;
+  return new Date(from.getTime() + (days && days > 0 ? days : DEFAULT_TERMS_DAYS) * 86400000);
+}
+
+/** Who an invoice is from, and its QR once there is a VAT number to put in it. */
+export async function sellerDetails(
+  invoice: { issuedAt?: Date; createdAt?: Date; total: number; tax: number },
+  settings: unknown
+) {
+  const general = ((settings as { general?: Record<string, any> } | null)?.general || {}) as Record<string, any>;
+  const seller = {
+    companyName: general.companyName,
+    contactAddress: general.contactAddress,
+    vatNumber: general.vatNumber,
+    crNumber: general.crNumber,
+  };
+  const name = general.companyName?.ar || general.companyName?.en;
+  const qr = general.vatNumber && name && invoice.issuedAt
+    ? await zatcaQrSvg({ seller: name, vatNumber: general.vatNumber, issuedAt: new Date(invoice.issuedAt), total: invoice.total, vat: invoice.tax })
+    : undefined;
+  return { seller, qr };
+}
 
 export class AccountingError extends Error {
   constructor(message: string, public status = 400) {
@@ -101,7 +130,7 @@ export async function ensureInvoice(
       total: order.totals?.total || 0,
       status: options.issue ? 'sent' : 'draft',
       issuedAt,
-      dueDate: options.dueDate || order.quote?.validUntil || new Date(Date.now() + DEFAULT_TERMS_DAYS * 86400000),
+      dueDate: options.dueDate || order.quote?.validUntil || (await defaultDueDate()),
     });
   } catch (e) {
     // Lost the race to a request doing the same thing; its invoice is the invoice.
@@ -191,7 +220,13 @@ export async function recordPayment(invoiceId: Id, input: PaymentInput) {
     status,
     paidAt: status === 'completed' ? input.paidAt || new Date() : undefined,
   });
-  return { payment, invoice: await settleInvoice(invoiceId) };
+  const settled = await settleInvoice(invoiceId);
+  if (status === 'completed') {
+    try {
+      await recordMoney({ _id: invoice.orderId }, `Payment of ${amount.toFixed(2)} received on ${invoice.invoiceNumber}`, null);
+    } catch { /* the money is recorded whether or not the CRM heard */ }
+  }
+  return { payment, invoice: settled };
 }
 
 /**
@@ -217,7 +252,10 @@ export async function applyOrderMove(
         notes: `Confirmed on the order by ${by}`,
       });
     }
-  } else if (to === 'Cancelled') {
+  } else if (to === 'Quotation Sent') {
+    // A revised quotation reprices an invoice that was already raised.
+    await syncInvoiceToOrder(order);
+  } else if (to === 'Cancelled' || to === 'Rejected') {
     const invoice = await activeInvoiceOf(order._id);
     // Money already taken has to be refunded by a person, not cancelled away.
     if (invoice && !(invoice.amountPaid > 0)) {

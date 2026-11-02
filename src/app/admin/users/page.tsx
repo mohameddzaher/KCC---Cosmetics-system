@@ -5,6 +5,7 @@ import {
   Check, Edit2, Mail, Plus, Search, ShieldCheck, ToggleLeft, ToggleRight, Trash2, X, Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import ExportButton from '@/components/admin/ExportButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 import RequirePermission from '@/components/admin/RequirePermission';
 import PasswordToggle from '@/components/common/PasswordToggle';
@@ -280,9 +281,12 @@ function UsersInner() {
         title={t('admin.usersTitle')}
         subtitle={t('admin.usersSubtitle')}
         actions={
-          <Button icon={Plus} onClick={openCreate}>
-            {t('admin.addUser')}
-          </Button>
+          <>
+            <ExportButton what="users" />
+            <Button icon={Plus} onClick={openCreate}>
+              {t('admin.addUser')}
+            </Button>
+          </>
         }
       />
 

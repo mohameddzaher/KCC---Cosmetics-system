@@ -9,6 +9,7 @@ import {
 import ContactActions from '@/components/admin/ContactActions';
 import { STAGES, stageMeta } from '@/components/admin/CrmPanel';
 import { useApi } from '@/lib/useApi';
+import ExportButton from '@/components/admin/ExportButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const emptyForm = {
@@ -126,6 +127,7 @@ export default function CrmPipelinePage() {
           <Link href="/admin/crm/tasks" className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-fg bg-surface border border-line rounded-lg hover:border-line">
             <ListTodo size={16} /> Tasks{openTasks > 0 && <span className="px-1.5 py-0.5 text-xs rounded-full bg-yellow-500/20 text-yellow-300">{openTasks}</span>}
           </Link>
+          <ExportButton what="customers" shown={filtered.map((c) => c._id)} total={customers.length} />
           <button type="button" onClick={() => { setForm(emptyForm); setShowForm(true); }}
             className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors">
             <Plus size={16} />{tx('Add Contact')}</button>

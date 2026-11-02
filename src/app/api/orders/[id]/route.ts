@@ -49,8 +49,10 @@ export async function GET(
 
     // Staff see where the money stands; the screen links to it if they may open it.
     const staff = isStaffRole(user.role) && can(user.role, 'orders.view');
-    const invoice = staff
-      ? await activeInvoiceOf(order._id).then((i) => i && {
+    const live = await activeInvoiceOf(order._id);
+    // A customer sees an invoice once it is issued, never a draft.
+    const invoice = staff || (live && live.status !== 'draft')
+      ? await Promise.resolve(live).then((i) => i && {
           _id: i._id, invoiceNumber: i.invoiceNumber, status: i.status,
           total: i.total, amountPaid: i.amountPaid, dueDate: i.dueDate,
         })
@@ -59,7 +61,10 @@ export async function GET(
       ? await CrmAccount.findOne({ orderIds: order._id }).select('name').lean()
       : null;
 
-    return NextResponse.json({ ...(order.toObject?.() ?? order), invoice, crmAccount });
+    const body = { ...(order.toObject?.() ?? order), invoice, crmAccount };
+    // Notes the team writes to itself are not the customer's to read.
+    if (!staff) delete body.internalNotes;
+    return NextResponse.json(body);
   } catch (error: any) {
     console.error('Orders GET [id] error:', error);
     return NextResponse.json(

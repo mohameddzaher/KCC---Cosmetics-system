@@ -8,6 +8,7 @@ import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { statusMeta } from '@/lib/orderWorkflow';
 import { audited } from '@/lib/audit';
+import { recordFeedback } from '@/lib/crmFlow';
 
 export const dynamic = 'force-dynamic';
 
@@ -130,6 +131,12 @@ export const POST = audited(async function POST(req: NextRequest, context: Route
       });
     } catch {
       /* notification failure must never block the feedback */
+    }
+
+    try {
+      await recordFeedback(order, rating as number, doc.comment, session);
+    } catch (e) {
+      console.error('[crm] feedback not recorded', order.orderNumber, e);
     }
 
     return NextResponse.json(doc, { status: 201 });

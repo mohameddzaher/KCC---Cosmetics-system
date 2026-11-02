@@ -69,7 +69,10 @@ const NAV_GROUPS: NavGroup[] = [
   {
     key: 'overview',
     icon: LayoutDashboard,
-    items: [{ key: 'dashboard', href: '/admin', icon: LayoutDashboard, permission: 'dashboard.view' }],
+    items: [
+      { key: 'dashboard', href: '/admin', icon: LayoutDashboard, permission: 'dashboard.view' },
+      { key: 'sops', href: '/admin/sops', icon: BookOpen, permission: 'dashboard.view' },
+    ],
   },
   {
     key: 'salesCrm',
@@ -314,9 +317,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Nav — the ONLY scrolling region of the sidebar */}
       <nav className="scroll-thin min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 py-3">
         {visibleGroups.map((grp) => {
-          const here = grp.items.some((i) => pathname === i.href || pathname.startsWith(i.href + '/')) && grp.key !== 'overview'
-            || (grp.key === 'overview' && pathname === '/admin');
-          const single = grp.items.length === 1;
+          const here = grp.items.some((i) => isActive(i.href) || pathname.startsWith(i.href + '/') && i.href !== '/admin');
+          // The two everyday pages sit at the top, with no heading to open.
+          const single = grp.key === 'overview';
           // The section you are in stays open; the rest stay as you left them.
           const open = collapsed || single || here || !!sections[grp.key] === true;
           const GroupIcon = grp.icon;

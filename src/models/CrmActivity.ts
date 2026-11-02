@@ -32,6 +32,7 @@ export const CRM_ACTIVITY_TYPES = [
   'suggestion',       // something they asked us to do differently
   'note',
   'task',
+  'order_update',     // something happened to one of this account's orders
   'stage_change',
   'assignment',
   'system',

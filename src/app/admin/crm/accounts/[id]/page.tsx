@@ -13,6 +13,7 @@ import {
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApi } from '@/lib/useApi';
 import { AuditTrail } from '@/components/admin/audit';
+import ClientHub from '@/components/admin/ClientHub';
 import { CRM_CATEGORIES, CRM_CITIES } from '@/lib/crmVocab';
 import { STEP_ORDER } from '@/lib/crmProgress';
 import LogActionModal from '@/components/admin/crm/LogActionModal';
@@ -51,6 +52,7 @@ const TYPE_LABELS: Record<string, [string, string]> = {
   note: ['Note', 'ملاحظة'],
   task: ['Task', 'مهمة'],
   stage_change: ['Stage change', 'تغيير المرحلة'],
+  order_update: ['Order update', 'تحديث طلب'],
   assignment: ['Assignment', 'تعيين'],
   system: ['System', 'النظام'],
 };
@@ -191,6 +193,8 @@ export default function CrmAccountPage({ params }: { params: Promise<{ id: strin
           <ErrorNote>{error}</ErrorNote>
         </div>
       )}
+
+      <div className="mb-5"><ClientHub accountId={id} /></div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
         {/* ------------------------- left: progress and history ------------------------- */}

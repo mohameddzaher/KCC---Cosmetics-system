@@ -5,6 +5,7 @@ import {
   Loader2, Plus, Trash2, Save, ChevronRight, ChevronDown,
   Folder, FolderOpen, Package, X, Layers, AlertCircle, Check,
 } from 'lucide-react';
+import ExportButton from '@/components/admin/ExportButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Sub { name: string; slug?: string; items: string[]; order?: number }
@@ -126,6 +127,7 @@ export default function CategoriesAdminPage() {
   return (
     <div className="space-y-6">
       <div>
+        <div className="float-end"><ExportButton what="categories" /></div>
         <h1 className="text-2xl font-bold text-fg mb-1 flex items-center gap-2">
           <Layers size={22} className="text-kcc-green" />{tx('Product Categories')}</h1>
         <p className="text-sm text-fg-muted">

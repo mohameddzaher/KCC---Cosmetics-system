@@ -115,7 +115,7 @@ const VALUES: Record<string, Pair> = {
   key_person: ['Key person', 'الشخص المسؤول'], feedback: ['Feedback', 'رد الحساب'], commercial: ['Commercial', 'تجاري'],
   sample_request: ['Sample request', 'طلب عيّنة'], pricing_request: ['Pricing request', 'طلب أسعار'], complaint: ['Complaint', 'شكوى'],
   suggestion: ['Suggestion', 'اقتراح'], note: ['Note', 'ملاحظة'], task: ['Task', 'مهمة'], stage_change: ['Stage change', 'تغيير المرحلة'],
-  assignment: ['Assignment', 'تعيين'], system: ['System', 'النظام'],
+  order_update: ['Order update', 'تحديث طلب'], assignment: ['Assignment', 'تعيين'], system: ['System', 'النظام'],
   // Orders
   sample: ['Sample', 'عيّنة'], bulk: ['Bulk', 'جملة'], low: ['Low', 'منخفضة'], normal: ['Normal', 'عادية'], high: ['High', 'مرتفعة'], urgent: ['Urgent', 'عاجلة'],
   pending: ['Pending', 'قيد الانتظار'], paid: ['Paid', 'مدفوع'], refunded: ['Refunded', 'مسترد'], cash: ['Cash', 'نقدًا'], card: ['Card', 'بطاقة'],

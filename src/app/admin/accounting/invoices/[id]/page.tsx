@@ -152,6 +152,7 @@ function InvoiceDetail() {
             <Row label={tx('Balance')} value={money(owed)} strong />
           </div>
           {inv.notes && <p className="mt-4 text-xs text-fg-muted">{inv.notes}</p>}
+          {data.qr && <div className="mt-4 h-28 w-28" dangerouslySetInnerHTML={{ __html: data.qr }} />}
         </Card>
 
         <div className="space-y-4 print:hidden">

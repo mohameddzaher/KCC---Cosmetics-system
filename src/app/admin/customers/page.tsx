@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import ContactActions from '@/components/admin/ContactActions';
 import { stageMeta, STAGES } from '@/components/admin/CrmPanel';
+import ExportButton from '@/components/admin/ExportButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function CustomersPage() {
@@ -139,6 +140,7 @@ export default function CustomersPage() {
         <div className="text-sm text-fg-muted hidden sm:block">
           {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''}
         </div>
+        <ExportButton what="customers" shown={filteredCustomers.map((c) => c._id)} total={customers.length} />
         <button type="button" onClick={() => setShowForm((s) => !s)}
           className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors shrink-0">
           <Plus size={16} />{tx('Add Contact')}</button>

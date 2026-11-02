@@ -10,6 +10,7 @@ export default function LogisticsPage() {
   return (
     <RequirePermission permission="logistics.view">
       <OperationsQueue
+        exportAs="logistics"
         title={t('admin.logisticsTitle')}
         subtitle={t('admin.logisticsSubtitle')}
         emptyLabel={t('admin.logisticsEmpty')}

@@ -7,6 +7,7 @@ import { User, Package, ShoppingBag, Copy, Check, ArrowRight, Calendar, Loader2 
 import { useAuth } from '@/contexts/AuthContext';
 import ProfileSettings from '@/components/account/ProfileSettings';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatCurrency } from '@/lib/money';
 
 const statusColors: Record<string, string> = {
   Submitted: 'bg-blue-500/10 text-blue-400',
@@ -117,7 +118,7 @@ export default function AccountPage() {
           className="p-5 bg-surface/50 border border-line rounded-2xl">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-fg uppercase tracking-wider">{t('account.referralCode')}</h3>
-            <span className="text-xs text-fg-muted">{tx('Balance:')}<span className="text-kcc-green font-medium">${referralBalance}</span></span>
+            <span className="text-xs text-fg-muted">{tx('Balance:')}<span className="text-kcc-green font-medium">{formatCurrency(referralBalance)}</span></span>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex-1 px-4 py-3 bg-surface-2 border border-line rounded-xl font-mono text-fg text-sm">

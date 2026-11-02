@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import User from '@/models/User';
+import CrmAccount from '@/models/CrmAccount';
 import { can } from '@/lib/roles';
 
 /**
@@ -98,6 +99,20 @@ export async function activityScope(
   const ids = asIds(await visibleOwnerIds(user));
   if (ids.length === 0) return {};
   return { byId: { $in: ids } };
+}
+
+/**
+ * What was said about the accounts this viewer owns, whoever said it. A client's
+ * own complaint is written by the client, so filtering on the author alone would
+ * hide it from the very rep who has to answer it.
+ */
+export async function accountActivityScope(
+  user: Viewer | null | undefined
+): Promise<Record<string, unknown>> {
+  const ids = asIds(await visibleOwnerIds(user));
+  if (ids.length === 0) return {};
+  const accounts = await CrmAccount.find({ ownerId: { $in: ids } }).select('_id').lean();
+  return { $or: [{ byId: { $in: ids } }, { accountId: { $in: accounts.map((a) => a._id) } }] };
 }
 
 /** True when this viewer may open that particular account. */

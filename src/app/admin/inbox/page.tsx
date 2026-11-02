@@ -5,6 +5,7 @@ import {
   Inbox, Mail, Loader2, Trash2, Building2, Phone, Search, Users,
 } from 'lucide-react';
 import { useLivePoll } from '@/lib/useLivePoll';
+import ExportButton from '@/components/admin/ExportButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 type Tab = 'messages' | 'subscribers';
@@ -81,8 +82,9 @@ export default function InboxPage() {
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tx('Search...')}
               className="ps-9 pe-3 py-2 text-sm bg-surface border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none w-52" />
           </div>
+          {tab === 'messages' && <ExportButton what="messages" shown={filteredMsgs.map((m) => m._id)} total={messages.length} />}
           {tab === 'subscribers' && subs.length > 0 && (
-            <button type="button" onClick={exportSubs} className="px-3 py-2 text-sm text-fg border border-line rounded-lg hover:border-line">{tx('Export CSV')}</button>
+            <button type="button" onClick={exportSubs} className="px-3 py-2 text-sm text-fg border border-line rounded-lg hover:border-line">{tx('Export to Excel')}</button>
           )}
         </div>
       </div>

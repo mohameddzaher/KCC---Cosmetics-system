@@ -13,6 +13,7 @@ import {
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatCurrency } from '@/lib/money';
 import OrderProgressTracker from '@/components/account/OrderProgressTracker';
+import OrderInvoiceCard from '@/components/account/OrderInvoiceCard';
 import OrderFeedbackCard from '@/components/account/OrderFeedbackCard';
 import { statusLabel } from '@/lib/orderWorkflow';
 
@@ -345,6 +346,8 @@ export default function OrderDetailPage() {
             <DetailRow label={t('samples.customerAddress')} value={customerInfo.address} />
           )}
         </SectionCard>
+
+        <OrderInvoiceCard invoice={order.invoice} />
 
         {/* Payment & Financial */}
         <SectionCard title={t('samples.paymentSection')} icon={CreditCard}>

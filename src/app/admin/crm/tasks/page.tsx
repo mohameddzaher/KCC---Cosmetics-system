@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import ContactActions from '@/components/admin/ContactActions';
 import { useApi } from '@/lib/useApi';
+import ExportButton from '@/components/admin/ExportButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const FILTERS = [
@@ -25,6 +26,14 @@ export default function CrmTasksPage() {
   const load = reload;
 
   const toggle = async (task: any) => {
+    if (task.source === 'account') {
+      await fetch(`/api/crm/activities/${task._id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ done: !task.done }),
+      });
+      load();
+      return;
+    }
     const cid = task.customerId?._id;
     if (!cid) return;
     await fetch(`/api/customers/${cid}/activities/${task._id}`, {
@@ -59,6 +68,10 @@ export default function CrmTasksPage() {
         </div>
       </div>
 
+      <div className="flex justify-end">
+        <ExportButton what="tasks" shown={tasks.map((x) => x._id)} />
+      </div>
+
       <div className="bg-surface border border-line rounded-xl overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-48"><Loader2 className="animate-spin text-kcc-green" size={24} /></div>
@@ -86,6 +99,11 @@ export default function CrmTasksPage() {
                           {c.name}{c.company ? ` · ${c.company}` : ''}
                         </Link>
                       )}
+                      {t.account && (
+                        <Link href={`/admin/crm/accounts/${t.account._id}`} className="text-xs text-fg-muted hover:text-kcc-green">
+                          {t.account.name}
+                        </Link>
+                      )}
                       {t.dueDate && (
                         <span className={`text-xs flex items-center gap-1 ${overdue ? 'text-red-400' : 'text-fg-subtle'}`}>
                           {overdue ? <AlertTriangle size={11} /> : <CalendarClock size={11} />}
@@ -94,8 +112,8 @@ export default function CrmTasksPage() {
                       )}
                     </div>
                   </div>
-                  {c && (
-                    <ContactActions phone={c.phone} whatsapp={c.whatsapp} email={c.email} size={14} />
+                  {(c || t.account) && (
+                    <ContactActions phone={(c || t.account).phone} whatsapp={c?.whatsapp} email={(c || t.account).email} size={14} />
                   )}
                 </div>
               );

@@ -133,7 +133,7 @@ function Invoices() {
         backLabel={tx('Accounting')}
         actions={
           <>
-            <Button variant="outline" icon={Download} onClick={() => downloadFile('/api/accounting/export?what=invoices')}>{tx('Export to Excel')}</Button>
+            <Button variant="outline" icon={Download} onClick={() => downloadFile(`/api/accounting/export?what=invoices&status=${status}`)}>{tx('Export to Excel')}</Button>
             {can('accounting.manage') && <Button icon={Plus} onClick={() => setCreating(true)}>{tx('New Invoice')}</Button>}
           </>
         }

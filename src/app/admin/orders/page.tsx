@@ -3,12 +3,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
-  Search, Filter, Download, Eye, ChevronLeft, ChevronRight,
+  Search, Filter, Eye, ChevronLeft, ChevronRight,
   ShoppingCart, Package, Calendar, Loader2
 } from 'lucide-react';
 import { useLivePoll } from '@/lib/useLivePoll';
 import OrdersStats from '@/components/admin/OrdersStats';
+import ExportButton from '@/components/admin/ExportButton';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatCurrency } from '@/lib/money';
 import { ORDER_STATUSES, statusBadgeClass, statusLabel } from '@/lib/orderWorkflow';
 
 // The filter list is derived from the workflow, so a new status appears here
@@ -61,7 +63,7 @@ export default function OrdersPage() {
   useLivePoll(useCallback(() => loadOrders(true), [loadOrders]), 20000);
 
   // Client-side filtering for search and date range (server already filtered type/status)
-  const filteredOrders = orders.filter(order => {
+  const matchesFilters = (order: any) => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const matchesOrder = order.orderNumber?.toLowerCase().includes(q);
@@ -73,31 +75,22 @@ export default function OrdersPage() {
     if (dateFrom && new Date(order.createdAt) < new Date(dateFrom)) return false;
     if (dateTo && new Date(order.createdAt) > new Date(dateTo + 'T23:59:59Z')) return false;
     return true;
-  });
+  };
+  const filteredOrders = orders.filter(matchesFilters);
+
+  /** The list is paged, so "with the filters" has to look past the page on screen. */
+  const anyFilter = typeFilter !== 'all' || statusFilter !== 'All' || !!searchQuery || !!dateFrom || !!dateTo;
+  const allFilteredIds = async () => {
+    const params = new URLSearchParams({ limit: '20000' });
+    if (typeFilter !== 'all') params.set('type', typeFilter);
+    if (statusFilter !== 'All') params.set('status', statusFilter);
+    const res = await fetch(`/api/orders?${params}`, { cache: 'no-store' });
+    const data = await res.json();
+    return (data.orders || []).filter(matchesFilters).map((o: any) => o._id as string);
+  };
 
   const totalPages = Math.ceil(totalOrders / itemsPerPage);
 
-  const handleExportCSV = () => {
-    const headers = ['Order Number', 'Type', 'Customer', 'Company', 'Status', 'Total', 'Payment', 'Date'];
-    const rows = filteredOrders.map(o => [
-      o.orderNumber,
-      o.type,
-      o.customerInfo?.personName || o.userId?.name || '',
-      o.customerInfo?.companyName || o.userId?.company || '',
-      o.status,
-      o.totals?.total || 0,
-      o.paymentStatus,
-      new Date(o.createdAt).toLocaleDateString()
-    ]);
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `orders-export-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
@@ -178,11 +171,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Export */}
-        <button
-          onClick={handleExportCSV}
-          className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-fg-muted border border-line rounded-lg hover:text-fg hover:border-line-strong transition-colors"
-        >
-          <Download size={15} />{tx('Export CSV')}</button>
+        <ExportButton what="orders" resolveShown={anyFilter ? allFilteredIds : undefined} />
       </div>
 
       {/* Results Count */}
@@ -240,7 +229,7 @@ export default function OrdersPage() {
                         {statusLabel(order.status, locale)}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-end text-sm text-fg font-medium">${(order.totals?.total || 0).toLocaleString()}</td>
+                    <td className="px-5 py-3.5 text-end text-sm text-fg font-medium">{formatCurrency(order.totals?.total)}</td>
                     <td className="px-5 py-3.5">
                       <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
                         order.paymentStatus === 'paid' ? 'bg-green-500/10 text-green-400' :

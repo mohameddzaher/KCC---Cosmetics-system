@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
 import CustomerActivity from '@/models/CustomerActivity';
+import { linkCustomerToCrm } from '@/lib/crmFlow';
 import { getSession, hashPassword } from '@/lib/auth';
 import { generateReferralCode } from '@/lib/api-helpers';
 import { can } from '@/lib/roles';
@@ -81,6 +82,13 @@ export const POST = audited(async function POST(req: NextRequest) {
       authorId: session.id,
       authorName: session.name,
     });
+
+    // A client added by hand belongs on the CRM as much as one who ordered.
+    try {
+      await linkCustomerToCrm(customer);
+    } catch (e) {
+      console.error('[crm] customer not linked', e);
+    }
 
     const safe = customer.toObject();
     delete safe.password;

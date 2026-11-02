@@ -5,7 +5,6 @@ import User from '@/models/User';
 import Order from '@/models/Order';
 import Referral from '@/models/Referral';
 import Invoice from '@/models/Invoice';
-import CrmAccount from '@/models/CrmAccount';
 import CustomerActivity from '@/models/CustomerActivity';
 import { getSession } from '@/lib/auth';
 import { can, ROLES } from '@/lib/roles';
@@ -66,11 +65,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
         .lean()
       : null;
 
-    const crmAccount = can(user.role, 'crm.view')
-      ? await CrmAccount.findOne({ customerId: id }).select('name').lean()
-      : null;
-
-    return NextResponse.json({ customer, orders, referrals, activities, managers, invoices, crmAccount });
+    return NextResponse.json({ customer, orders, referrals, activities, managers, invoices });
   } catch (error: any) {
     console.error('Customers GET [id] error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

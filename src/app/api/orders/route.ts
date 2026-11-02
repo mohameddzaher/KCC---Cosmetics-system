@@ -11,6 +11,7 @@ import { can } from '@/lib/roles';
 import { computeTotals } from '@/lib/orderTotals';
 import { claimPromo, evaluatePromo } from '@/lib/promo';
 import { linkOrderToCrm } from '@/lib/crmLink';
+import { ownerForNewOrder } from '@/lib/crmFlow';
 import { scopeFilterForRole } from '@/lib/orderWorkflow';
 import { generateOrderNumber } from '@/lib/api-helpers';
 import { sendEventEmail, adminUrl } from '@/lib/mailer';
@@ -170,7 +171,7 @@ export const POST = audited(async function POST(req: NextRequest) {
       referralCode: body.referralCode || undefined,
       paymentMethod: body.paymentMethod || 'cash',
       paymentStatus: 'pending',
-      internalNotes: body.internalNotes || '',
+      internalNotes: can(user.role, 'orders.edit') ? body.internalNotes || '' : '',
       attachments: body.attachments || [],
       bulkDetails: body.bulkDetails || undefined,
       convertedFromSample: body.convertedFromSample || undefined,
@@ -234,6 +235,14 @@ export const POST = audited(async function POST(req: NextRequest) {
     } catch (e) {
       console.error('[crm] could not link order', order.orderNumber, e instanceof Error ? e.message : e);
     }
+
+    // The rep who owns the account looks after the order they brought in.
+    try {
+      const owner = await ownerForNewOrder(order._id);
+      if (owner && !order.assignments?.accountManagerId) {
+        await Order.updateOne({ _id: order._id }, { $set: { 'assignments.accountManagerId': owner } });
+      }
+    } catch { /* an unassigned order still arrives in the shared queue */ }
 
     // Record promo usage (for accurate per-user limits going forward)
     if (promoCodeId && user) {

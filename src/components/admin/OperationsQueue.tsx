@@ -7,6 +7,7 @@ import {
   AutoGrid, Badge, Button, Card, EmptyState, ErrorNote, PageHeader, Spinner,
 } from '@/components/admin/ui';
 import OrderWorkflow, { type TimelineEvent } from '@/components/admin/OrderWorkflow';
+import ExportButton from '@/components/admin/ExportButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ORDER_STATUSES, statusBadgeClass, statusLabel, type OrderStatus } from '@/lib/orderWorkflow';
 
@@ -37,6 +38,7 @@ export default function OperationsQueue({
   columns,
   emptyLabel,
   nextStop,
+  exportAs,
 }: {
   title: string;
   subtitle: string;
@@ -44,6 +46,7 @@ export default function OperationsQueue({
   emptyLabel: string;
   /** The board an order lands on once it leaves this one. */
   nextStop?: { label: string; href: string };
+  exportAs: string;
 }) {
   const { t, locale } = useLanguage();
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -125,9 +128,12 @@ export default function OperationsQueue({
         title={title}
         subtitle={subtitle}
         actions={
-          <Button variant="outline" size="sm" icon={RefreshCw} onClick={load}>
-            {t('ui.refresh')}
-          </Button>
+          <>
+            <ExportButton what={exportAs} />
+            <Button variant="outline" size="sm" icon={RefreshCw} onClick={load}>
+              {t('ui.refresh')}
+            </Button>
+          </>
         }
       />
 

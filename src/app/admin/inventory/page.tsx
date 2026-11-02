@@ -5,7 +5,9 @@ import {
   Package, Plus, Edit2, Trash2, ArrowUpCircle, ArrowDownCircle,
   AlertTriangle, Loader2, Search, X, Save
 } from 'lucide-react';
+import ExportButton from '@/components/admin/ExportButton';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatCurrency } from '@/lib/money';
 
 export default function InventoryPage() {
   const { locale, tx } = useLanguage();
@@ -228,6 +230,9 @@ export default function InventoryPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {activeTab === 'items'
+            ? <ExportButton what="inventory" shown={filteredItems.map((i) => i._id)} total={items.length} />
+            : <ExportButton what="movements" shown={filteredMovements.map((m) => m._id)} total={movements.length} />}
           {activeTab === 'items' && (
             <button
               type="button"
@@ -298,7 +303,7 @@ export default function InventoryPage() {
               <input type="text" value={itemForm.unit} onChange={(e) => setItemForm(f => ({ ...f, unit: e.target.value }))} className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none" placeholder={tx('pcs')} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Cost Per Unit ($)')}</label>
+              <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Cost Per Unit (SAR)')}</label>
               <input type="number" step="0.01" value={itemForm.costPerUnit} onChange={(e) => setItemForm(f => ({ ...f, costPerUnit: Number(e.target.value) }))} className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none" placeholder="0.00" />
             </div>
           </div>
@@ -404,7 +409,7 @@ export default function InventoryPage() {
                         {isLow && <AlertTriangle size={13} className="inline ms-1.5 text-red-400" />}
                       </td>
                       <td className="px-5 py-3.5 text-end text-sm text-fg-muted">{(item.lowStockThreshold || 0).toLocaleString()}</td>
-                      <td className="px-5 py-3.5 text-end text-sm text-fg-muted">${(item.costPerUnit || 0).toFixed(2)}</td>
+                      <td className="px-5 py-3.5 text-end text-sm text-fg-muted">{formatCurrency(item.costPerUnit)}</td>
                       <td className="px-5 py-3.5 text-center">
                         <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
                           item.isActive !== false ? 'bg-green-500/10 text-green-400' : 'bg-surface-3 text-fg-muted'

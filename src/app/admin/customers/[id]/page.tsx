@@ -12,6 +12,7 @@ import {
 import ContactActions from '@/components/admin/ContactActions';
 import CrmPanel, { stageMeta } from '@/components/admin/CrmPanel';
 import { AuditTrail } from '@/components/admin/audit';
+import ClientHub from '@/components/admin/ClientHub';
 import { InvoiceBadge } from '@/components/admin/accounting/shared';
 import { balanceOf } from '@/lib/invoiceStatus';
 import { formatCurrency as money } from '@/lib/money';
@@ -45,7 +46,6 @@ export default function CustomerDetailPage() {
   const [managers, setManagers] = useState<any[]>([]);
   /** Null for someone who may not see the accounts. */
   const [invoices, setInvoices] = useState<any[] | null>(null);
-  const [crmAccount, setCrmAccount] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -64,7 +64,6 @@ export default function CustomerDetailPage() {
         setActivities(Array.isArray(data.activities) ? data.activities : []);
         setManagers(Array.isArray(data.managers) ? data.managers : []);
         setInvoices(Array.isArray(data.invoices) ? data.invoices : null);
-        setCrmAccount(data.crmAccount || null);
       } else if (res.status === 404) {
         setError('Customer not found');
       } else {
@@ -217,6 +216,8 @@ export default function CustomerDetailPage() {
           </div>
         </div>
       </div>
+
+      <ClientHub customerId={customer._id} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left column - Details & Orders */}
@@ -427,13 +428,6 @@ export default function CustomerDetailPage() {
               isActive={customer.isActive !== false}
               onChange={loadCustomer}
             />
-          )}
-
-          {crmAccount && (
-            <Link href={`/admin/crm/accounts/${crmAccount._id}`} className="mb-6 flex items-center justify-between rounded-xl border border-line bg-surface p-4 text-sm hover:bg-surface-2">
-              <span className="text-fg-muted">{tx('CRM account')}</span>
-              <span className="font-semibold text-fg">{crmAccount.name}</span>
-            </Link>
           )}
 
           {invoices && (

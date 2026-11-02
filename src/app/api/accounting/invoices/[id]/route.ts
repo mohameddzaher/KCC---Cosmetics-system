@@ -7,7 +7,7 @@ import SiteSettings from '@/models/SiteSettings';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { audited } from '@/lib/audit';
-import { AccountingError, priceItems, syncOrderPayment } from '@/lib/accounting';
+import { AccountingError, priceItems, sellerDetails, syncOrderPayment } from '@/lib/accounting';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,11 +34,11 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         .populate('orderId', 'orderNumber status type customerInfo')
         .lean(),
       Payment.find({ invoiceId: id }).sort({ createdAt: -1 }).lean(),
-      SiteSettings.findOne({ key: 'main' }).select('general.companyName general.vatNumber general.crNumber general.contactAddress').lean(),
+      SiteSettings.findOne({ key: 'main' }).lean(),
     ]);
     if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
 
-    return NextResponse.json({ invoice, payments, seller: (settings as { general?: unknown } | null)?.general || {} });
+    return NextResponse.json({ invoice, payments, ...(await sellerDetails(invoice as never, settings)) });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });

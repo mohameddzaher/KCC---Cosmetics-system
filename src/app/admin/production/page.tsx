@@ -10,6 +10,7 @@ export default function ProductionPage() {
   return (
     <RequirePermission permission="production.view">
       <OperationsQueue
+        exportAs="production"
         title={t('admin.productionTitle')}
         subtitle={t('admin.productionSubtitle')}
         emptyLabel={t('admin.productionEmpty')}

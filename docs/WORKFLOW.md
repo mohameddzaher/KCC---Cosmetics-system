@@ -389,3 +389,26 @@ payments, and an order's payment status from its invoice. All of it lives in
 An order's status still moves only through the workflow, so an invoice paid in
 full does not advance the order: its page offers the link to confirm it. An
 order with no price raises no invoice.
+
+---
+
+## 13. How the CRM sits inside the cycle
+
+The same SOPs, for the team, are in the admin panel under **Workflow & SOPs**
+(`src/lib/sops.ts`). `src/lib/crmFlow.ts` is the link in code.
+
+| What happens | What the CRM does |
+|---|---|
+| An order arrives | It finds its account by company name, or creates one. The account owner becomes the order's account manager |
+| A customer is added by hand | They join the CRM, on their existing account if there is one |
+| Any order move | It is written on the account's history, with who made it |
+| Quotation sent | The commercial step is ticked, and the owner gets a follow-up in 3 days |
+| The client moves on | That follow-up closes itself |
+| Payment received | The account moves to Won |
+| Delivered | The owner gets a reorder follow-up in 7 days |
+| Client rates an order | It lands on the account. Two stars or fewer is an open complaint |
+
+The client file (`src/lib/clientProfile.ts`) reads as one company from either
+the CRM account or the customer page: visits, meetings, calls, requests, orders,
+follow-ups, complaints and money, on one timeline. Money shows only to those with
+`accounting.view`.

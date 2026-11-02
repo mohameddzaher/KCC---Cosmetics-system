@@ -12,7 +12,7 @@ const STATUS_COLORS: Record<string, string> = {
   Shipped: '#06b6d4', Delivered: '#10b981', Closed: '#64748b',
 };
 
-const money = (n: number) => (n >= 1000 ? `$${(n / 1000).toFixed(1)}K` : `$${n.toLocaleString()}`);
+const money = (n: number) => (n >= 1000 ? `SAR ${(n / 1000).toFixed(1)}K` : `SAR ${n.toLocaleString()}`);
 
 export default function OrdersStats() {
   const { tx } = useLanguage();

@@ -5,6 +5,8 @@ import {
   Tag, Plus, Edit2, Trash2, Loader2, Search,
   X, ToggleLeft, ToggleRight, Calendar, Percent, DollarSign
 } from 'lucide-react';
+import { formatCurrency } from '@/lib/money';
+import ExportButton from '@/components/admin/ExportButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function PromosPage() {
@@ -193,6 +195,7 @@ export default function PromosPage() {
             className="w-full ps-9 pe-3 py-2.5 text-sm bg-surface border border-line rounded-xl text-fg placeholder:text-fg-subtle focus:border-kcc-green focus:outline-none"
           />
         </div>
+        <ExportButton what="promos" shown={filteredPromos.map((p) => p._id)} total={promos.length} />
         <button
           type="button"
           onClick={handleOpenCreate}
@@ -231,11 +234,11 @@ export default function PromosPage() {
                 className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
               >
                 <option value="percentage">{tx('Percentage (%)')}</option>
-                <option value="fixed">{tx('Fixed Amount ($)')}</option>
+                <option value="fixed">{tx('Fixed Amount (SAR)')}</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-fg-muted mb-1.5">Value ({formData.type === 'percentage' ? '%' : '$'})</label>
+              <label className="block text-xs font-medium text-fg-muted mb-1.5">Value ({formData.type === 'percentage' ? '%' : 'SAR'})</label>
               <input
                 type="number"
                 value={formData.value}
@@ -244,7 +247,7 @@ export default function PromosPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Min Order ($)')}</label>
+              <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Min Order (SAR)')}</label>
               <input
                 type="number"
                 value={formData.minOrder}
@@ -253,7 +256,7 @@ export default function PromosPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Max Discount ($)')}</label>
+              <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Max Discount (SAR)')}</label>
               <input
                 type="number"
                 value={formData.maxDiscount}
@@ -351,7 +354,7 @@ export default function PromosPage() {
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-end text-sm font-medium text-fg">
-                        {promo.type === 'percentage' ? `${promo.value}%` : `$${promo.value}`}
+                        {promo.type === 'percentage' ? `${promo.value}%` : formatCurrency(promo.value)}
                       </td>
                       <td className="px-5 py-3.5 text-center">
                         <span className={`text-sm font-medium ${usageFull ? 'text-red-400' : 'text-fg'}`}>

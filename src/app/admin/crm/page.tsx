@@ -80,7 +80,7 @@ const TYPE_LABELS: Record<string, [string, string]> = {
   commercial: ['Commercial', 'تجاري'], sample_request: ['Sample requested', 'طلب عيّنة'],
   pricing_request: ['Pricing requested', 'طلب أسعار'], complaint: ['Complaint', 'شكوى'],
   suggestion: ['Suggestion', 'اقتراح'], note: ['Note', 'ملاحظة'], task: ['Task', 'مهمة'],
-  stage_change: ['Stage change', 'تغيير المرحلة'], assignment: ['Assignment', 'تعيين'],
+  stage_change: ['Stage change', 'تغيير المرحلة'], order_update: ['Order update', 'تحديث طلب'], assignment: ['Assignment', 'تعيين'],
   system: ['System', 'النظام'],
 };
 

@@ -8,7 +8,7 @@ import { can } from '@/lib/roles';
 import { audited } from '@/lib/audit';
 import { buildXlsx, type XlsxColumn } from '@/lib/xlsx';
 import { computeReceivables, computeSummary } from '@/lib/accountingReports';
-import { balanceOf, expenseCategoryLabel, INVOICE_STATUS_META, displayStatus, PAYMENT_METHODS, PAYMENT_STATUS_META } from '@/lib/invoiceStatus';
+import { balanceOf, OPEN_INVOICE_STATUSES, expenseCategoryLabel, INVOICE_STATUS_META, displayStatus, PAYMENT_METHODS, PAYMENT_STATUS_META } from '@/lib/invoiceStatus';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +28,18 @@ export const GET = audited(async function GET(req: NextRequest) {
     const now = new Date();
     const from = p.get('from') ? new Date(`${p.get('from')}T00:00:00`) : new Date(now.getFullYear(), 0, 1);
     const to = p.get('to') ? new Date(`${p.get('to')}T23:59:59.999`) : now;
-    const range = { $gte: from, $lte: to };
+    // No period asked for means all of it, not this year.
+    const range = p.get('from') || p.get('to')
+      ? { $gte: p.get('from') ? from : new Date(0), $lte: to }
+      : { $exists: true };
+    const only = (key: string) => {
+      const v = p.get(key);
+      return v && v !== 'all' ? { [key]: v } : {};
+    };
+    const invoiceStatus = p.get('status');
+    const invoiceFilter: Record<string, unknown> = invoiceStatus === 'overdue'
+      ? { status: { $in: OPEN_INVOICE_STATUSES }, dueDate: { $lt: new Date(new Date().setHours(0, 0, 0, 0)) } }
+      : invoiceStatus === 'open' ? { status: { $in: OPEN_INVOICE_STATUSES } } : only('status');
 
     let columns: XlsxColumn[] = [];
     let rows: Array<Record<string, unknown>> = [];
@@ -36,7 +47,7 @@ export const GET = audited(async function GET(req: NextRequest) {
     let title = '';
 
     if (what === 'invoices') {
-      const docs = await Invoice.find({ createdAt: range }).populate('userId', 'name company').populate('orderId', 'orderNumber').sort({ createdAt: -1 }).lean() as unknown as Array<Record<string, any>>;
+      const docs = await Invoice.find({ createdAt: range, ...invoiceFilter }).populate('userId', 'name company').populate('orderId', 'orderNumber').sort({ createdAt: -1 }).lean() as unknown as Array<Record<string, any>>;
       title = 'Invoices';
       columns = [
         { header: 'Invoice', key: 'number', width: 18 }, { header: 'Order', key: 'order', width: 22 },
@@ -53,7 +64,7 @@ export const GET = audited(async function GET(req: NextRequest) {
         net: (d.subtotal || 0) - (d.discount || 0), tax: d.tax, total: d.total, paid: d.amountPaid || 0, balance: balanceOf(d),
       }));
     } else if (what === 'payments') {
-      const docs = await Payment.find({ createdAt: range }).populate('userId', 'name company').populate('invoiceId', 'invoiceNumber').sort({ createdAt: -1 }).lean() as unknown as Array<Record<string, any>>;
+      const docs = await Payment.find({ createdAt: range, ...only('status'), ...only('method') }).populate('userId', 'name company').populate('invoiceId', 'invoiceNumber').sort({ createdAt: -1 }).lean() as unknown as Array<Record<string, any>>;
       title = 'Payments';
       columns = [
         { header: 'Date', key: 'date', width: 12 }, { header: 'Invoice', key: 'invoice', width: 18 },
@@ -67,7 +78,7 @@ export const GET = audited(async function GET(req: NextRequest) {
         method: PAYMENT_METHODS[d.method]?.en || d.method, reference: d.reference, status: PAYMENT_STATUS_META[d.status]?.en || d.status, amount: d.amount,
       }));
     } else if (what === 'expenses') {
-      const docs = await Expense.find({ date: range }).populate('orderId', 'orderNumber').sort({ date: -1 }).lean() as unknown as Array<Record<string, any>>;
+      const docs = await Expense.find({ date: range, ...only('category') }).populate('orderId', 'orderNumber').sort({ date: -1 }).lean() as unknown as Array<Record<string, any>>;
       title = 'Expenses';
       columns = [
         { header: 'Date', key: 'date', width: 12 }, { header: 'Category', key: 'category', width: 20 },

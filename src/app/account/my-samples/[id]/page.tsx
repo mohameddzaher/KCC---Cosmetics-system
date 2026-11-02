@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import OrderProgressTracker from '@/components/account/OrderProgressTracker';
+import OrderInvoiceCard from '@/components/account/OrderInvoiceCard';
 import OrderFeedbackCard from '@/components/account/OrderFeedbackCard';
 import QuotationCard from '@/components/account/QuotationCard';
 import { statusLabel } from '@/lib/orderWorkflow';
@@ -492,6 +493,8 @@ export default function SampleDetailPage() {
             <DetailRow label={t('samples.customerAddress')} value={customerInfo.address} />
           )}
         </SectionCard>
+
+        <OrderInvoiceCard invoice={order.invoice} />
 
         {/* Payment */}
         <SectionCard title={t('samples.paymentSection')} icon={CreditCard}>

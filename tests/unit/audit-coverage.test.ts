@@ -34,8 +34,16 @@ test('every route that writes goes through audited()', () => {
 
 test('taking data out of the system is audited', () => {
   for (const f of routes.filter((r) => /buildXlsx|buildPdf/.test(readFileSync(r, 'utf8')))) {
-    assert.match(readFileSync(f, 'utf8'), /audited\(async function GET/, f);
+    assert.match(readFileSync(f, 'utf8'), /audited\(async function (GET|POST)/, f);
   }
+});
+
+test('every list page in the panel can export to Excel', () => {
+  const lists = ['orders', 'customers', 'inbox', 'inventory', 'promos', 'referrals', 'users', 'categories', 'knowledge', 'audit',
+    'accounting/invoices', 'accounting/payments', 'accounting/expenses', 'accounting/receivables', 'accounting/reports',
+    'crm/contacts', 'crm/tasks', 'crm/feedback', 'crm/kpis', 'crm/plan', 'crm/catalogue'];
+  const missing = lists.filter((p) => !/Export|ExportButton/.test(readFileSync(`src/app/admin/${p}/page.tsx`, 'utf8')));
+  assert.deepEqual(missing, []);
 });
 
 test('nothing bypasses the model hooks', () => {

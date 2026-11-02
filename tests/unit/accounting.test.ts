@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { agingBucket, balanceOf, displayStatus, statusFromPayments } from '../../src/lib/invoiceStatus';
+import { zatcaPayload } from '../../src/lib/zatcaQr';
 
 test('the status follows the money', () => {
   assert.equal(statusFromPayments('sent', 115, 0), 'sent');
@@ -40,4 +41,17 @@ test('ageing buckets', () => {
   assert.equal(agingBucket('2026-05-30', now), 'd31_60');
   assert.equal(agingBucket('2026-04-30', now), 'd61_90');
   assert.equal(agingBucket('2026-03-01', now), 'd90plus');
+});
+
+test('the invoice QR is the five tagged fields, Arabic included', () => {
+  const payload = zatcaPayload({ seller: 'شركة كي سي سي', vatNumber: '300000000000003', issuedAt: new Date('2026-11-02T10:00:00.000Z'), total: 1150, vat: 150 });
+  const b = Buffer.from(payload, 'base64');
+  const fields: string[] = [];
+  for (let i = 0; i < b.length;) {
+    const [tag, len] = [b[i], b[i + 1]];
+    assert.equal(tag, fields.length + 1);
+    fields.push(b.subarray(i + 2, i + 2 + len).toString('utf8'));
+    i += 2 + len;
+  }
+  assert.deepEqual(fields, ['شركة كي سي سي', '300000000000003', '2026-11-02T10:00:00Z', '1150.00', '150.00']);
 });
