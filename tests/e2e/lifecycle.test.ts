@@ -48,8 +48,8 @@ async function customerSees(id: string, status: string, who = 'buyer') {
   return r.json;
 }
 
-async function placeOrder(type = 'sample', company = 'Rose Beauty Co') {
-  const r = await call('buyer', '/api/orders', 'POST', {
+async function placeOrder(type = 'sample', company = 'Rose Beauty Co', who = 'buyer') {
+  const r = await call(who, '/api/orders', 'POST', {
     type,
     internalNotes: 'injected by the customer',
     customerInfo: { companyName: company, personName: 'Lina', email: 'buyer@t.local', phone: '0501112222', city: 'Riyadh' },
@@ -67,7 +67,7 @@ before(async () => {
   const password = bcrypt.hashSync(PASSWORD, 4);
   const people: Record<string, string> = {
     admin: 'SUPER_ADMIN', am: 'ACCOUNT_MANAGER', sales: 'SALES', finance: 'ACCOUNTANT',
-    factory: 'FACTORY', dispatch: 'LOGISTICS', buyer: 'CUSTOMER', stranger: 'CUSTOMER',
+    factory: 'FACTORY', dispatch: 'LOGISTICS', buyer: 'CUSTOMER', stranger: 'CUSTOMER', cedar: 'CUSTOMER',
   };
   for (const [k, role] of Object.entries(people)) {
     await db.collection('users').insertOne({ name: k, email: `${k}@t.local`, role, isActive: true, password, createdAt: new Date(), updatedAt: new Date() });
@@ -324,7 +324,7 @@ test('the sales side lives inside the cycle', opts, async () => {
   await call('am', `/api/crm/accounts/${accountId}/activities`, 'POST', { type: 'visit', body: 'Met Sami at the head office' });
   await call('am', `/api/crm/accounts/${accountId}/activities`, 'POST', { type: 'call', body: 'Agreed to send a sample' });
 
-  const id = await placeOrder('sample', 'Cedar Pharmacy');
+  const id = await placeOrder('sample', 'Cedar Pharmacy', 'cedar');
   const order = await db.collection('orders').findOne({ _id: new mongoose.Types.ObjectId(id) });
   assert.equal(String(order?.assignments?.accountManagerId), String(salesUser?._id), 'the rep who owns the account looks after the order');
 
@@ -358,12 +358,12 @@ test('the sales side lives inside the cycle', opts, async () => {
   assert.ok((await call('am', '/api/crm/tasks?status=open')).json.some((t: { body: string }) => t.body.includes('reorder')), 'delivery leaves a reorder follow-up');
 
   // A poor rating reaches the complaints screen by itself.
-  await call('buyer', `/api/orders/${id}/feedback`, 'POST', { rating: 2, comment: 'Box was damaged', aspects: {} });
+  await call('cedar', `/api/orders/${id}/feedback`, 'POST', { rating: 2, comment: 'Box was damaged', aspects: {} });
   const complaints = (await call('am', '/api/crm/activities?type=complaint&limit=50')).json;
   assert.ok(complaints.items.some((c: { body: string }) => c.body.includes('Box was damaged')));
 
   // And all of it is one client file, from either door.
-  const buyer = await db.collection('users').findOne({ email: 'buyer@t.local' });
+  const buyer = await db.collection('users').findOne({ email: 'cedar@t.local' });
   const viaAccount = (await call('am', `/api/client-profile?accountId=${accountId}`)).json;
   assert.equal(viaAccount.stats.meetings, 1);
   assert.equal(viaAccount.stats.contacts, 1);
