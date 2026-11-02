@@ -5,12 +5,16 @@ import {
   Package, Plus, Edit2, Trash2, ArrowUpCircle, ArrowDownCircle,
   AlertTriangle, Loader2, Search, X, Save
 } from 'lucide-react';
+import Link from 'next/link';
 import ExportButton from '@/components/admin/ExportButton';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { usePermission } from '@/contexts/AuthContext';
 import { formatCurrency } from '@/lib/money';
 
 export default function InventoryPage() {
   const { locale, tx } = useLanguage();
+  const { can } = usePermission();
+  const canManage = can('inventory.manage');
   const [activeTab, setActiveTab] = useState<'items' | 'movements'>('items');
   const [items, setItems] = useState<any[]>([]);
   const [movements, setMovements] = useState<any[]>([]);
@@ -28,9 +32,11 @@ export default function InventoryPage() {
   });
 
   // Add movement form state
-  const [movementForm, setMovementForm] = useState({
+  const EMPTY_MOVEMENT = {
     itemId: '', type: 'IN', quantity: 0, reason: '', reference: '',
-  });
+    unitCost: 0, vatAmount: 0, vendor: '', recordExpense: true,
+  };
+  const [movementForm, setMovementForm] = useState(EMPTY_MOVEMENT);
 
   useEffect(() => {
     loadData();
@@ -109,7 +115,7 @@ export default function InventoryPage() {
         resetItemForm();
       } else {
         const data = await res.json();
-        alert(data.error || 'Failed to save item');
+        alert(tx(data.error || 'Failed to save item'));
       }
     } catch (error) {
       console.error('Failed to save item:', error);
@@ -128,10 +134,14 @@ export default function InventoryPage() {
         body: JSON.stringify(movementForm),
       });
       if (res.ok) {
-        const created = await res.json();
-        setMovements(prev => [created, ...prev]);
+        await res.json();
+        const movesRes = await fetch('/api/inventory/movements');
+        if (movesRes.ok) {
+          const data = await movesRes.json();
+          setMovements(Array.isArray(data) ? data : []);
+        }
         setShowAddMovement(false);
-        setMovementForm({ itemId: '', type: 'IN', quantity: 0, reason: '', reference: '' });
+        setMovementForm(EMPTY_MOVEMENT);
         // Reload items to get updated stock
         const itemsRes = await fetch('/api/inventory');
         if (itemsRes.ok) {
@@ -140,7 +150,7 @@ export default function InventoryPage() {
         }
       } else {
         const data = await res.json();
-        alert(data.error || 'Failed to record movement');
+        alert(tx(data.error || 'Failed to record movement'));
       }
     } catch (error) {
       console.error('Failed to create movement:', error);
@@ -158,7 +168,7 @@ export default function InventoryPage() {
         setItems(prev => prev.filter(item => item._id !== id));
       } else {
         const data = await res.json();
-        alert(data.error || 'Failed to delete item');
+        alert(tx(data.error || 'Failed to delete item'));
       }
     } catch (error) {
       console.error('Failed to delete item:', error);
@@ -183,7 +193,8 @@ export default function InventoryPage() {
     return (
       m.itemId?.sku?.toLowerCase().includes(q) ||
       m.itemId?.name?.en?.toLowerCase().includes(q) ||
-      m.reference?.toLowerCase().includes(q) ||
+      String(m.reference?.id || '').toLowerCase().includes(q) ||
+      String(m.orderNumber || '').toLowerCase().includes(q) ||
       m.reason?.toLowerCase().includes(q)
     );
   });
@@ -233,7 +244,7 @@ export default function InventoryPage() {
           {activeTab === 'items'
             ? <ExportButton what="inventory" shown={filteredItems.map((i) => i._id)} total={items.length} />
             : <ExportButton what="movements" shown={filteredMovements.map((m) => m._id)} total={movements.length} />}
-          {activeTab === 'items' && (
+          {activeTab === 'items' && canManage && (
             <button
               type="button"
               onClick={() => { if (showAddItem) { setShowAddItem(false); resetItemForm(); } else { resetItemForm(); setShowAddItem(true); } }}
@@ -241,7 +252,7 @@ export default function InventoryPage() {
             >
               <Plus size={16} />{tx('Add Item')}</button>
           )}
-          {activeTab === 'movements' && (
+          {activeTab === 'movements' && canManage && (
             <button
               type="button"
               onClick={() => setShowAddMovement(!showAddMovement)}
@@ -291,8 +302,8 @@ export default function InventoryPage() {
               <input type="text" value={itemForm.category} onChange={(e) => setItemForm(f => ({ ...f, category: e.target.value }))} className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none" placeholder="Paper Cups" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Initial Stock')}</label>
-              <input type="number" value={itemForm.currentStock} onChange={(e) => setItemForm(f => ({ ...f, currentStock: Number(e.target.value) }))} className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none" placeholder="0" />
+              <label className="block text-xs font-medium text-fg-muted mb-1.5">{editingItemId ? tx('Stock (change it with a movement)') : tx('Initial Stock')}</label>
+              <input type="number" disabled={Boolean(editingItemId)} value={itemForm.currentStock} onChange={(e) => setItemForm(f => ({ ...f, currentStock: Number(e.target.value) }))} className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none" placeholder="0" />
             </div>
             <div>
               <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Low Stock Threshold')}</label>
@@ -356,12 +367,33 @@ export default function InventoryPage() {
               <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Reference')}</label>
               <input type="text" value={movementForm.reference} onChange={(e) => setMovementForm(f => ({ ...f, reference: e.target.value }))} className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none" placeholder="PO-2026-XXX" />
             </div>
+            {movementForm.type === 'IN' && (
+              <>
+                <div>
+                  <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Price paid per unit (SAR)')}</label>
+                  <input type="number" step="0.01" min="0" value={movementForm.unitCost} onChange={(e) => setMovementForm(f => ({ ...f, unitCost: Number(e.target.value) }))} className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none" placeholder="0.00" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('Supplier')}</label>
+                  <input type="text" value={movementForm.vendor} onChange={(e) => setMovementForm(f => ({ ...f, vendor: e.target.value }))} className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-fg-muted mb-1.5">{tx('VAT paid (SAR)')}</label>
+                  <input type="number" step="0.01" min="0" value={movementForm.vatAmount} onChange={(e) => setMovementForm(f => ({ ...f, vatAmount: Number(e.target.value) }))} className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none" placeholder="0.00" />
+                </div>
+                <label className="flex items-center gap-2 text-sm text-fg md:col-span-3">
+                  <input type="checkbox" checked={movementForm.recordExpense} onChange={(e) => setMovementForm(f => ({ ...f, recordExpense: e.target.checked }))} />
+                  {tx('Record the purchase as an expense in Accounting')}
+                </label>
+                <p className="text-xs text-fg-muted md:col-span-3">{tx('The price paid updates the average cost of this item, which is what orders are charged when they use it.')}</p>
+              </>
+            )}
           </div>
           <div className="flex justify-end gap-3 mt-4">
             <button type="button" onClick={() => setShowAddMovement(false)} className="px-4 py-2 text-sm text-fg-muted border border-line rounded-lg hover:text-fg">{tx('Cancel')}</button>
             <button type="button" onClick={handleCreateMovement} disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors disabled:opacity-50">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              Record Movement
+              {tx('Record Movement')}
             </button>
           </div>
         </div>
@@ -419,12 +451,14 @@ export default function InventoryPage() {
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-center gap-2">
+                          {canManage && <>
                           <button type="button" onClick={() => handleOpenEdit(item)} className="p-1.5 text-fg-muted hover:text-kcc-green hover:bg-surface-2 rounded-lg transition-colors" title={tx('Edit')}>
                             <Edit2 size={15} />
                           </button>
                           <button type="button" onClick={() => handleDeleteItem(item._id)} className="p-1.5 text-fg-muted hover:text-red-400 hover:bg-surface-2 rounded-lg transition-colors" title={tx('Delete')}>
                             <Trash2 size={15} />
                           </button>
+                          </>}
                         </div>
                       </td>
                     </tr>
@@ -451,6 +485,7 @@ export default function InventoryPage() {
                   <th className="text-end text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Quantity')}</th>
                   <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Reason')}</th>
                   <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Reference')}</th>
+                  <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('By')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -458,7 +493,7 @@ export default function InventoryPage() {
                   <tr key={m._id} className="hover:bg-surface-2/50 transition-colors">
                     <td className="px-5 py-3.5 text-sm text-fg-muted">{formatDate(m.createdAt)}</td>
                     <td className="px-5 py-3.5">
-                      <p className="text-sm text-fg">{m.itemId?.name?.en || m.itemId?.name || '-'}</p>
+                      <p className="text-sm text-fg">{m.itemId?.name?.[locale] || m.itemId?.name?.en || '-'}</p>
                       <p className="text-xs text-fg-subtle">{m.itemId?.sku || '-'}</p>
                     </td>
                     <td className="px-5 py-3.5 text-center">
@@ -481,8 +516,13 @@ export default function InventoryPage() {
                     </td>
                     <td className="px-5 py-3.5 text-sm text-fg-muted max-w-xs truncate">{m.reason}</td>
                     <td className="px-5 py-3.5">
-                      <code className="text-xs text-fg-muted bg-surface-2 px-2 py-0.5 rounded">{m.reference}</code>
+                      {m.orderNumber ? (
+                        <Link href={`/admin/orders/${m.reference.id}`} className="text-xs font-semibold text-fg hover:underline">{m.orderNumber}</Link>
+                      ) : m.reference?.id ? (
+                        <code className="text-xs text-fg-muted bg-surface-2 px-2 py-0.5 rounded">{m.reference.id}</code>
+                      ) : '—'}
                     </td>
+                    <td className="px-5 py-3.5 text-sm text-fg-muted">{m.createdBy?.name || '—'}</td>
                   </tr>
                 ))}
               </tbody>

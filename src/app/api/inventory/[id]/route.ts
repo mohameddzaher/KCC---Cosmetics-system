@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import connectDB from '@/lib/db';
 import InventoryItem from '@/models/InventoryItem';
+import Order from '@/models/Order';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
 import { audited } from '@/lib/audit';
@@ -41,6 +42,8 @@ export const PUT = audited(async function PUT(req: NextRequest, context: RouteCo
       return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
     }
     const body = await req.json();
+    // The level is the sum of its movements; record a count as an adjustment.
+    delete body.currentStock;
     const item = await InventoryItem.findByIdAndUpdate(id, body, { new: true, runValidators: true });
     if (!item) return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     return NextResponse.json(item);
@@ -62,6 +65,18 @@ export const DELETE = audited(async function DELETE(req: NextRequest, context: R
     const { id } = await context.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
+    }
+    // An order waiting to use it would not be able to start.
+    const planned = await Order.exists({
+      'materials.itemId': id,
+      materialsConsumedAt: { $exists: false },
+      status: { $nin: ['Cancelled', 'Rejected', 'Closed'] },
+    });
+    if (planned) {
+      return NextResponse.json(
+        { error: 'An order still plans to use this item. Take it off that order first, or mark the item inactive.' },
+        { status: 409 }
+      );
     }
     const item = await InventoryItem.findByIdAndDelete(id);
     if (!item) return NextResponse.json({ error: 'Item not found' }, { status: 404 });

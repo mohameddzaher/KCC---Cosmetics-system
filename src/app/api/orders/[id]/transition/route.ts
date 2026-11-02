@@ -14,6 +14,8 @@ import { computeTotals } from '@/lib/orderTotals';
 import { audited } from '@/lib/audit';
 import { applyOrderMove } from '@/lib/accounting';
 import { recordOrderMove } from '@/lib/crmFlow';
+import { StockError, syncOrderMaterials } from '@/lib/inventory';
+import { CONSUMES_AT } from '@/lib/materialsPlan';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,7 +77,7 @@ export const POST = audited(async function POST(req: NextRequest, context: Route
       return NextResponse.json({ error: 'Unknown target status' }, { status: 400 });
     }
 
-    const order = await Order.findById(id);
+    const order = await Order.findById(id).select('+materials +materialsConsumedAt +materialsCost');
     if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
 
     const from = order.status;
@@ -147,7 +149,42 @@ export const POST = audited(async function POST(req: NextRequest, context: Route
       order.assignments = { ...(order.assignments || {}), logisticsUserId: new mongoose.Types.ObjectId(user.id) };
     }
 
-    await order.save();
+    // Starting production takes the order's materials off the shelves. Short of
+    // anything, production does not start: the factory sees what is missing
+    // instead of finding out half way through a batch.
+    const actor = { id: user.id, name: user.name };
+    let consumedNow = false;
+    let materialsWarning: string | undefined;
+    if (to === CONSUMES_AT && !order.materialsConsumedAt) {
+      if ((order.materials || []).length === 0) {
+        materialsWarning = 'Production started with no materials listed. Add them on the order and the store will follow.';
+      } else {
+        try {
+          await syncOrderMaterials(order, actor);
+          consumedNow = true;
+        } catch (e) {
+          if (e instanceof StockError) {
+            return NextResponse.json({ error: e.message, shortages: e.shortages }, { status: e.status });
+          }
+          throw e;
+        }
+      }
+      order.materialsConsumedAt = new Date();
+    }
+
+    try {
+      await order.save();
+    } catch (e) {
+      if (consumedNow) {
+        // The move did not happen, so neither did the use of the materials.
+        const back = {
+          _id: order._id, orderNumber: order.orderNumber,
+          materials: order.materials.map((l: { itemId: unknown; consumed: number; cost?: number }) => ({ itemId: String(l.itemId), quantity: 0, consumed: l.consumed, cost: l.cost })),
+        };
+        await syncOrderMaterials(back, actor).catch((err) => console.error('[inventory] could not return materials', order.orderNumber, err));
+      }
+      throw e;
+    }
 
     // The books follow the order. A failure here is reported, not swallowed:
     // the move has happened, and an order that thinks it is paid with nothing
@@ -239,6 +276,7 @@ export const POST = audited(async function POST(req: NextRequest, context: Route
       transitions: allowedTransitions(order.status, user.role),
       timeline: order.timeline,
       accountingWarning,
+      materialsWarning,
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Internal server error';

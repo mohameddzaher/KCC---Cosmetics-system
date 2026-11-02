@@ -12,6 +12,8 @@ export interface IInventoryMovement extends Document {
     type: string;
     id: string;
   };
+  /** What one unit was worth at the time: the purchase price coming in, the average cost going out. */
+  unitCost?: number;
   createdBy: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -29,6 +31,7 @@ const InventoryMovementSchema = new Schema<IInventoryMovement>(
       type: { type: String, enum: ['order', 'purchase', 'adjustment'] },
       id: { type: String },
     },
+    unitCost: { type: Number },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
     createdAt: { type: Date, default: Date.now },
   },
@@ -38,6 +41,7 @@ const InventoryMovementSchema = new Schema<IInventoryMovement>(
 InventoryMovementSchema.index({ itemId: 1 });
 InventoryMovementSchema.index({ type: 1 });
 InventoryMovementSchema.index({ createdAt: -1 });
+InventoryMovementSchema.index({ 'reference.type': 1, 'reference.id': 1 });
 
 InventoryMovementSchema.plugin(auditTrail);
 

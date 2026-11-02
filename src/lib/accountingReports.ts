@@ -2,6 +2,8 @@ import Expense from '@/models/Expense';
 import Invoice from '@/models/Invoice';
 import Order from '@/models/Order';
 import Payment from '@/models/Payment';
+import InventoryItem from '@/models/InventoryItem';
+import { materialsUsed } from '@/lib/inventory';
 import { AGING_BUCKETS, agingBucket, balanceOf, money2, OPEN_INVOICE_STATUSES, type AgingBucket } from '@/lib/invoiceStatus';
 
 /**
@@ -21,7 +23,7 @@ export async function computeSummary(from: Date, to: Date) {
   const issued = { status: { $nin: ['draft', 'cancelled'] }, issuedAt: { $gte: from, $lte: to } };
   const yearAgo = new Date(to.getFullYear(), to.getMonth() - 11, 1);
 
-  const [sales, cash, costs, byCategory, salesMonths, cashMonths, costMonths] = await Promise.all([
+  const [sales, cash, costs, byCategory, salesMonths, cashMonths, costMonths, used, stock] = await Promise.all([
     Invoice.aggregate([
       { $match: issued },
       {
@@ -57,6 +59,11 @@ export async function computeSummary(from: Date, to: Date) {
       { $match: { date: { $gte: yearAgo } } },
       { $group: { _id: monthKey('$date'), total: { $sum: { $subtract: ['$amount', { $ifNull: ['$vatAmount', 0] }] } } } },
     ]),
+    materialsUsed(from, to),
+    InventoryItem.aggregate([
+      { $match: { currentStock: { $gt: 0 } } },
+      { $group: { _id: null, total: { $sum: { $multiply: ['$currentStock', { $ifNull: ['$costPerUnit', 0] }] } } } },
+    ]),
   ]);
 
   const s = sales[0] || { net: 0, vat: 0, gross: 0, n: 0 };
@@ -83,6 +90,9 @@ export async function computeSummary(from: Date, to: Date) {
     expenses: { gross: money2(c.total), vat: money2(c.vat), net: netCosts, count: c.n },
     profit: { earned: money2(s.net - netCosts), cash: money2(received - c.total) },
     vat: { output: money2(s.vat), input: money2(c.vat), due: money2(s.vat - c.vat) },
+    // The store, at cost. Not a second expense: buying the stock already was
+    // one. These say how much of it went into orders and how much is left.
+    materials: { used: used, onHand: money2(stock[0]?.total || 0) },
     byCategory: (byCategory as Row[]).map((r) => ({ key: r._id || 'other', total: money2(r.total), count: r.n || 0 })),
     months,
   };

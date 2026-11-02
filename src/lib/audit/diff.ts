@@ -136,6 +136,12 @@ export function labelOf(doc: unknown): string | undefined {
   const d = doc as Record<string, unknown>;
   for (const k of LABEL_FIELDS) {
     if (typeof d[k] === 'string' && d[k]) return (d[k] as string).slice(0, 160);
+    // Bilingual names ({ en, ar }), as the store and catalogue keep them.
+    const pair = d[k] as { en?: unknown; ar?: unknown } | undefined;
+    if (pair && typeof pair === 'object') {
+      const text = [pair.en, pair.ar].find((x) => typeof x === 'string' && x) as string | undefined;
+      if (text) return text.slice(0, 160);
+    }
   }
   return undefined;
 }

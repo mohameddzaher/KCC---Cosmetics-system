@@ -66,6 +66,14 @@ function Reports() {
       </div>
 
       <Card>
+        <SectionTitle title={tx('Store')} hint={tx('Materials are an expense when bought. These show where that stock went.')} />
+        <div className="grid gap-x-8 sm:grid-cols-2">
+          <Line label={tx('Materials used in orders this period')} value={money(d.materials?.used || 0)} />
+          <Line label={tx('Stock on hand today, at cost')} value={money(d.materials?.onHand || 0)} />
+        </div>
+      </Card>
+
+      <Card>
         <SectionTitle title={tx('Sales and expenses by month')} />
         <MonthlyChart months={d.months} />
       </Card>

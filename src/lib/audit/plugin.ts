@@ -87,20 +87,35 @@ const QUERY_WRITES = [
 
 type AuditedQuery = Query<unknown, unknown> & { op?: string; $auditBefore?: Lean[]; $auditCapped?: boolean };
 
+/** Paths a schema keeps out of queries by default; the trail still wants them. */
+function hiddenPathsOf(schema: Schema): string[] {
+  const out: string[] = [];
+  schema.eachPath((path, type) => {
+    if ((type as unknown as { options?: { select?: boolean } }).options?.select === false) out.push(path);
+  });
+  return out;
+}
+
 export function auditTrail(schema: Schema) {
   const refs = refPathsOf(schema);
+  const hidden = hiddenPathsOf(schema);
+  const withHidden = hidden.map((p) => `+${p}`).join(' ');
 
   /* ---- save(), and so create() ---- */
   schema.pre('save', async function () {
     if (!currentAudit()) return;
-    const model = this.constructor as unknown as { findById(id: unknown): { lean(): Promise<Lean | null> } };
-    this.$locals.auditBefore = this.isNew ? null : await model.findById(this._id).lean();
+    const model = this.constructor as unknown as { findById(id: unknown): { select(s: string): { lean(): Promise<Lean | null> } } };
+    this.$locals.auditBefore = this.isNew ? null : await model.findById(this._id).select(withHidden).lean();
   });
 
   schema.post('save', function (doc) {
     if (!currentAudit()) return;
     const after = doc.toObject({ depopulate: true, flattenMaps: true }) as Lean;
-    record((doc.constructor as unknown as { modelName: string }).modelName, (doc.$locals.auditBefore as Lean) || null, after, refs);
+    const before = (doc.$locals.auditBefore as Lean) || null;
+    // A document loaded without a hidden path did not touch it; comparing it
+    // against the stored value would report it removed.
+    if (before) for (const p of hidden) if (!doc.isSelected(p)) delete before[p];
+    record((doc.constructor as unknown as { modelName: string }).modelName, before, after, refs);
   });
 
   /* ---- insertMany ---- */
@@ -114,7 +129,7 @@ export function auditTrail(schema: Schema) {
   /* ---- everything written through a query, doc.deleteOne() included ---- */
   schema.pre(QUERY_WRITES, { document: false, query: true }, async function (this: AuditedQuery) {
     if (!currentAudit()) return;
-    const rows = (await this.model.find(this.getFilter()).limit(BULK_CAP + 1).lean()) as unknown as Lean[];
+    const rows = (await this.model.find(this.getFilter()).select(withHidden).limit(BULK_CAP + 1).lean()) as unknown as Lean[];
     this.$auditCapped = rows.length > BULK_CAP;
     this.$auditBefore = rows.slice(0, BULK_CAP);
   });
@@ -138,12 +153,12 @@ export function auditTrail(schema: Schema) {
     if (before.length === 0) {
       // Nothing matched, so only an upsert can have written anything.
       if (!(this.getOptions() as { upsert?: boolean }).upsert) return;
-      const created = (await model.findOne(this.getFilter()).lean()) as unknown as Lean | null;
+      const created = (await model.findOne(this.getFilter()).select(withHidden).lean()) as unknown as Lean | null;
       if (created) record(entity, null, created, refs);
       return;
     }
 
-    const now = (await model.find({ _id: { $in: before.map((b) => b._id) } }).lean()) as unknown as Lean[];
+    const now = (await model.find({ _id: { $in: before.map((b) => b._id) } }).select(withHidden).lean()) as unknown as Lean[];
     const afterById = new Map(now.map((d) => [String(d._id), d]));
     for (const b of before) record(entity, b, afterById.get(String(b._id)) || null, refs);
   });

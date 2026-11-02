@@ -119,3 +119,9 @@ test('a browser string becomes a device', () => {
   assert.equal(deviceText(undefined, 'en'), '—');
   assert.equal(deviceText('node', 'en'), 'node');
 });
+
+test('a bilingual name is still a name', () => {
+  assert.equal(labelOf({ name: { en: 'Glycerin', ar: 'جلسرين' } }), 'Glycerin');
+  assert.equal(labelOf({ name: { ar: 'جلسرين' } }), 'جلسرين');
+  assert.equal(labelOf({ name: {} }), undefined);
+});

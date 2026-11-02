@@ -104,10 +104,15 @@ const SHEETS: Record<string, Sheet> = {
   movements: {
     permission: 'inventory.view',
     title: 'Stock movements',
-    columns: [text('Date', 12), text('SKU', 16), text('Item', 28), text('Type', 12), { header: 'Quantity', type: 'number', width: 10 }, { header: 'Before', type: 'number', width: 10 }, { header: 'After', type: 'number', width: 10 }, text('Reason', 34), text('By', 20)],
+    columns: [text('Date', 12), text('SKU', 16), text('Item', 28), text('Type', 12), { header: 'Quantity', type: 'number', width: 10 }, { header: 'Before', type: 'number', width: 10 }, { header: 'After', type: 'number', width: 10 }, { header: 'Unit cost', type: 'money', width: 12 }, text('Order / reference', 22), text('Reason', 34), text('By', 20)],
     rows: async (ids) => {
       const docs = await InventoryMovement.find(within(ids)).populate('itemId', 'sku name').populate('createdBy', 'name').sort({ createdAt: -1 }).limit(20000).lean() as any[];
-      return docs.map((m) => [day(m.createdAt), m.itemId?.sku, m.itemId?.name?.en, m.type, m.quantity, m.previousStock, m.newStock, m.reason, m.createdBy?.name]);
+      const orderIds = docs.filter((m) => m.reference?.type === 'order' && /^[a-f0-9]{24}$/i.test(m.reference.id || '')).map((m) => m.reference.id);
+      const numbers = new Map((await Order.find({ _id: { $in: orderIds } }).select('orderNumber').lean() as any[]).map((o) => [String(o._id), o.orderNumber]));
+      return docs.map((m) => [
+        day(m.createdAt), m.itemId?.sku, m.itemId?.name?.en, m.type, m.quantity, m.previousStock, m.newStock, m.unitCost,
+        m.reference?.type === 'order' ? numbers.get(m.reference.id) : m.reference?.id, m.reason, m.createdBy?.name,
+      ]);
     },
   },
   promos: {

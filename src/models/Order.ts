@@ -41,6 +41,18 @@ export interface IOrderAssignments {
   trackingNumber?: string;
 }
 
+/**
+ * One raw material or pack component the order uses. `quantity` is the plan;
+ * `consumed` is what has actually left the store for it, and `cost` what that
+ * stock was worth when it left. The two agree once production has started.
+ */
+export interface IOrderMaterial {
+  itemId: Types.ObjectId;
+  quantity: number;
+  consumed: number;
+  cost: number;
+}
+
 /** Append-only audit trail of every status change. */
 export interface IOrderEvent {
   from?: string;
@@ -91,6 +103,11 @@ export interface IOrder extends Document {
   surveyData?: Record<string, unknown>;
   bulkDetails?: IBulkDetails;
   convertedFromSample?: Types.ObjectId;
+  /** Bill of materials. Hidden from every query that does not ask for it. */
+  materials: IOrderMaterial[];
+  /** Set when production starts; from then on the store follows the list. */
+  materialsConsumedAt?: Date;
+  materialsCost: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -178,6 +195,25 @@ const OrderSchema = new Schema<IOrder>(
       deliveryTimeline: { type: String },
     },
     convertedFromSample: { type: Schema.Types.ObjectId, ref: 'Order' },
+    // Internal: what the order costs the factory is never the customer's to
+    // read, so these stay out of every query unless selected by name.
+    materials: {
+      type: [
+        new Schema<IOrderMaterial>(
+          {
+            itemId: { type: Schema.Types.ObjectId, ref: 'InventoryItem', required: true },
+            quantity: { type: Number, required: true, min: 0 },
+            consumed: { type: Number, default: 0 },
+            cost: { type: Number, default: 0 },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
+      select: false,
+    },
+    materialsConsumedAt: { type: Date, select: false },
+    materialsCost: { type: Number, default: 0, select: false },
   },
   { timestamps: true }
 );

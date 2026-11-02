@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import InventoryItem from '@/models/InventoryItem';
+import mongoose from 'mongoose';
 import InventoryMovement from '@/models/InventoryMovement';
-import Notification from '@/models/Notification';
+import Order from '@/models/Order';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/roles';
-import { sendEventEmail, adminUrl } from '@/lib/mailer';
 import { audited } from '@/lib/audit';
+import { moveStock, recordPurchaseExpense, StockError } from '@/lib/inventory';
 
 export async function GET(req: NextRequest) {
   try {
@@ -26,12 +26,25 @@ export async function GET(req: NextRequest) {
     if (type && ['IN', 'OUT', 'ADJUSTMENT'].includes(type)) filter.type = type;
 
     const movements = await InventoryMovement.find(filter)
-      .populate('itemId', 'sku name')
+      .populate('itemId', 'sku name unit')
       .populate('createdBy', 'name email')
       .sort({ createdAt: -1 })
-      .limit(limit);
+      .limit(Math.min(Math.max(limit || 50, 1), 1000))
+      .lean() as any[];
 
-    return NextResponse.json(movements);
+    // A movement made by an order names it, so the store links back to the job.
+    const orderIds = movements
+      .filter((m) => m.reference?.type === 'order' && mongoose.Types.ObjectId.isValid(m.reference.id))
+      .map((m) => m.reference.id);
+    const orders = orderIds.length
+      ? await Order.find({ _id: { $in: orderIds } }).select('orderNumber').lean() as any[]
+      : [];
+    const numberOf = new Map(orders.map((o) => [String(o._id), o.orderNumber]));
+
+    return NextResponse.json(movements.map((m) => ({
+      ...m,
+      orderNumber: m.reference?.type === 'order' ? numberOf.get(m.reference.id) : undefined,
+    })));
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to fetch movements' }, { status: 500 });
   }
@@ -40,87 +53,57 @@ export async function GET(req: NextRequest) {
 export const POST = audited(async function POST(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !can(user.role, 'inventory.view')) {
+    if (!user || !can(user.role, 'inventory.manage')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();
 
     const body = await req.json();
-    const { itemId, type, quantity, reason, reference } = body;
+    const { itemId, type, reason } = body;
+    const quantity = Number(body.quantity);
 
-    if (!itemId || !type || quantity === undefined) {
+    if (!itemId || !type || body.quantity === undefined || body.quantity === '') {
       return NextResponse.json({ error: 'itemId, type, and quantity are required' }, { status: 400 });
     }
-
-    const item = await InventoryItem.findById(itemId);
-    if (!item) {
+    if (!['IN', 'OUT', 'ADJUSTMENT'].includes(type)) {
+      return NextResponse.json({ error: 'Invalid movement type' }, { status: 400 });
+    }
+    if (!mongoose.Types.ObjectId.isValid(itemId)) {
       return NextResponse.json({ error: 'Inventory item not found' }, { status: 404 });
     }
 
-    const previousStock = item.currentStock;
-    let newStock: number;
+    // The screen sends a reference as the paper's number; older callers sent
+    // the stored shape. Both mean the same thing.
+    const refText = typeof body.reference === 'string' ? body.reference.trim() : body.reference?.id;
+    const reference = refText
+      ? { type: type === 'IN' ? 'purchase' : 'adjustment', id: String(refText).slice(0, 120) } as const
+      : undefined;
+    const unitCost = type === 'IN' ? Number(body.unitCost) || 0 : 0;
 
-    switch (type) {
-      case 'IN':
-        newStock = previousStock + quantity;
-        break;
-      case 'OUT':
-        newStock = previousStock - quantity;
-        break;
-      case 'ADJUSTMENT':
-        newStock = quantity;
-        break;
-      default:
-        return NextResponse.json({ error: 'Invalid movement type' }, { status: 400 });
-    }
-
-    if (newStock < 0) {
-      return NextResponse.json({ error: 'Insufficient stock for this operation' }, { status: 400 });
-    }
-
-    await InventoryItem.findByIdAndUpdate(itemId, { currentStock: newStock });
-
-    const movement = await InventoryMovement.create({
-      itemId,
-      type,
-      quantity,
-      previousStock,
-      newStock,
-      reason,
-      reference,
-      createdBy: user.id,
+    const { movement, item } = await moveStock({
+      itemId, type, quantity, reason, reference,
+      unitCost: unitCost > 0 ? unitCost : undefined,
+      actor: { id: user.id, name: user.name },
     });
 
-    if (newStock <= item.lowStockThreshold) {
-      await Notification.create({
-        type: 'low_stock',
-        title: {
-          en: `Low Stock Alert: ${item.name.en}`,
-          ar: `تنبيه مخزون منخفض: ${item.name.ar}`,
-        },
-        message: {
-          en: `${item.name.en} (SKU: ${item.sku}) stock is at ${newStock} units, below threshold of ${item.lowStockThreshold}.`,
-          ar: `${item.name.ar} (SKU: ${item.sku}) المخزون عند ${newStock} وحدة، أقل من الحد الأدنى ${item.lowStockThreshold}.`,
-        },
-        data: { itemId: item._id, sku: item.sku, currentStock: newStock, threshold: item.lowStockThreshold },
-      });
-
-      await sendEventEmail('emailLowStock', {
-        subject: `Low stock: ${item.name.en} (${item.sku})`,
-        heading: 'Stock has fallen below its threshold',
-        rows: [
-          ['Item', item.name.en],
-          ['SKU', item.sku],
-          ['In stock', String(newStock)],
-          ['Threshold', String(item.lowStockThreshold)],
-        ],
-        actionUrl: adminUrl('/admin/inventory'),
-        actionLabel: 'Open inventory',
+    // A paid receipt is money out, so it reaches the accounts without anyone
+    // re-typing it. Unticked for stock that arrived free or was already booked.
+    let expense = null;
+    if (type === 'IN' && unitCost > 0 && body.recordExpense !== false) {
+      expense = await recordPurchaseExpense({
+        item, quantity, unitCost,
+        vatAmount: Number(body.vatAmount) || 0,
+        vendor: typeof body.vendor === 'string' ? body.vendor.trim().slice(0, 200) : undefined,
+        reference: refText,
+        actor: { id: user.id, name: user.name },
       });
     }
 
-    return NextResponse.json(movement, { status: 201 });
+    return NextResponse.json({ ...movement.toObject(), expenseId: expense?._id }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof StockError) {
+      return NextResponse.json({ error: error.message, shortages: error.shortages }, { status: error.status === 409 ? 400 : error.status });
+    }
     return NextResponse.json({ error: error.message || 'Failed to create movement' }, { status: 500 });
   }
 });

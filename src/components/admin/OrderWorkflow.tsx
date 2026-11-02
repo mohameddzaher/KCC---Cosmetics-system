@@ -36,13 +36,14 @@ export default function OrderWorkflow({
   onChanged?: (status: string, timeline: TimelineEvent[]) => void;
   compact?: boolean;
 }) {
-  const { t, locale } = useLanguage();
+  const { t, tx, locale } = useLanguage();
   const [transitions, setTransitions] = useState<Transition[]>([]);
   const [pending, setPending] = useState<Transition | null>(null);
   const [note, setNote] = useState('');
   const [quote, setQuote] = useState({ amount: '', notes: '', validUntil: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -62,6 +63,7 @@ export default function OrderWorkflow({
   async function apply(tr: Transition, withNote: string) {
     setBusy(true);
     setError(null);
+    setWarning(null);
     try {
       const res = await fetch(`/api/orders/${orderId}/transition`, {
         method: 'POST',
@@ -81,7 +83,16 @@ export default function OrderWorkflow({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || t('admin.saveFailed'));
+      if (!res.ok) {
+        // Short of materials: say exactly what is missing, not just "no".
+        const missing = Array.isArray(data.shortages)
+          ? data.shortages.map((s: { name?: { en: string; ar: string }; sku: string; needed: number; available: number; unit: string }) =>
+              `${s.name?.[locale] || s.name?.en || s.sku}: ${tx('needs')} ${s.needed} ${s.unit}, ${tx('in stock')} ${s.available}`)
+          : [];
+        throw new Error([tx(data.error || 'Could not save'), ...missing].join('\n'));
+      }
+      const warn = [data.materialsWarning, data.accountingWarning].filter(Boolean).map((w: string) => tx(w));
+      if (warn.length) setWarning(warn.join(' '));
       setPending(null);
       setNote('');
       setQuote({ amount: '', notes: '', validUntil: '' });
@@ -132,10 +143,11 @@ export default function OrderWorkflow({
       <>
         {buttons}
         {error && (
-          <div className="mt-2">
+          <div className="mt-2 whitespace-pre-line">
             <ErrorNote>{error}</ErrorNote>
           </div>
         )}
+        {warning && <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">{warning}</p>}
         <ActionModal
           pending={pending}
           note={note}
@@ -160,10 +172,11 @@ export default function OrderWorkflow({
 
       {buttons}
       {error && (
-        <div className="mt-3">
+        <div className="mt-3 whitespace-pre-line">
           <ErrorNote>{error}</ErrorNote>
         </div>
       )}
+      {warning && <p className="mt-3 text-xs text-amber-700 dark:text-amber-400">{warning}</p>}
 
       <div className="mt-6">
         <SectionTitle title={t('admin.timeline')} />

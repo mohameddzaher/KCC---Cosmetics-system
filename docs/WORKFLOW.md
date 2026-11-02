@@ -412,3 +412,37 @@ The client file (`src/lib/clientProfile.ts`) reads as one company from either
 the CRM account or the customer page: visits, meetings, calls, requests, orders,
 follow-ups, complaints and money, on one timeline. Money shows only to those with
 `accounting.view`.
+
+## 14. How production draws on the store
+
+`src/lib/inventory.ts` is the one place a stock level changes; the arithmetic
+of an order's list is in `src/lib/materialsPlan.ts`, on its own so it is tested
+on its own.
+
+| What happens | What the store does |
+|---|---|
+| The factory lists an order's materials (or copies them from an earlier order) | Nothing yet. It is a plan, and the order page warns early if the shelves cannot cover it |
+| **Start production** | Every listed material is taken off the shelf, one movement per item, each naming the order. Short of anything, the move is refused and the screen lists what is missing |
+| The list changes after that | Only the difference moves: more is taken, less is returned at what it cost when it left |
+| QC fails and the order goes back to production | Nothing is taken twice |
+| Stock in, with the price paid | The item's average cost is recalculated, and the purchase is booked as an expense (raw materials or packaging), unless unticked |
+| A new item with an opening count | The count is recorded as an opening movement |
+| A level falls below its threshold | The team is notified and the low-stock email goes out |
+
+Rules behind it:
+
+- A stock level changes only through a movement. Editing an item no longer
+  changes its level; a count is an **Adjustment**. So the movements always add
+  up to what is on the shelf.
+- A level never goes below zero, even when two people take the last of an item
+  at the same moment: the take and the check are one database operation.
+- Starting production is all or nothing. If one material runs out half way,
+  whatever was already taken for that order is put back.
+- An order's materials cost (`materialsCost`) is the average cost at the time
+  of use. Buying stock is already the expense; using it is not a second one, so
+  the reports show it separately, as *Materials used in orders* and
+  *Stock on hand at cost*, outside the profit line.
+- An order's materials and their cost are never sent to the customer. The
+  fields are hidden from every query that does not ask for them.
+- Recording movements needs `inventory.manage`. Before this change any role
+  that could see stock could also change it.

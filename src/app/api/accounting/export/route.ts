@@ -116,6 +116,8 @@ export const GET = audited(async function GET(req: NextRequest) {
         { line: 'VAT charged on sales', amount: s.vat.output },
         { line: 'VAT paid on expenses', amount: s.vat.input },
         { line: 'VAT due', amount: s.vat.due },
+        { line: 'Materials used in orders', amount: s.materials.used },
+        { line: 'Stock on hand at cost (today)', amount: s.materials.onHand },
         ...s.byCategory.map((c) => ({ line: `Expense: ${expenseCategoryLabel(c.key, 'en')}`, amount: c.total })),
       ];
     } else {

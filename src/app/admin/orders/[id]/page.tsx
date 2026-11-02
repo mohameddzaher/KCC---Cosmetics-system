@@ -11,6 +11,7 @@ import {
 import OrderWorkflow from '@/components/admin/OrderWorkflow';
 import OrderAssignments from '@/components/admin/OrderAssignments';
 import OrderFeedbackPanel from '@/components/admin/OrderFeedbackPanel';
+import OrderMaterials from '@/components/admin/OrderMaterials';
 import { AuditTrail } from '@/components/admin/audit';
 import { InvoiceBadge } from '@/components/admin/accounting/shared';
 import { balanceOf } from '@/lib/invoiceStatus';
@@ -216,6 +217,8 @@ export default function OrderDetailPage() {
               loadOrder();
             }}
           />
+
+          {can('inventory.view') && <OrderMaterials orderId={orderId} status={status} />}
 
           {/* The customer's verdict once it landed, plus our reply. */}
           <OrderFeedbackPanel orderId={orderId} />

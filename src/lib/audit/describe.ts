@@ -56,7 +56,8 @@ const FIELDS: Record<string, Pair> = {
   status: ['Status', 'الحالة'], stage: ['Stage', 'المرحلة'], priority: ['Priority', 'الأولوية'], type: ['Type', 'النوع'],
   dueDate: ['Due date', 'تاريخ الاستحقاق'], orderNumber: ['Order number', 'رقم الطلب'], invoiceNumber: ['Invoice number', 'رقم الفاتورة'],
   userId: ['Customer', 'العميل'], customerId: ['Customer', 'العميل'], orderId: ['Order', 'الطلب'], orderIds: ['Orders', 'الطلبات'],
-  invoiceId: ['Invoice', 'الفاتورة'], accountId: ['Account', 'الحساب'], itemId: ['Item', 'الصنف'], ownerId: ['Owner', 'المسؤول'],
+  invoiceId: ['Invoice', 'الفاتورة'], accountId: ['Account', 'الحساب'], itemId: ['Item', 'الصنف'], consumed: ['Taken from store', 'المخصوم من المخزون'],
+  materialsCost: ['Materials cost', 'تكلفة الخامات'], materialsConsumedAt: ['Materials taken on', 'تاريخ خصم الخامات'], ownerId: ['Owner', 'المسؤول'],
   ownerName: ['Owner', 'المسؤول'], promoCodeId: ['Promo code', 'كود الخصم'], referrerId: ['Referred by', 'صاحب الإحالة'],
   referredId: ['Referred customer', 'العميل المُحال'], convertedFromSample: ['From sample', 'من العيّنة'],
   subtotal: ['Subtotal', 'الإجمالي الفرعي'], discount: ['Discount', 'الخصم'], tax: ['Tax', 'الضريبة'], total: ['Total', 'الإجمالي'],
@@ -86,7 +87,7 @@ const FIELDS: Record<string, Pair> = {
 
 const SECTIONS: Record<string, Pair> = {
   customerInfo: ['Customer', 'بيانات العميل'], assignments: ['Assignment', 'التكليف'], totals: ['Totals', 'الإجماليات'],
-  bulkDetails: ['Bulk details', 'تفاصيل الجملة'], timeline: ['Status log', 'سجل الحالات'], attachments: ['Attachments', 'المرفقات'],
+  bulkDetails: ['Bulk details', 'تفاصيل الجملة'], materials: ['Materials', 'الخامات'], timeline: ['Status log', 'سجل الحالات'], attachments: ['Attachments', 'المرفقات'],
 };
 
 function humanise(key: string): string {
