@@ -12,6 +12,7 @@ import { sendEventEmail, sendCustomerEmail, adminUrl, publicUrl } from '@/lib/ma
 import { formatCurrency } from '@/lib/money';
 import { computeTotals } from '@/lib/orderTotals';
 import { audited } from '@/lib/audit';
+import { applyOrderMove } from '@/lib/accounting';
 
 export const dynamic = 'force-dynamic';
 
@@ -147,6 +148,17 @@ export const POST = audited(async function POST(req: NextRequest, context: Route
 
     await order.save();
 
+    // The books follow the order. A failure here is reported, not swallowed:
+    // the move has happened, and an order that thinks it is paid with nothing
+    // in the accounts is exactly what this link exists to prevent.
+    let accountingWarning: string | undefined;
+    try {
+      await applyOrderMove(order, to, user.name);
+    } catch (e) {
+      console.error('[accounting] order move not applied', order.orderNumber, to, e);
+      accountingWarning = 'The order moved, but its invoice could not be updated. Check it in Accounting.';
+    }
+
     // Tell the next desk it is their turn.
     try {
       await Notification.create({
@@ -218,6 +230,7 @@ export const POST = audited(async function POST(req: NextRequest, context: Route
       meta: statusMeta(order.status),
       transitions: allowedTransitions(order.status, user.role),
       timeline: order.timeline,
+      accountingWarning,
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Internal server error';

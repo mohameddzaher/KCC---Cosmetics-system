@@ -85,7 +85,7 @@ export default function CrmAccountPage({ params }: { params: Promise<{ id: strin
   const [form, setForm] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    fetch('/api/users?role=', { cache: 'no-store' })
+    fetch('/api/users/directory', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : []))
       .then((u) => setOwners(Array.isArray(u) ? u : u?.users || []))
       .catch(() => setOwners([]));
@@ -308,6 +308,13 @@ export default function CrmAccountPage({ params }: { params: Promise<{ id: strin
               </Row>
             </dl>
           </Card>
+
+          {a.customerId?._id && (
+            <Link href={`/admin/customers/${a.customerId._id}`} className="flex items-center justify-between rounded-xl border border-line bg-surface p-4 text-sm hover:bg-surface-2">
+              <span className="text-fg-muted">{tx('Registered customer')}</span>
+              <span className="font-semibold text-fg">{a.customerId.company || a.customerId.name}</span>
+            </Link>
+          )}
 
           <Card>
             <SectionTitle title={tx('Key person')} />

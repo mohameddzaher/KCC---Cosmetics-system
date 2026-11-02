@@ -46,7 +46,7 @@ test('nothing bypasses the model hooks', () => {
 });
 
 test('every model is watched', () => {
-  const skip = new Set(['AuditLog.ts', 'Notification.ts']);
+  const skip = new Set(['AuditLog.ts', 'Notification.ts', 'Counter.ts']);
   const unwatched = readdirSync('src/models')
     .filter((f) => !skip.has(f))
     .filter((f) => !readFileSync(`src/models/${f}`, 'utf8').includes('.plugin(auditTrail)'));

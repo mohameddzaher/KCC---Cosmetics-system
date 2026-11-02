@@ -12,6 +12,8 @@ import OrderWorkflow from '@/components/admin/OrderWorkflow';
 import OrderAssignments from '@/components/admin/OrderAssignments';
 import OrderFeedbackPanel from '@/components/admin/OrderFeedbackPanel';
 import { AuditTrail } from '@/components/admin/audit';
+import { InvoiceBadge } from '@/components/admin/accounting/shared';
+import { balanceOf } from '@/lib/invoiceStatus';
 import { usePermission } from '@/contexts/AuthContext';
 import { statusBadgeClass, statusLabel } from '@/lib/orderWorkflow';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -98,7 +100,7 @@ export default function OrderDetailPage() {
       });
       if (res.ok) {
         const updated = await res.json();
-        setOrder(updated);
+        setOrder({ ...updated, invoice: order?.invoice, crmAccount: order?.crmAccount });
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
       } else {
@@ -232,20 +234,46 @@ export default function OrderDetailPage() {
               <CreditCard size={16} className="text-brand" />
               {t('admin.payment')}
             </h2>
-            <label className="field-label" htmlFor="payment-status">{t('admin.orderStatus')}</label>
-            <select
-              id="payment-status"
-              value={paymentStatus}
-              onChange={(e) => setPaymentStatus(e.target.value)}
-              className="field max-w-xs"
-            >
-              {PAYMENT_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s === 'paid' ? t('admin.paid') : s === 'refunded' ? t('ui.reset') : t('admin.unpaid')}
-                </option>
-              ))}
-            </select>
+            {order.invoice ? (
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between text-fg-muted"><span>{tx('Invoice')}</span>
+                  {can('accounting.view')
+                    ? <Link href={`/admin/accounting/invoices/${order.invoice._id}`} className="font-semibold text-fg hover:underline">{order.invoice.invoiceNumber}</Link>
+                    : <span className="font-semibold text-fg">{order.invoice.invoiceNumber}</span>}
+                </div>
+                <div className="flex justify-between text-fg-muted"><span>{tx('Status')}</span><InvoiceBadge invoice={order.invoice} /></div>
+                <div className="flex justify-between text-fg-muted"><span>{tx('Total')}</span><span className="text-fg">{formatCurrency(order.invoice.total, locale)}</span></div>
+                <div className="flex justify-between text-fg-muted"><span>{tx('Paid')}</span><span className="text-fg">{formatCurrency(order.invoice.amountPaid, locale)}</span></div>
+                <div className="flex justify-between border-t border-line pt-2 font-semibold text-fg"><span>{tx('Balance')}</span><span>{formatCurrency(balanceOf(order.invoice), locale)}</span></div>
+              </div>
+            ) : (
+              <>
+                {(order.totals?.total || 0) > 0 && can('accounting.manage') && (
+                  <Link href={`/admin/accounting/invoices?new=${order._id}`} className="btn btn-outline btn-sm mb-3">{tx('Create invoice')}</Link>
+                )}
+                <label className="field-label" htmlFor="payment-status">{t('admin.orderStatus')}</label>
+                <select
+                  id="payment-status"
+                  value={paymentStatus}
+                  onChange={(e) => setPaymentStatus(e.target.value)}
+                  className="field max-w-xs"
+                >
+                  {PAYMENT_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s === 'paid' ? t('admin.paid') : s === 'refunded' ? t('ui.reset') : t('admin.unpaid')}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
           </div>
+
+          {order.crmAccount && can('crm.view') && (
+            <Link href={`/admin/crm/accounts/${order.crmAccount._id}`} className="flex items-center justify-between rounded-xl border border-line bg-surface p-4 text-sm hover:bg-surface-2">
+              <span className="text-fg-muted">{tx('CRM account')}</span>
+              <span className="font-semibold text-fg">{order.crmAccount.name}</span>
+            </Link>
+          )}
 
           {/* Customer Info */}
           <div className="bg-surface border border-line rounded-xl p-5">
@@ -258,7 +286,9 @@ export default function OrderDetailPage() {
                 <User size={14} className="text-fg-subtle shrink-0" />
                 <div>
                   <p className="text-fg-muted text-xs">{tx('Account Name')}</p>
-                  <p className="text-fg">{customer.name || '-'}</p>
+                  {customer._id && can('customers.view')
+                    ? <Link href={`/admin/customers/${customer._id}`} className="text-fg hover:underline">{customer.name || '-'}</Link>
+                    : <p className="text-fg">{customer.name || '-'}</p>}
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm">

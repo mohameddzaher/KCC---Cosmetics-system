@@ -3,8 +3,10 @@ import mongoose from 'mongoose';
 import connectDB from '@/lib/db';
 import Order from '@/models/Order';
 import { getSession } from '@/lib/auth';
-import { can } from '@/lib/roles';
+import { can, isStaffRole } from '@/lib/roles';
 import { audited } from '@/lib/audit';
+import { activeInvoiceOf, syncInvoiceToOrder } from '@/lib/accounting';
+import CrmAccount from '@/models/CrmAccount';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -45,7 +47,19 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    return NextResponse.json(order);
+    // Staff see where the money stands; the screen links to it if they may open it.
+    const staff = isStaffRole(user.role) && can(user.role, 'orders.view');
+    const invoice = staff
+      ? await activeInvoiceOf(order._id).then((i) => i && {
+          _id: i._id, invoiceNumber: i.invoiceNumber, status: i.status,
+          total: i.total, amountPaid: i.amountPaid, dueDate: i.dueDate,
+        })
+      : null;
+    const crmAccount = staff
+      ? await CrmAccount.findOne({ orderIds: order._id }).select('name').lean()
+      : null;
+
+    return NextResponse.json({ ...(order.toObject?.() ?? order), invoice, crmAccount });
   } catch (error: any) {
     console.error('Orders GET [id] error:', error);
     return NextResponse.json(
@@ -86,7 +100,10 @@ export const PUT = audited(async function PUT(
       const update: Record<string, unknown> = {};
 
       if (body.internalNotes !== undefined) update.internalNotes = body.internalNotes;
-      if (body.paymentStatus !== undefined) update.paymentStatus = body.paymentStatus;
+      // With an invoice, this is a reading of the payments and not a choice.
+      if (body.paymentStatus !== undefined && !(await activeInvoiceOf(id))) {
+        update.paymentStatus = body.paymentStatus;
+      }
       if (body.totals !== undefined) update.totals = body.totals;
       if (body.bulkDetails !== undefined) update.bulkDetails = body.bulkDetails;
       if (body.attachments !== undefined) update.attachments = body.attachments;
@@ -129,6 +146,8 @@ export const PUT = audited(async function PUT(
         .populate('assignments.accountManagerId', 'name email role')
         .populate('assignments.factoryUserId', 'name email role')
         .populate('assignments.logisticsUserId', 'name email role');
+
+      if (body.totals !== undefined && updatedOrder) await syncInvoiceToOrder(updatedOrder);
 
       return NextResponse.json(updatedOrder);
     }

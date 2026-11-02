@@ -6,25 +6,30 @@ import Link from 'next/link';
 import { useAuth, usePermission } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import NotificationBell from '@/components/admin/NotificationBell';
+import GlobalSearch from '@/components/admin/GlobalSearch';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import { can, isStaffRole, roleLabel, type Permission } from '@/lib/roles';
 import { useQueryClient } from '@tanstack/react-query';
 import { CRM_FIRST_REQUEST, prefetchApi, useCrmWarmup } from '@/lib/useApi';
 import {
+  BarChart3,
   BookOpen,
   Brain,
   Briefcase,
   CalendarDays,
   CheckSquare,
+  ChevronDown,
   ClipboardList,
   Contact,
-  DollarSign,
+  CreditCard,
   Factory,
   FileText,
   Gauge,
   Globe,
   History,
+  Home,
   Inbox,
+  Landmark,
   Layers,
   LayoutDashboard,
   LogOut,
@@ -33,6 +38,7 @@ import {
   Package,
   PanelLeftClose,
   PanelLeftOpen,
+  Receipt,
   Search as SearchIcon,
   Settings,
   Share2,
@@ -43,6 +49,7 @@ import {
   Tag,
   Truck,
   Users,
+  Wallet,
   X,
 } from 'lucide-react';
 
@@ -52,7 +59,7 @@ type NavItem = {
   icon: typeof LayoutDashboard;
   permission: Permission;
 };
-type NavGroup = { key: string; items: NavItem[] };
+type NavGroup = { key: string; icon: typeof LayoutDashboard; items: NavItem[] };
 
 /**
  * Navigation is permission-driven, never role-list-driven: add a role to
@@ -61,62 +68,83 @@ type NavGroup = { key: string; items: NavItem[] };
 const NAV_GROUPS: NavGroup[] = [
   {
     key: 'overview',
+    icon: LayoutDashboard,
     items: [{ key: 'dashboard', href: '/admin', icon: LayoutDashboard, permission: 'dashboard.view' }],
   },
   {
     key: 'salesCrm',
+    icon: Contact,
     items: [
       { key: 'crm', href: '/admin/crm', icon: Contact, permission: 'crm.view' },
       { key: 'crmUpcoming', href: '/admin/crm/upcoming', icon: ClipboardList, permission: 'crm.view' },
       { key: 'crmCurrent', href: '/admin/crm/current', icon: Briefcase, permission: 'crm.view' },
       { key: 'crmPlan', href: '/admin/crm/plan', icon: CalendarDays, permission: 'crm.view' },
-      { key: 'crmKpis', href: '/admin/crm/kpis', icon: Gauge, permission: 'crm.view' },
-      { key: 'crmFeedback', href: '/admin/crm/feedback', icon: MessageSquareWarning, permission: 'crm.view' },
-      { key: 'crmCatalogue', href: '/admin/crm/catalogue', icon: BookOpen, permission: 'crm.view' },
-      { key: 'crmContacts', href: '/admin/crm/contacts', icon: Users, permission: 'crm.view' },
-      { key: 'crmSettings', href: '/admin/crm/settings', icon: SlidersHorizontal, permission: 'crm.edit' },
       { key: 'tasks', href: '/admin/crm/tasks', icon: CheckSquare, permission: 'crm.view' },
-      { key: 'customers', href: '/admin/customers', icon: Users, permission: 'customers.view' },
+      { key: 'crmContacts', href: '/admin/crm/contacts', icon: Users, permission: 'crm.view' },
+      { key: 'crmFeedback', href: '/admin/crm/feedback', icon: MessageSquareWarning, permission: 'crm.view' },
+      { key: 'crmKpis', href: '/admin/crm/kpis', icon: Gauge, permission: 'crm.view' },
+      { key: 'crmCatalogue', href: '/admin/crm/catalogue', icon: BookOpen, permission: 'crm.view' },
+      { key: 'crmSettings', href: '/admin/crm/settings', icon: SlidersHorizontal, permission: 'crm.edit' },
+    ],
+  },
+  {
+    key: 'customersOrders',
+    icon: ShoppingCart,
+    items: [
       { key: 'orders', href: '/admin/orders', icon: ShoppingCart, permission: 'orders.view' },
+      { key: 'customers', href: '/admin/customers', icon: Users, permission: 'customers.view' },
       { key: 'inbox', href: '/admin/inbox', icon: Inbox, permission: 'inbox.view' },
     ],
   },
   {
     key: 'operations',
+    icon: Factory,
     items: [
       { key: 'production', href: '/admin/production', icon: Factory, permission: 'production.view' },
       { key: 'logistics', href: '/admin/logistics', icon: Truck, permission: 'logistics.view' },
-    ],
-  },
-  {
-    key: 'catalog',
-    items: [
-      { key: 'categories', href: '/admin/categories', icon: Layers, permission: 'categories.manage' },
-      { key: 'sampleQuiz', href: '/admin/sample-quiz', icon: Sparkles, permission: 'sampleQuiz.manage' },
       { key: 'inventory', href: '/admin/inventory', icon: Package, permission: 'inventory.view' },
     ],
   },
   {
+    key: 'finance',
+    icon: Landmark,
+    items: [
+      { key: 'accountingOverview', href: '/admin/accounting', icon: Landmark, permission: 'accounting.view' },
+      { key: 'invoices', href: '/admin/accounting/invoices', icon: FileText, permission: 'accounting.view' },
+      { key: 'payments', href: '/admin/accounting/payments', icon: CreditCard, permission: 'accounting.view' },
+      { key: 'expenses', href: '/admin/accounting/expenses', icon: Receipt, permission: 'accounting.view' },
+      { key: 'receivables', href: '/admin/accounting/receivables', icon: Wallet, permission: 'accounting.view' },
+      { key: 'financialReports', href: '/admin/accounting/reports', icon: BarChart3, permission: 'accounting.view' },
+    ],
+  },
+  {
+    key: 'catalog',
+    icon: Layers,
+    items: [
+      { key: 'categories', href: '/admin/categories', icon: Layers, permission: 'categories.manage' },
+      { key: 'sampleQuiz', href: '/admin/sample-quiz', icon: Sparkles, permission: 'sampleQuiz.manage' },
+    ],
+  },
+  {
     key: 'marketing',
+    icon: Tag,
     items: [
       { key: 'promos', href: '/admin/promos', icon: Tag, permission: 'promos.manage' },
       { key: 'referrals', href: '/admin/referrals', icon: Share2, permission: 'referrals.manage' },
     ],
   },
   {
-    key: 'finance',
-    items: [{ key: 'accounting', href: '/admin/accounting', icon: DollarSign, permission: 'accounting.view' }],
-  },
-  {
     key: 'content',
+    icon: Globe,
     items: [
-      { key: 'cms', href: '/admin/cms', icon: FileText, permission: 'cms.manage' },
+      { key: 'cms', href: '/admin/cms', icon: Home, permission: 'cms.manage' },
       { key: 'knowledge', href: '/admin/knowledge', icon: Brain, permission: 'knowledge.manage' },
       { key: 'seo', href: '/admin/seo', icon: SearchIcon, permission: 'seo.manage' },
     ],
   },
   {
     key: 'system',
+    icon: Settings,
     items: [
       { key: 'users', href: '/admin/users', icon: ShieldCheck, permission: 'users.view' },
       { key: 'audit', href: '/admin/audit', icon: History, permission: 'audit.view' },
@@ -126,6 +154,7 @@ const NAV_GROUPS: NavGroup[] = [
 ];
 
 const COLLAPSE_KEY = 'kcc-admin-sidebar-collapsed';
+const SECTIONS_KEY = 'kcc-admin-sidebar-sections';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -135,15 +164,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  /** Sections opened or closed by hand. Absent means "open if you are in it". */
+  const [sections, setSections] = useState<Record<string, boolean>>({});
   const queryClient = useQueryClient();
   useCrmWarmup(queryClient, !!user && canDo('crm.view'));
 
   useEffect(() => {
     try {
       setCollapsed(localStorage.getItem(COLLAPSE_KEY) === '1');
+      setSections(JSON.parse(localStorage.getItem(SECTIONS_KEY) || '{}'));
     } catch {
       /* ignore */
     }
+  }, []);
+
+  const toggleSection = useCallback((key: string, open: boolean) => {
+    setSections((prev) => {
+      const next = { ...prev, [key]: !open };
+      try {
+        localStorage.setItem(SECTIONS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
   }, []);
 
   const toggleCollapsed = useCallback(() => {
@@ -189,6 +233,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (href === '/admin') return pathname === '/admin';
       // /admin/crm must not light up while on /admin/crm/tasks
       if (href === '/admin/crm') return pathname === '/admin/crm';
+      if (href === '/admin/accounting') return pathname === '/admin/accounting';
       return pathname === href || pathname.startsWith(href + '/');
     },
     [pathname]
@@ -208,7 +253,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const flat = visibleGroups.flatMap((g) => g.items);
     // Longest matching href wins so nested routes resolve to their own entry.
     const match = flat
-      .filter((i) => isActive(i.href))
+      // A page inside a section takes the nearest entry above it, so an account
+      // reads "CRM dashboard" rather than falling through to "Admin Panel".
+      .filter((i) => i.href !== '/admin' ? pathname === i.href || pathname.startsWith(i.href + '/') : pathname === '/admin')
       .sort((a, b) => b.href.length - a.href.length)[0];
     return match ? t(`admin.${match.key}`) : t('admin.adminPanel');
   }, [visibleGroups, isActive, t]);
@@ -266,44 +313,65 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Nav — the ONLY scrolling region of the sidebar */}
       <nav className="scroll-thin min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 py-3">
-        {visibleGroups.map((grp) => (
-          <div key={grp.key} className="mb-2">
-            {!collapsed ? (
-              <p className="px-3 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-fg-subtle">
-                {t(`admin.nav.${grp.key}`)}
-              </p>
-            ) : (
-              <div className="mx-3 my-3 border-t border-line" />
-            )}
-            <ul className="space-y-0.5">
-              {grp.items.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.href);
-                return (
-                  <li key={item.key}>
-                    <Link
-                      href={item.href}
-                      title={collapsed ? t(`admin.${item.key}`) : undefined}
-                      aria-current={active ? 'page' : undefined}
-                      onMouseEnter={() => {
-                        const url = CRM_FIRST_REQUEST[item.href];
-                        if (url) prefetchApi(queryClient, url);
-                      }}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                        active
-                          ? 'bg-brand-soft text-brand-soft-fg'
-                          : 'text-fg-muted hover:bg-surface-2 hover:text-fg'
-                      } ${collapsed ? 'lg:justify-center lg:px-0' : ''}`}
-                    >
-                      <Icon size={18} className="shrink-0" />
-                      {!collapsed && <span className="truncate">{t(`admin.${item.key}`)}</span>}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+        {visibleGroups.map((grp) => {
+          const here = grp.items.some((i) => pathname === i.href || pathname.startsWith(i.href + '/')) && grp.key !== 'overview'
+            || (grp.key === 'overview' && pathname === '/admin');
+          const single = grp.items.length === 1;
+          // The section you are in stays open; the rest stay as you left them.
+          const open = collapsed || single || here || !!sections[grp.key] === true;
+          const GroupIcon = grp.icon;
+          return (
+            <div key={grp.key} className="mb-1">
+              {collapsed ? (
+                <div className="mx-3 my-2 border-t border-line" />
+              ) : !single && (
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  onClick={() => toggleSection(grp.key, !!sections[grp.key])}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors hover:bg-surface-2 ${
+                    here ? 'text-fg' : 'text-fg-muted'
+                  }`}
+                >
+                  <GroupIcon size={18} className="shrink-0" />
+                  <span className="min-w-0 flex-1 truncate text-start">{t(`admin.nav.${grp.key}`)}</span>
+                  <ChevronDown size={14} className={`shrink-0 text-fg-subtle transition-transform ${open ? 'rotate-180' : ''}`} />
+                </button>
+              )}
+              {open && (
+                <ul className={`space-y-0.5 ${!collapsed && !single ? 'ms-5 border-s border-line ps-2' : ''}`}>
+                  {grp.items.map((item) => {
+                    const Icon = item.icon;
+                    const active = isActive(item.href);
+                    return (
+                      <li key={item.key}>
+                        <Link
+                          href={item.href}
+                          title={collapsed ? t(`admin.${item.key}`) : undefined}
+                          aria-current={active ? 'page' : undefined}
+                          onMouseEnter={() => {
+                            const url = CRM_FIRST_REQUEST[item.href];
+                            if (url) prefetchApi(queryClient, url);
+                          }}
+                          className={`flex items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors ${
+                            single ? 'py-2.5' : 'py-2'
+                          } ${
+                            active
+                              ? 'bg-brand-soft text-brand-soft-fg'
+                              : 'text-fg-muted hover:bg-surface-2 hover:text-fg'
+                          } ${collapsed ? 'lg:justify-center lg:px-0' : ''}`}
+                        >
+                          {(collapsed || single) && <Icon size={18} className="shrink-0" />}
+                          {!collapsed && <span className="truncate">{t(`admin.${item.key}`)}</span>}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       {/* Footer — pinned to the bottom of the viewport, never scrolls away */}
@@ -328,7 +396,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen bg-bg" style={{ ['--sidebar-w' as string]: sidebarWidth }}>
       {/* ---------- Desktop sidebar: fixed to the viewport, full height ---------- */}
       <aside
-        className="fixed inset-y-0 start-0 z-40 hidden w-[var(--sidebar-w)] flex-col border-e border-line bg-surface transition-[width] duration-200 lg:flex"
+        className="fixed inset-y-0 start-0 z-40 hidden w-[var(--sidebar-w)] flex-col border-e border-line bg-surface transition-[width] duration-200 lg:flex print:!hidden"
         aria-label={t('admin.adminPanel')}
       >
         {sidebarInner}
@@ -353,8 +421,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* ---------- Main column ---------- */}
-      <div className="flex min-h-screen min-w-0 flex-col lg:ps-[var(--sidebar-w)]">
-        <header className="sticky top-0 z-30 border-b border-line bg-surface/85 backdrop-blur-xl">
+      <div className="flex min-h-screen min-w-0 flex-col lg:ps-[var(--sidebar-w)] print:!ps-0">
+        <header className="sticky top-0 z-30 border-b border-line bg-surface/85 backdrop-blur-xl print:hidden">
           <div className="flex h-16 items-center gap-2 px-3 sm:px-4 xl:px-6">
             <button
               type="button"
@@ -368,6 +436,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-fg sm:text-lg">
               {currentTitle}
             </h1>
+
+            <GlobalSearch />
 
             <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <NotificationBell locale={locale} />

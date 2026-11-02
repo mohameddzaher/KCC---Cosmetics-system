@@ -12,6 +12,9 @@ import {
 import ContactActions from '@/components/admin/ContactActions';
 import CrmPanel, { stageMeta } from '@/components/admin/CrmPanel';
 import { AuditTrail } from '@/components/admin/audit';
+import { InvoiceBadge } from '@/components/admin/accounting/shared';
+import { balanceOf } from '@/lib/invoiceStatus';
+import { formatCurrency as money } from '@/lib/money';
 import CustomerCredentials from '@/components/admin/CustomerCredentials';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -30,7 +33,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function CustomerDetailPage() {
-  const { tx } = useLanguage();
+  const { tx, locale } = useLanguage();
   const params = useParams();
   const customerId = params.id as string;
   const { user: me } = useAuth();
@@ -40,6 +43,9 @@ export default function CustomerDetailPage() {
   const [referrals, setReferrals] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [managers, setManagers] = useState<any[]>([]);
+  /** Null for someone who may not see the accounts. */
+  const [invoices, setInvoices] = useState<any[] | null>(null);
+  const [crmAccount, setCrmAccount] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -57,6 +63,8 @@ export default function CustomerDetailPage() {
         setReferrals(Array.isArray(data.referrals) ? data.referrals : []);
         setActivities(Array.isArray(data.activities) ? data.activities : []);
         setManagers(Array.isArray(data.managers) ? data.managers : []);
+        setInvoices(Array.isArray(data.invoices) ? data.invoices : null);
+        setCrmAccount(data.crmAccount || null);
       } else if (res.status === 404) {
         setError('Customer not found');
       } else {
@@ -419,6 +427,34 @@ export default function CustomerDetailPage() {
               isActive={customer.isActive !== false}
               onChange={loadCustomer}
             />
+          )}
+
+          {crmAccount && (
+            <Link href={`/admin/crm/accounts/${crmAccount._id}`} className="mb-6 flex items-center justify-between rounded-xl border border-line bg-surface p-4 text-sm hover:bg-surface-2">
+              <span className="text-fg-muted">{tx('CRM account')}</span>
+              <span className="font-semibold text-fg">{crmAccount.name}</span>
+            </Link>
+          )}
+
+          {invoices && (
+            <div className="mb-6 rounded-xl border border-line bg-surface p-5">
+              <h2 className="mb-3 text-sm font-semibold text-fg">{tx('Account balance')}</h2>
+              <div className="mb-3 grid grid-cols-3 gap-2 text-xs text-fg-muted">
+                <div>{tx('Invoiced')}<p className="text-sm font-semibold text-fg">{money(invoices.reduce((n, i) => n + i.total, 0), locale)}</p></div>
+                <div>{tx('Paid')}<p className="text-sm font-semibold text-fg">{money(invoices.reduce((n, i) => n + (i.amountPaid || 0), 0), locale)}</p></div>
+                <div>{tx('Balance')}<p className="text-sm font-semibold text-fg">{money(invoices.reduce((n, i) => n + balanceOf(i), 0), locale)}</p></div>
+              </div>
+              {invoices.length === 0 ? <p className="text-sm text-fg-muted">{tx('No invoices found')}</p> : (
+                <ul className="divide-y divide-line">
+                  {invoices.map((i) => (
+                    <li key={i._id} className="flex items-center justify-between gap-2 py-2 text-sm">
+                      <Link href={`/admin/accounting/invoices/${i._id}`} className="font-medium text-fg hover:underline">{i.invoiceNumber}</Link>
+                      <InvoiceBadge invoice={i} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           )}
 
           {/* CRM: stage, manager, tags, activity timeline */}

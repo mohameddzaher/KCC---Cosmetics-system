@@ -108,6 +108,7 @@ test('records link to their own pages, and a customer is not a staff member', ()
   assert.equal(recordHref('User', 'x', 'CUSTOMER'), '/admin/customers/x');
   assert.equal(recordHref('User', 'x', 'SALES'), '/admin/users');
   assert.equal(recordHref('Session', 'x'), undefined);
+  assert.equal(recordHref('Invoice', 'x'), '/admin/accounting/invoices/x');
 });
 
 test('a browser string becomes a device', () => {

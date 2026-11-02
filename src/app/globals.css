@@ -251,6 +251,8 @@
   --fg-inverse: #FBF9F6;
 
   /* Brand — buttons are green or rose per brand palette */
+  --chart-1: #1E8A62;         /* money in / money out: validated, see the dataviz check */
+  --chart-2: #C8691B;
   --brand: #2D6A4F;
   --brand-hover: #24583F;
   --brand-soft: #E6EFE9;
@@ -329,6 +331,8 @@
   --fg-subtle: #948FA4;
   --fg-inverse: #1B1B24;
 
+  --chart-1: #2E9E74;
+  --chart-2: #D2702A;
   --brand: #40916C;
   --brand-hover: #52B788;
   --brand-soft: rgba(64, 145, 108, 0.16);

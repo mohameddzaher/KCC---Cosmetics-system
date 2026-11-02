@@ -10,6 +10,7 @@ import { can } from '@/lib/roles';
 import { computeTotals } from '@/lib/orderTotals';
 import { claimPromo, discountFor, evaluatePromo, releasePromo } from '@/lib/promo';
 import { audited } from '@/lib/audit';
+import { syncInvoiceToOrder } from '@/lib/accounting';
 
 export const dynamic = 'force-dynamic';
 
@@ -138,6 +139,7 @@ export const POST = audited(async function POST(req: NextRequest, context: Route
 
     order.totals = computeTotals(subtotal, promoDiscount + (order.creditApplied || 0));
     await order.save();
+    await syncInvoiceToOrder(order);
 
     const after = await User.findById(balanceOwner).select('referralBalance').lean();
 

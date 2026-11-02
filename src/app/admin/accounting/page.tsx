@@ -1,442 +1,115 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import Link from 'next/link';
+import { ArrowDownCircle, ArrowUpCircle, Clock, Download, FileWarning, Landmark, Receipt, Scale, TrendingUp } from 'lucide-react';
 import {
-  DollarSign, FileText, CreditCard, Receipt, BarChart3,
-  Loader2, TrendingUp, TrendingDown, Plus, Trash2
-} from 'lucide-react';
-import AccountingCreateForm from '@/components/admin/AccountingCreateForm';
-
-const INVOICE_STATUSES = ['draft', 'sent', 'paid', 'overdue', 'cancelled'];
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer
-} from 'recharts';
+  AutoGrid, Badge, Card, ErrorNote, PageHeader, PageSkeleton, SectionTitle,
+} from '@/components/admin/ui';
+import RequirePermission from '@/components/admin/RequirePermission';
+import { MonthlyChart, PeriodPicker, Stat, thisMonth, useMoney } from '@/components/admin/accounting/shared';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useApi } from '@/lib/useApi';
+import { statusLabel } from '@/lib/orderWorkflow';
 
-const invoiceStatusClasses: Record<string, string> = {
-  draft: 'bg-surface-3 text-fg-muted',
-  sent: 'bg-blue-500/10 text-blue-400',
-  paid: 'bg-green-500/10 text-green-400',
-  overdue: 'bg-red-500/10 text-red-400',
-  cancelled: 'bg-surface-3 text-fg-muted',
-};
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-export default function AccountingPage() {
-  const { tx } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'invoices' | 'payments' | 'expenses' | 'reports'>('invoices');
-  const [loading, setLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [payments, setPayments] = useState<any[]>([]);
-  const [expenses, setExpenses] = useState<any[]>([]);
-  const [profitReport, setProfitReport] = useState<any>(null);
-  const [showCreate, setShowCreate] = useState<'invoices' | 'payments' | 'expenses' | null>(null);
+/** The accounts at a glance, and what needs doing about them. */
+function Overview() {
+  const { tx, locale } = useLanguage();
+  const { money, date } = useMoney();
+  const [period, setPeriod] = useState(thisMonth);
+  const { data: d, ready, error } = useApi<any>(`/api/accounting/summary?from=${period.from}&to=${period.to}`);
 
-  useEffect(() => {
-    setMounted(true);
-    fetchAccountingData();
-  }, []);
+  if (!ready) return <PageSkeleton tiles={6} rows={6} />;
+  if (error && !d) return <ErrorNote>{error}</ErrorNote>;
 
-  const fetchAccountingData = async () => {
-    setLoading(true);
-    try {
-      const [invoicesRes, paymentsRes, expensesRes, profitRes] = await Promise.allSettled([
-        fetch('/api/accounting/invoices'),
-        fetch('/api/accounting/payments'),
-        fetch('/api/accounting/expenses'),
-        fetch('/api/accounting/reports?type=profit'),
-      ]);
-
-      if (invoicesRes.status === 'fulfilled' && invoicesRes.value.ok) {
-        const data = await invoicesRes.value.json();
-        setInvoices(Array.isArray(data) ? data : []);
-      }
-      if (paymentsRes.status === 'fulfilled' && paymentsRes.value.ok) {
-        const data = await paymentsRes.value.json();
-        setPayments(Array.isArray(data) ? data : []);
-      }
-      if (expensesRes.status === 'fulfilled' && expensesRes.value.ok) {
-        const data = await expensesRes.value.json();
-        setExpenses(Array.isArray(data) ? data : []);
-      }
-      if (profitRes.status === 'fulfilled' && profitRes.value.ok) {
-        const data = await profitRes.value.json();
-        setProfitReport(data.report || null);
-      }
-    } catch (error) {
-      console.error('Failed to fetch accounting data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteRecord = async (kind: 'invoices' | 'payments' | 'expenses', id: string) => {
-    if (!confirm('Delete this record permanently?')) return;
-    const res = await fetch(`/api/accounting/${kind}/${id}`, { method: 'DELETE' });
-    if (res.ok) fetchAccountingData();
-    else { const e = await res.json(); alert(e.error || 'Failed to delete'); }
-  };
-
-  const updateStatus = async (kind: 'invoices' | 'payments', id: string, status: string) => {
-    const res = await fetch(`/api/accounting/${kind}/${id}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    });
-    if (res.ok) fetchAccountingData();
-    else { const e = await res.json(); alert(e.error || 'Failed to update'); }
-  };
-
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
-
-  // Compute summary from real data
-  const totalRevenue = payments
-    .filter((p: any) => p.status === 'completed')
-    .reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
-  const outstandingInvoices = invoices
-    .filter((inv: any) => ['draft', 'sent', 'overdue'].includes(inv.status))
-    .reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
-  const totalExpenses = expenses.reduce((sum: number, e: any) => sum + (e.amount || 0), 0);
-  const netProfit = totalRevenue - totalExpenses;
-
-  // Build chart data from payments and expenses grouped by month
-  const revenueChartData: { month: string; revenue: number; expenses: number }[] = [];
-  const months = new Map<string, { revenue: number; expenses: number }>();
-  payments.filter((p: any) => p.status === 'completed').forEach((p: any) => {
-    const d = new Date(p.paidAt || p.createdAt);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    const label = d.toLocaleDateString('en-US', { month: 'short' });
-    if (!months.has(key)) months.set(key, { revenue: 0, expenses: 0 });
-    months.get(key)!.revenue += p.amount || 0;
-  });
-  expenses.forEach((e: any) => {
-    const d = new Date(e.date || e.createdAt);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    if (!months.has(key)) months.set(key, { revenue: 0, expenses: 0 });
-    months.get(key)!.expenses += e.amount || 0;
-  });
-  Array.from(months.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-6)
-    .forEach(([key, data]) => {
-      const [y, m] = key.split('-');
-      const label = new Date(Number(y), Number(m) - 1).toLocaleDateString('en-US', { month: 'short' });
-      revenueChartData.push({ month: label, ...data });
-    });
-
-  const summaryCards = [
-    { label: 'Total Revenue', value: totalRevenue, icon: DollarSign, color: 'text-kcc-green', bg: 'bg-kcc-green/10' },
-    { label: 'Outstanding Invoices', value: outstandingInvoices, icon: FileText, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
-    { label: 'Total Expenses', value: totalExpenses, icon: Receipt, color: 'text-red-400', bg: 'bg-red-500/10' },
-    { label: 'Net Profit', value: netProfit, icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  ];
-
-  const tabs = [
-    { key: 'invoices' as const, label: 'Invoices', icon: FileText },
-    { key: 'payments' as const, label: 'Payments', icon: CreditCard },
-    { key: 'expenses' as const, label: 'Expenses', icon: Receipt },
-    { key: 'reports' as const, label: 'Reports', icon: BarChart3 },
-  ];
-
-  if (!mounted) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-kcc-green" size={24} />
-      </div>
-    );
-  }
+  const overdue = (d.receivables.total as number) - (d.receivables.buckets.current as number);
 
   return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {summaryCards.map((card, i) => {
-          const Icon = card.icon;
-          return (
-            <div key={i} className="p-5 bg-surface border border-line rounded-xl">
-              <div className="flex items-start justify-between">
-                <div className={`p-2.5 rounded-lg ${card.bg}`}>
-                  <Icon size={20} className={card.color} />
-                </div>
-              </div>
-              <div className="mt-3">
-                <p className="text-2xl font-bold text-fg">${card.value.toLocaleString()}</p>
-                <p className="text-sm text-fg-muted mt-0.5">{card.label}</p>
-              </div>
-            </div>
-          );
-        })}
+    <div className="space-y-5">
+      <PageHeader title={tx('Accounting')} subtitle={tx('Sales, money received, costs and what is still owed.')}>
+        <PeriodPicker from={period.from} to={period.to} onChange={(from, to) => setPeriod({ from, to })} />
+      </PageHeader>
+
+      <AutoGrid min="16rem">
+        <Stat icon={TrendingUp} tone="text-ok-soft-fg" label={tx('Sales before VAT')} value={money(d.sales.net)} note={`${d.sales.invoices} ${tx('invoices')}`} />
+        <Stat icon={ArrowDownCircle} tone="text-ok-soft-fg" label={tx('Money received')} value={money(d.collected.total)} note={`${d.collected.payments} ${tx('payments')}`} />
+        <Stat icon={ArrowUpCircle} tone="text-warn-soft-fg" label={tx('Expenses before VAT')} value={money(d.expenses.net)} note={`${d.expenses.count} ${tx('expenses')}`} />
+        <Stat icon={Scale} label={tx('Profit earned')} value={money(d.profit.earned)} note={tx('Sales less expenses, before VAT')} />
+        <Stat icon={Clock} tone="text-warn-soft-fg" label={tx('Still owed to us')} value={money(d.receivables.total)} note={overdue > 0 ? `${money(overdue)} ${tx('overdue')}` : tx('Nothing overdue')} />
+        <Stat icon={Landmark} label={tx('VAT due')} value={money(d.vat.due)} note={tx('Charged less paid')} />
+      </AutoGrid>
+
+      <Card>
+        <SectionTitle title={tx('Sales and expenses by month')} />
+        <MonthlyChart months={d.months} />
+      </Card>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Card>
+          <SectionTitle title={tx('Overdue invoices')} />
+          {d.receivables.overdue.length === 0 ? (
+            <p className="text-sm text-fg-muted">{tx('Nothing overdue')}</p>
+          ) : (
+            <ul className="divide-y divide-line">
+              {d.receivables.overdue.map((i: any) => (
+                <li key={i._id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <div className="min-w-0">
+                    <Link href={`/admin/accounting/invoices/${i._id}`} className="font-medium text-fg hover:underline">{i.invoiceNumber}</Link>
+                    <p className="truncate text-xs text-fg-muted">{[i.customer, `${tx('Due')} ${date(i.dueDate)}`].filter(Boolean).join(' · ')}</p>
+                  </div>
+                  <span className="shrink-0 font-semibold text-fg">{money(i.balance)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card>
+          <SectionTitle title={tx('Priced orders with no invoice')} />
+          {d.unbilled.length === 0 ? (
+            <p className="text-sm text-fg-muted">{tx('Every priced order has an invoice.')}</p>
+          ) : (
+            <ul className="divide-y divide-line">
+              {d.unbilled.slice(0, 8).map((o: any) => (
+                <li key={o._id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <div className="min-w-0">
+                    <Link href={`/admin/orders/${o._id}`} className="font-medium text-fg hover:underline">{o.orderNumber}</Link>
+                    <p className="truncate text-xs text-fg-muted">{o.customerInfo?.companyName || o.customerInfo?.personName} · {statusLabel(o.status, locale)}</p>
+                  </div>
+                  <Link href={`/admin/accounting/invoices?new=${o._id}`} className="shrink-0 text-xs font-semibold text-brand hover:underline">
+                    {money(o.totals?.total)} · {tx('Invoice it')}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       </div>
 
-      {/* Revenue Chart */}
-      {revenueChartData.length > 0 && (
-        <div className="bg-surface border border-line rounded-xl p-5">
-          <h2 className="text-base font-semibold text-fg mb-4">{tx('Revenue vs Expenses')}</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={revenueChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
-                <YAxis stroke="#64748b" fontSize={12} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0f172a',
-                    border: '1px solid #1e293b',
-                    borderRadius: '8px',
-                    color: '#f8fafc',
-                    fontSize: '12px',
-                  }}
-                  formatter={(value) => [`$${(value ?? 0).toLocaleString()}`, '']}
-                />
-                <Bar dataKey="revenue" fill="#2D6A4F" radius={[4, 4, 0, 0]} name="Revenue" />
-                <Bar dataKey="expenses" fill="#D4A574" radius={[4, 4, 0, 0]} name="Expenses" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="tab-bar">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              type="button"
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                activeTab === tab.key ? 'bg-kcc-green/20 text-kcc-green' : 'text-fg-muted hover:text-fg'
-              }`}
-            >
-              <Icon size={15} />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Tab Content */}
-      <div className="bg-surface border border-line rounded-xl overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center h-48">
-            <Loader2 className="animate-spin text-kcc-green" size={24} />
-          </div>
-        ) : activeTab === 'invoices' ? (
-          <>
-            <div className="flex items-center justify-between p-5 border-b border-line">
-              <h3 className="text-sm font-semibold text-fg">Invoices ({invoices.length})</h3>
-              <button type="button" onClick={() => setShowCreate('invoices')}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors">
-                <Plus size={14} />{tx('New Invoice')}</button>
-            </div>
-            {showCreate === 'invoices' && (
-              <div className="p-5 border-b border-line">
-                <AccountingCreateForm kind="invoices" invoices={invoices} onClose={() => setShowCreate(null)} onCreated={fetchAccountingData} />
-              </div>
-            )}
-            <div className="scroll-thin w-full min-w-0 overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-line">
-                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Invoice #')}</th>
-                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Customer')}</th>
-                    <th className="text-end text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Total')}</th>
-                    <th className="text-center text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Status')}</th>
-                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Due Date')}</th>
-                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Paid')}</th>
-                    <th className="text-center text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Actions')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line">
-                  {invoices.map((inv: any) => (
-                    <tr key={inv._id} className="hover:bg-surface-2/50 transition-colors">
-                      <td className="px-5 py-3.5 text-sm font-medium text-fg">{inv.invoiceNumber}</td>
-                      <td className="px-5 py-3.5 text-sm text-fg-muted">{inv.userId?.name || inv.userId?.email || '-'}</td>
-                      <td className="px-5 py-3.5 text-end text-sm font-medium text-fg">${(inv.total || 0).toLocaleString()}</td>
-                      <td className="px-5 py-3.5 text-center">
-                        <select
-                          value={inv.status}
-                          onChange={(e) => updateStatus('invoices', inv._id, e.target.value)}
-                          title={tx('Change invoice status')}
-                          className={`text-xs font-medium rounded-full px-2 py-1 capitalize border-0 focus:outline-none cursor-pointer ${invoiceStatusClasses[inv.status] || 'bg-surface-3 text-fg-muted'}`}
-                        >
-                          {INVOICE_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-fg-muted">{formatDate(inv.dueDate)}</td>
-                      <td className="px-5 py-3.5 text-sm text-fg-muted">{formatDate(inv.paidAt)}</td>
-                      <td className="px-5 py-3.5 text-center">
-                        <button type="button" onClick={() => deleteRecord('invoices', inv._id)} title={tx('Delete invoice')}
-                          className="p-1.5 text-fg-muted hover:text-red-400 hover:bg-surface-2 rounded-lg transition-colors"><Trash2 size={15} /></button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {invoices.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-32 text-fg-muted">
-                  <FileText size={28} className="mb-2" />
-                  <p className="text-sm">{tx('No invoices found')}</p>
-                </div>
-              )}
-            </div>
-          </>
-        ) : activeTab === 'payments' ? (
-          <>
-            <div className="flex items-center justify-between p-5 border-b border-line">
-              <h3 className="text-sm font-semibold text-fg">Payments ({payments.length})</h3>
-              <button type="button" onClick={() => setShowCreate('payments')}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors">
-                <Plus size={14} />{tx('Record Payment')}</button>
-            </div>
-            {showCreate === 'payments' && (
-              <div className="p-5 border-b border-line">
-                <AccountingCreateForm kind="payments" invoices={invoices} onClose={() => setShowCreate(null)} onCreated={fetchAccountingData} />
-              </div>
-            )}
-            <div className="scroll-thin w-full min-w-0 overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-line">
-                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Reference')}</th>
-                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Invoice')}</th>
-                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Customer')}</th>
-                    <th className="text-end text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Amount')}</th>
-                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Method')}</th>
-                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Date')}</th>
-                    <th className="text-center text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Actions')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line">
-                  {payments.map((pay: any) => (
-                    <tr key={pay._id} className="hover:bg-surface-2/50 transition-colors">
-                      <td className="px-5 py-3.5 text-sm font-medium text-fg">{pay.reference || pay._id?.slice(-8)}</td>
-                      <td className="px-5 py-3.5 text-sm text-kcc-green">{pay.invoiceId?.invoiceNumber || '-'}</td>
-                      <td className="px-5 py-3.5 text-sm text-fg-muted">{pay.userId?.name || '-'}</td>
-                      <td className="px-5 py-3.5 text-end text-sm font-medium text-green-400">${(pay.amount || 0).toLocaleString()}</td>
-                      <td className="px-5 py-3.5 text-sm text-fg-muted">{pay.method}</td>
-                      <td className="px-5 py-3.5 text-sm text-fg-muted">{formatDate(pay.paidAt || pay.createdAt)}</td>
-                      <td className="px-5 py-3.5 text-center">
-                        <button type="button" onClick={() => deleteRecord('payments', pay._id)} title={tx('Delete payment')}
-                          className="p-1.5 text-fg-muted hover:text-red-400 hover:bg-surface-2 rounded-lg transition-colors"><Trash2 size={15} /></button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {payments.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-32 text-fg-muted">
-                  <CreditCard size={28} className="mb-2" />
-                  <p className="text-sm">{tx('No payments found')}</p>
-                </div>
-              )}
-            </div>
-          </>
-        ) : activeTab === 'expenses' ? (
-          <>
-            <div className="flex items-center justify-between p-5 border-b border-line">
-              <h3 className="text-sm font-semibold text-fg">Expenses ({expenses.length})</h3>
-              <button type="button" onClick={() => setShowCreate('expenses')}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-brand-fg bg-brand hover:bg-brand-hover rounded-lg transition-colors">
-                <Plus size={14} />{tx('New Expense')}</button>
-            </div>
-            {showCreate === 'expenses' && (
-              <div className="p-5 border-b border-line">
-                <AccountingCreateForm kind="expenses" invoices={invoices} onClose={() => setShowCreate(null)} onCreated={fetchAccountingData} />
-              </div>
-            )}
-            <div className="scroll-thin w-full min-w-0 overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-line">
-                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Category')}</th>
-                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Description')}</th>
-                    <th className="text-end text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Amount')}</th>
-                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Vendor')}</th>
-                    <th className="text-start text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Date')}</th>
-                    <th className="text-center text-xs font-medium text-fg-subtle uppercase tracking-wider px-5 py-3">{tx('Actions')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line">
-                  {expenses.map((exp: any) => (
-                    <tr key={exp._id} className="hover:bg-surface-2/50 transition-colors">
-                      <td className="px-5 py-3.5">
-                        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-kcc-beige/10 text-kcc-beige">{exp.category}</span>
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-fg-muted">{typeof exp.description === 'object' ? (exp.description?.en || exp.description?.ar || '-') : exp.description}</td>
-                      <td className="px-5 py-3.5 text-end text-sm font-medium text-red-400">${(exp.amount || 0).toLocaleString()}</td>
-                      <td className="px-5 py-3.5 text-sm text-fg-muted">{exp.vendor}</td>
-                      <td className="px-5 py-3.5 text-sm text-fg-muted">{formatDate(exp.date || exp.createdAt)}</td>
-                      <td className="px-5 py-3.5 text-center">
-                        <button type="button" onClick={() => deleteRecord('expenses', exp._id)} title={tx('Delete expense')}
-                          className="p-1.5 text-fg-muted hover:text-red-400 hover:bg-surface-2 rounded-lg transition-colors"><Trash2 size={15} /></button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {expenses.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-32 text-fg-muted">
-                  <Receipt size={28} className="mb-2" />
-                  <p className="text-sm">{tx('No expenses found')}</p>
-                </div>
-              )}
-            </div>
-          </>
+      <Card>
+        <SectionTitle title={tx('Latest payments')} />
+        {d.recent.length === 0 ? (
+          <p className="text-sm text-fg-muted">{tx('No payments found')}</p>
         ) : (
-          /* Reports Tab */
-          <div className="p-8">
-            {profitReport && (
-              <div className="mb-6 p-5 border border-line rounded-xl">
-                <h4 className="text-sm font-semibold text-fg mb-3">Current Month P&L ({profitReport.month})</h4>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-xs text-fg-subtle">{tx('Revenue')}</p>
-                    <p className="text-lg font-bold text-green-400">${(profitReport.revenue || 0).toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-fg-subtle">{tx('Expenses')}</p>
-                    <p className="text-lg font-bold text-red-400">${(profitReport.expenses || 0).toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-fg-subtle">{tx('Net Profit')}</p>
-                    <p className={`text-lg font-bold ${(profitReport.profit || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      ${(profitReport.profit || 0).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[
-                { title: 'Revenue Report', desc: 'Monthly revenue breakdown', icon: BarChart3, color: 'text-kcc-green', bg: 'bg-kcc-green/10', type: 'revenue' },
-                { title: 'Expense Report', desc: 'Category-wise expense analysis', icon: Receipt, color: 'text-red-400', bg: 'bg-red-500/10', type: 'expenses' },
-                { title: 'Outstanding Invoices', desc: 'Unpaid and overdue invoices', icon: FileText, color: 'text-yellow-400', bg: 'bg-yellow-500/10', type: 'outstanding' },
-                { title: 'Profit & Loss', desc: 'P&L statement overview', icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10', type: 'profit' },
-              ].map((report) => {
-                const Icon = report.icon;
-                return (
-                  <div key={report.type} className="p-5 border border-line rounded-xl hover:border-line transition-colors cursor-pointer">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`p-2.5 rounded-lg ${report.bg}`}>
-                        <Icon size={20} className={report.color} />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-fg">{report.title}</h4>
-                        <p className="text-xs text-fg-subtle">{report.desc}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <ul className="divide-y divide-line">
+            {d.recent.map((p: any) => (
+              <li key={p._id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                <span className="min-w-0 truncate text-fg-muted">
+                  {p.userId?.name} ·{' '}
+                  {p.invoiceId && <Link href={`/admin/accounting/invoices/${p.invoiceId._id}`} className="hover:underline">{p.invoiceId.invoiceNumber}</Link>} · {date(p.paidAt)}
+                </span>
+                <Badge tone="ok">{money(p.amount)}</Badge>
+              </li>
+            ))}
+          </ul>
         )}
-      </div>
+      </Card>
     </div>
   );
+}
+
+export default function AccountingOverviewPage() {
+  return <RequirePermission permission="accounting.view"><Overview /></RequirePermission>;
 }

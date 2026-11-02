@@ -175,9 +175,9 @@ export default function AdminDashboard() {
     const bulkOrders = orders.filter(o => o.type === 'bulk').length;
     const totalCustomers = customers.length;
 
+    // Money actually received, so a part-paid invoice counts for what came in.
     const totalRevenue = invoices
-      .filter((inv: any) => inv.status === 'paid')
-      .reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
+      .reduce((sum: number, inv: any) => sum + (inv.amountPaid || 0), 0);
 
     const pendingStatuses = ['Submitted', 'Under Review', 'Quotation Sent', 'Awaiting Payment'];
     const completedStatuses = ['Delivered', 'Closed'];
@@ -236,9 +236,9 @@ export default function AdminDashboard() {
       const monthRevenue = invoices
         .filter((inv: any) => {
           const d = new Date(inv.createdAt);
-          return d >= monthDate && d < nextMonth && inv.status === 'paid';
+          return d >= monthDate && d < nextMonth;
         })
-        .reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
+        .reduce((sum: number, inv: any) => sum + (inv.amountPaid || 0), 0);
 
       const monthOrderRevenue = orders
         .filter(o => {

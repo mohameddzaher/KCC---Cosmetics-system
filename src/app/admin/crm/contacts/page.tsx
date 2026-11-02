@@ -19,7 +19,7 @@ const emptyForm = {
 export default function CrmPipelinePage() {
   const { tx } = useLanguage();
   const contacts = useApi<any[]>('/api/customers', { poll: 20000 });
-  const staff = useApi<any[]>('/api/users?role=', { poll: 20000 });
+  const staff = useApi<any[]>('/api/users/directory', { poll: 20000 });
   const open = useApi<any[]>('/api/crm/tasks?status=open', { poll: 20000 });
   const customers = useMemo(() => (Array.isArray(contacts.data) ? contacts.data : []), [contacts.data]);
   const managers = Array.isArray(staff.data) ? staff.data : [];

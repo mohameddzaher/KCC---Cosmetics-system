@@ -4,9 +4,11 @@ import connectDB from '@/lib/db';
 import User from '@/models/User';
 import Order from '@/models/Order';
 import Referral from '@/models/Referral';
+import Invoice from '@/models/Invoice';
+import CrmAccount from '@/models/CrmAccount';
 import CustomerActivity from '@/models/CustomerActivity';
 import { getSession } from '@/lib/auth';
-import { can } from '@/lib/roles';
+import { can, ROLES } from '@/lib/roles';
 import { audited } from '@/lib/audit';
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -51,11 +53,24 @@ export async function GET(req: NextRequest, context: RouteContext) {
     const activities = await CustomerActivity.find({ customerId: id }).sort({ createdAt: -1 });
 
     // Team list for account-manager assignment
-    const managers = await User.find({ role: { $in: 'customers.view' } })
+    const managers = await User.find({ role: { $in: ROLES.filter((r) => can(r, 'customers.view')) }, isActive: { $ne: false } })
       .select('name email role')
       .sort({ name: 1 });
 
-    return NextResponse.json({ customer, orders, referrals, activities, managers });
+    // The account as the accounts see it, for those allowed to.
+    const invoices = can(user.role, 'accounting.view')
+      ? await Invoice.find({ userId: id, status: { $ne: 'cancelled' } })
+        .select('invoiceNumber orderId status total amountPaid dueDate createdAt')
+        .populate('orderId', 'orderNumber')
+        .sort({ createdAt: -1 })
+        .lean()
+      : null;
+
+    const crmAccount = can(user.role, 'crm.view')
+      ? await CrmAccount.findOne({ customerId: id }).select('name').lean()
+      : null;
+
+    return NextResponse.json({ customer, orders, referrals, activities, managers, invoices, crmAccount });
   } catch (error: any) {
     console.error('Customers GET [id] error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

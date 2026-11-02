@@ -15,6 +15,8 @@ const defaultSettings = {
     whatsapp: '',
     contactAddress: { en: '', ar: '' },
     companyName: { en: '', ar: '' },
+    vatNumber: '',
+    crNumber: '',
     emails: { info: '', sales: '', support: '', hr: '', careers: '' },
     phones: { primary: '', secondary: '' },
     socialMedia: {
@@ -273,6 +275,32 @@ export default function SettingsPage() {
                   onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, companyName: { ...prev.general.companyName, ar: e.target.value } } }))}
                   className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                   dir="rtl"
+                />
+              </div>
+            </div>
+
+            {/* Tax details, printed on every invoice */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-fg-muted mb-1.5">
+                  <Building2 size={12} />{tx('VAT registration number')}</label>
+                <input
+                  type="text"
+                  dir="ltr"
+                  value={settings.general.vatNumber}
+                  onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, vatNumber: e.target.value } }))}
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-fg-muted mb-1.5">
+                  <Building2 size={12} />{tx('Commercial registration number')}</label>
+                <input
+                  type="text"
+                  dir="ltr"
+                  value={settings.general.crNumber}
+                  onChange={(e) => setSettings(prev => ({ ...prev, general: { ...prev.general, crNumber: e.target.value } }))}
+                  className="w-full px-3 py-2 text-sm bg-bg border border-line rounded-lg text-fg focus:border-kcc-green focus:outline-none"
                 />
               </div>
             </div>

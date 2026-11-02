@@ -23,12 +23,14 @@ export async function GET(req: NextRequest) {
     if (startDate || endDate) {
       filter.date = {};
       if (startDate) filter.date.$gte = new Date(startDate);
-      if (endDate) filter.date.$lte = new Date(endDate);
+      if (endDate) filter.date.$lte = new Date(`${endDate}T23:59:59.999`);
     }
 
     const expenses = await Expense.find(filter)
       .populate('createdBy', 'name email')
-      .sort({ date: -1 });
+      .populate('orderId', 'orderNumber')
+      .sort({ date: -1 })
+      .limit(1000);
 
     return NextResponse.json(expenses);
   } catch (error: any) {
@@ -46,6 +48,9 @@ export const POST = audited(async function POST(req: NextRequest) {
 
     const body = await req.json();
     // Explicit allowlist — never spread raw request body into create().
+    if (!body.category || !(Number(body.amount) > 0)) {
+      return NextResponse.json({ error: 'A category and an amount above zero are required.' }, { status: 400 });
+    }
     const expense = await Expense.create({
       category: body.category,
       description: body.description,
@@ -53,6 +58,8 @@ export const POST = audited(async function POST(req: NextRequest) {
       date: body.date ? new Date(body.date) : new Date(),
       vendor: body.vendor,
       reference: body.reference,
+      vatAmount: Math.max(0, Number(body.vatAmount) || 0),
+      orderId: body.orderId || undefined,
       notes: body.notes,
       createdBy: user.id,
     });

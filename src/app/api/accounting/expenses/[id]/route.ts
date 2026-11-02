@@ -22,7 +22,15 @@ export const PUT = audited(async function PUT(req: NextRequest, context: RouteCo
       return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
     }
     const body = await req.json();
-    const expense = await Expense.findByIdAndUpdate(id, body, { new: true, runValidators: true });
+    const set: Record<string, unknown> = {};
+    for (const key of ['category', 'description', 'vendor', 'reference', 'notes'] as const) {
+      if (body[key] !== undefined) set[key] = body[key];
+    }
+    if (body.amount !== undefined) set.amount = Number(body.amount) || 0;
+    if (body.vatAmount !== undefined) set.vatAmount = Math.max(0, Number(body.vatAmount) || 0);
+    if (body.date) set.date = new Date(body.date);
+    if (body.orderId !== undefined) set.orderId = body.orderId || null;
+    const expense = await Expense.findByIdAndUpdate(id, { $set: set }, { new: true, runValidators: true });
     if (!expense) return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
     return NextResponse.json(expense);
   } catch (error: any) {

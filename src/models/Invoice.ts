@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 import { auditTrail } from '@/lib/audit/plugin';
+import { ACTIVE_INVOICE_STATUSES, INVOICE_STATUSES, type InvoiceStatus } from '@/lib/invoiceStatus';
 
 interface IInvoiceItem {
   description: string;
@@ -17,7 +18,11 @@ export interface IInvoice extends Document {
   tax: number;
   discount: number;
   total: number;
-  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  /** Written only by settleInvoice(), from the payments. Never typed in. */
+  amountPaid: number;
+  status: InvoiceStatus;
+  /** When it stopped being a draft: the date it counts as a sale. */
+  issuedAt?: Date;
   dueDate: Date;
   paidAt: Date;
   notes: string;
@@ -45,11 +50,9 @@ const InvoiceSchema = new Schema<IInvoice>(
     tax: { type: Number, default: 0 },
     discount: { type: Number, default: 0 },
     total: { type: Number, default: 0 },
-    status: {
-      type: String,
-      enum: ['draft', 'sent', 'paid', 'overdue', 'cancelled'],
-      default: 'draft',
-    },
+    amountPaid: { type: Number, default: 0 },
+    status: { type: String, enum: INVOICE_STATUSES as unknown as string[], default: 'draft' },
+    issuedAt: { type: Date },
     dueDate: { type: Date },
     paidAt: { type: Date },
     notes: { type: String },
@@ -60,6 +63,12 @@ const InvoiceSchema = new Schema<IInvoice>(
 InvoiceSchema.index({ invoiceNumber: 1 }, { unique: true });
 InvoiceSchema.index({ userId: 1 });
 InvoiceSchema.index({ status: 1 });
+// One live invoice per order, enforced by the database: an order moved to
+// "Awaiting Payment" twice at the same moment must not bill the customer twice.
+InvoiceSchema.index(
+  { orderId: 1 },
+  { unique: true, partialFilterExpression: { status: { $in: ACTIVE_INVOICE_STATUSES } } }
+);
 
 InvoiceSchema.plugin(auditTrail);
 

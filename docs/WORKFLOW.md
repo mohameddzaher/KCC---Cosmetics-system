@@ -369,3 +369,23 @@ Neither is shown to the customer.
 
 *Regenerate the role accounts with `npm run create:users`. Check translation
 coverage with `npm run i18n:check`.*
+
+---
+
+## 12. How an order reaches the accounts
+
+Payments are the record. An invoice's balance and status are worked out from its
+payments, and an order's payment status from its invoice. All of it lives in
+`src/lib/accounting.ts`; nothing else writes those figures.
+
+| What happens | What the accounts do |
+|---|---|
+| Order moves to **Awaiting Payment** | The invoice is issued, at the order's price |
+| Order moves to **Payment Received** | Whatever is still owed is recorded as a payment |
+| Order is **Cancelled** | An unpaid invoice is cancelled. One with money on it is left for a person to refund |
+| A promo code changes the price | An unpaid invoice follows the order |
+| A payment is recorded or refunded | The invoice and the order's payment status follow |
+
+An order's status still moves only through the workflow, so an invoice paid in
+full does not advance the order: its page offers the link to confirm it. An
+order with no price raises no invoice.

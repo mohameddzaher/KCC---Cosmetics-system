@@ -1,4 +1,4 @@
-import { statusLabel } from '@/lib/orderWorkflow';
+import { ORDER_STATUSES, statusLabel } from '@/lib/orderWorkflow';
 import { roleLabel } from '@/lib/roles';
 import { CRM_CATEGORIES, CRM_CITIES } from '@/lib/crmVocab';
 
@@ -9,6 +9,8 @@ import { CRM_CATEGORIES, CRM_CITIES } from '@/lib/crmVocab';
  * The Arabic uses verbal nouns ("تعديل الطلب") on purpose: a verb would have to
  * be masculine or feminine, and the log does not know which the person is.
  */
+
+const ORDER_STATUS_WORDS = new Set<string>(ORDER_STATUSES);
 
 export type Locale = 'en' | 'ar';
 type Pair = [string, string];
@@ -26,7 +28,7 @@ const ENTITIES: Record<string, { en: string; ar: string }> = {
   Referral: { en: 'referral', ar: 'الإحالة' }, RolePermission: { en: 'role permissions', ar: 'صلاحيات الدور' },
   SiteSettings: { en: 'site settings', ar: 'إعدادات الموقع' }, Session: { en: 'session', ar: 'الجلسة' },
   File: { en: 'file', ar: 'الملف' }, Category: { en: 'category', ar: 'القسم' },
-  CrmReport: { en: 'CRM report', ar: 'تقرير CRM' }, AuditLog: { en: 'audit log', ar: 'سجل المراجعة' },
+  CrmReport: { en: 'CRM report', ar: 'تقرير CRM' }, AccountingReport: { en: 'accounting report', ar: 'تقرير مالي' }, AuditLog: { en: 'audit log', ar: 'سجل المراجعة' },
   OrderFeedback: { en: 'order feedback', ar: 'تقييم الطلب' }, ContactMessage: { en: 'contact message', ar: 'رسالة تواصل' },
   ProductSpecConfig: { en: 'product configuration', ar: 'إعدادات المنتج' }, SpecOptionMaster: { en: 'quiz options', ar: 'خيارات الاستبيان' },
   BriefQuestion: { en: 'brief question', ar: 'سؤال البريف' }, KnowledgeArticle: { en: 'knowledge article', ar: 'مقال المعرفة' },
@@ -70,6 +72,8 @@ const FIELDS: Record<string, Pair> = {
   firstActionAt: ['First action', 'أول إجراء'], lastActionAt: ['Last action', 'آخر إجراء'], targetList: ['On target list', 'ضمن قائمة الأهداف'],
   checklist: ['Call checklist', 'قائمة الزيارة'], interest: ['Interest', 'الاهتمام'], meetingIndex: ['Meeting number', 'رقم الاجتماع'],
   code: ['Code', 'الكود'], product: ['Product', 'المنتج'], title: ['Title', 'العنوان'], description: ['Description', 'الوصف'],
+  amountPaid: ['Paid', 'المدفوع'], issuedAt: ['Issued', 'تاريخ الإصدار'], paidAt: ['Paid on', 'تاريخ الدفع'], method: ['Method', 'الطريقة'],
+  reference: ['Reference', 'المرجع'], vendor: ['Vendor', 'المورد'], vatAmount: ['VAT', 'الضريبة'], vatNumber: ['VAT number', 'الرقم الضريبي'],
   sku: ['SKU', 'SKU'], unit: ['Unit', 'الوحدة'], stock: ['Stock', 'المخزون'], date: ['Date', 'التاريخ'],
   'keyPerson.name': ['Key person', 'الشخص المسؤول'], 'keyPerson.position': ['Key person position', 'منصب الشخص المسؤول'],
   'keyPerson.phone': ['Key person phone', 'هاتف الشخص المسؤول'], 'keyPerson.email': ['Key person email', 'بريد الشخص المسؤول'],
@@ -115,6 +119,10 @@ const VALUES: Record<string, Pair> = {
   // Orders
   sample: ['Sample', 'عيّنة'], bulk: ['Bulk', 'جملة'], low: ['Low', 'منخفضة'], normal: ['Normal', 'عادية'], high: ['High', 'مرتفعة'], urgent: ['Urgent', 'عاجلة'],
   pending: ['Pending', 'قيد الانتظار'], paid: ['Paid', 'مدفوع'], refunded: ['Refunded', 'مسترد'], cash: ['Cash', 'نقدًا'], card: ['Card', 'بطاقة'],
+  // Money
+  draft: ['Draft', 'مسودة'], sent: ['Issued', 'صادرة'], partial: ['Part paid', 'مدفوعة جزئيًا'], cancelled: ['Cancelled', 'ملغاة'],
+  completed: ['Received', 'مستلمة'], failed: ['Failed', 'فشلت'], bank_transfer: ['Bank transfer', 'تحويل بنكي'],
+  raw_materials: ['Raw materials', 'مواد خام'], packaging: ['Packaging', 'تغليف'], manufacturing: ['Manufacturing', 'تصنيع'],
   // Interest
   interested: ['Interested', 'مهتم'], moderate: ['Moderate', 'متوسط'], not_interested: ['Not interested', 'غير مهتم'],
 };
@@ -133,7 +141,7 @@ export function valueText(field: string, value: unknown, locale: Locale, label?:
 
   const key = field.split('.').pop() as string;
   const text = String(value);
-  if (key === 'status') return statusLabel(text, locale);
+  if (key === 'status' && ORDER_STATUS_WORDS.has(text)) return statusLabel(text, locale);
   if (key === 'role' || key === 'byRole') return roleLabel(text, locale) || text;
   if (key === 'category') {
     const c = CRM_CATEGORIES.find((x) => x.key === text);
@@ -205,7 +213,9 @@ export function recordHref(entity: string, id?: string, role?: string): string |
   if (entity === 'Order' && id) return `/admin/orders/${id}`;
   if (entity === 'CrmAccount' && id) return `/admin/crm/accounts/${id}`;
   if (entity === 'User') return role === 'CUSTOMER' && id ? `/admin/customers/${id}` : '/admin/users';
-  if (['Invoice', 'Payment', 'Expense'].includes(entity)) return '/admin/accounting';
+  if (entity === 'Invoice' && id) return `/admin/accounting/invoices/${id}`;
+  if (entity === 'Payment') return '/admin/accounting/payments';
+  if (entity === 'Expense') return '/admin/accounting/expenses';
   if (['InventoryItem', 'InventoryMovement'].includes(entity)) return '/admin/inventory';
   if (entity === 'PromoCode') return '/admin/promos';
   if (entity === 'Referral') return '/admin/referrals';

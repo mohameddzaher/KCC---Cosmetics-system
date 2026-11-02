@@ -8,6 +8,10 @@ export interface IExpense extends Document {
   date: Date;
   vendor: string;
   reference: string;
+  /** VAT paid on this expense, included in `amount`. What the VAT report reclaims. */
+  vatAmount: number;
+  /** The order this cost belongs to, when it belongs to one. */
+  orderId?: Types.ObjectId;
   createdBy: Types.ObjectId;
   notes: string;
   createdAt: Date;
@@ -25,6 +29,8 @@ const ExpenseSchema = new Schema<IExpense>(
     date: { type: Date, required: true },
     vendor: { type: String, trim: true },
     reference: { type: String, trim: true },
+    vatAmount: { type: Number, default: 0 },
+    orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
     notes: { type: String },
   },

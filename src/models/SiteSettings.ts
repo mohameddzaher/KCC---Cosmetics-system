@@ -10,6 +10,9 @@ export interface ISiteSettings extends Document {
     whatsapp: string;
     contactAddress: { en: string; ar: string };
     companyName: { en: string; ar: string };
+    /** Printed on tax invoices. */
+    vatNumber: string;
+    crNumber: string;
     emails: {
       info: string;
       sales: string;
@@ -71,6 +74,8 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         en: { type: String, default: '' },
         ar: { type: String, default: '' },
       },
+      vatNumber: { type: String, default: '' },
+      crNumber: { type: String, default: '' },
       emails: {
         info: { type: String, default: '' },
         sales: { type: String, default: '' },
