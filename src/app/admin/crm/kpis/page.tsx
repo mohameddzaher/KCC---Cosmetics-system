@@ -9,6 +9,7 @@ import {
   PageSkeleton, Spinner, Td, Th,
 } from '@/components/admin/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { usePermission } from '@/contexts/AuthContext';
 import { useApi } from '@/lib/useApi';
 import { downloadFile } from '@/lib/download';
 
@@ -35,10 +36,11 @@ interface Person {
   sampleRequests: number;
   accountsSeen: number;
   activeDays: number;
-  visitsPerDay: number;
+  /** Null "since the start": the sheet's meetings have no days to divide by. */
+  visitsPerDay: number | null;
   dailyTarget: { min: number; max: number };
   weeklyClientTarget: { min: number; max: number };
-  dailyAttainmentPct: number;
+  dailyAttainmentPct: number | null;
   weeklyClientAttainmentPct: number | null;
   mix: Array<{ key: string; labelEn: string; labelAr: string; targetPct: number; visits: number; actualPct: number }>;
   accountsOwned: Record<string, number>;
@@ -55,6 +57,7 @@ interface Person {
 
 interface Kpi {
   period: string;
+  allTime?: boolean;
   from: string;
   daysElapsed: number;
   targets: {
@@ -70,14 +73,65 @@ interface Kpi {
   people: Person[];
 }
 
+/**
+ * The sheet's accounts arrived without owners. One press gives each to the rep
+ * who visited it, so his pipeline and "Owns" stop reading empty. Admins only,
+ * shown only while there is something to give.
+ */
+function ClaimSheetWork({ onDone }: { onDone: () => void }) {
+  const { tx } = useLanguage();
+  const { can } = usePermission();
+  const allowed = can('crm.viewAll') && can('crm.edit');
+  const { data, reload } = useApi<{ total: number; reps: Array<{ repId: string; repName: string; accounts: number }> }>(
+    allowed ? '/api/crm/accounts/claim-sheet-work' : null
+  );
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (!allowed || !data?.total) return null;
+
+  async function apply() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/crm/accounts/claim-sheet-work', { method: 'POST' });
+      const d = await res.json();
+      if (!res.ok) throw new Error(tx(d.error || 'Could not save'));
+      await reload();
+      onDone();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : tx('Could not save'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="mb-5 border-brand/40 print:hidden">
+      <SectionTitle
+        title={tx('Accounts from the sales sheet have no owner')}
+        hint={tx('The sheet says who visited them. Give each one to that rep, so it shows in their pipeline and in "Owns". Accounts that already have an owner are not touched.')}
+        actions={<Button size="sm" loading={busy} onClick={apply}>{tx('Give them to their reps')}</Button>}
+      />
+      <ul className="text-sm text-fg-muted">
+        {data.reps.map((r) => (
+          <li key={r.repId}>{r.repName}: {r.accounts} {tx('accounts')}</li>
+        ))}
+      </ul>
+      {error && <div className="mt-2"><ErrorNote>{error}</ErrorNote></div>}
+    </Card>
+  );
+}
+
 function KpisInner() {
   const { t, tx, locale } = useLanguage();
   const ar = locale === 'ar';
   const params = useSearchParams();
   const focus = params.get('rep') || '';
 
-  const [period, setPeriod] = useState<'day' | 'week' | 'month'>('week');
-  const { data, ready, error: loadError } = useApi<Kpi>(`/api/crm/kpis?period=${period}`);
+  // Opens on everything each rep has done, the sales sheet included; the dated
+  // periods are where the daily target is judged.
+  const [period, setPeriod] = useState<'all' | 'day' | 'week' | 'month'>('all');
+  const { data, ready, error: loadError, reload } = useApi<Kpi>(`/api/crm/kpis?period=${period}`);
   const d = data ?? null;
   const [exportError, setError] = useState<string | null>(null);
   const error = exportError || loadError;
@@ -114,6 +168,7 @@ function KpisInner() {
             className="w-auto text-sm"
             aria-label={tx('Period')}
           >
+            <option value="all">{tx('Since the start')}</option>
             <option value="day">{tx('Today')}</option>
             <option value="week">{tx('This week')}</option>
             <option value="month">{tx('This month')}</option>
@@ -122,6 +177,8 @@ function KpisInner() {
           <Button variant="outline" icon={Printer} onClick={() => exportRows('pdf')}>{tx('PDF report')}</Button>
         </div>
       </div>
+
+      <ClaimSheetWork onDone={() => reload()} />
 
       {focus && (
         <p className="mb-4 print:hidden">
@@ -145,7 +202,9 @@ function KpisInner() {
             label={tx('Visited on the sheet')}
             value={d.team.carriedVisits}
             icon={ClipboardCheck}
-            note={`${d.team.carriedDone} ${tx('done')} · ${tx('no date recorded')}`}
+            note={d.allTime
+              ? `${d.team.carriedDone} ${tx('done')} · ${tx('included in the visits')}`
+              : `${d.team.carriedDone} ${tx('done')} · ${tx('no date recorded')}`}
           />
         )}
       </AutoGrid>
@@ -153,22 +212,32 @@ function KpisInner() {
       <Card padded={false} className="mb-5">
         <div className="border-b border-line p-4 sm:p-5">
           <SectionTitle
-            title={tx('Against target')}
-            hint={tx('The bar is visits a day; the mark on it is the target. Everyone with a visit target is listed, including anyone who logged nothing.')}
+            title={d.allTime ? tx('Visits since the start') : tx('Against target')}
+            hint={d.allTime
+              ? tx('Every visit each rep has made, the sales sheet included. Pick a week or a month to judge the daily target.')
+              : tx('The bar is visits a day; the mark on it is the target. Everyone with a visit target is listed, including anyone who logged nothing.')}
           />
         </div>
         <div className="space-y-3 p-4 sm:p-5">
           {people.map((p) => {
-            const pct = Math.min(140, p.dailyAttainmentPct);
+            // Since the start there is no rate to hold against the target, so
+            // the bar compares reps with each other instead.
+            const top = Math.max(1, ...people.map((x) => x.visits));
+            const pct = d.allTime ? (p.visits / top) * 140 : Math.min(140, p.dailyAttainmentPct ?? 0);
             return (
               <div key={p.id}>
                 <p className="mb-1 flex flex-wrap items-center justify-between gap-2 text-sm">
                   <span className="font-medium text-fg">{p.name}</span>
                   <span className="font-mono text-xs text-fg-muted">
-                    {p.visitsPerDay}/{tx('day')} · {p.visits} {tx('visits')} · {p.accountsSeen} {tx('accounts')}
+                    {p.visitsPerDay !== null && <>{p.visitsPerDay}/{tx('day')} · </>}{p.visits} {tx('visits')} · {p.accountsSeen} {tx('accounts')}
                   </span>
                 </p>
-                {p.carried.visits > 0 && (
+                {p.carried.visits > 0 && d.allTime && (
+                  <p className="mb-1 text-[11px] text-fg-subtle">
+                    {tx('Includes the sales sheet:')} {p.carried.visits} {tx('visits')} · {p.carried.done} {tx('done')}
+                  </p>
+                )}
+                {p.carried.visits > 0 && !d.allTime && (
                   <p className="mb-1 text-[11px] text-fg-subtle">
                     {tx('Plus, from the sales sheet:')} {p.carried.visits} {tx('visits')} ·{' '}
                     {p.carried.done} {tx('done')} ·{' '}
@@ -180,11 +249,13 @@ function KpisInner() {
                     className="absolute inset-y-0 start-0 rounded-e-[4px] bg-brand"
                     style={{ width: `${Math.max(2, (pct / 140) * 100)}%` }}
                   />
-                  <span
-                    className="absolute inset-y-0 w-0.5 bg-fg"
-                    style={{ insetInlineStart: `${(100 / 140) * 100}%` }}
-                    aria-hidden
-                  />
+                  {!d.allTime && (
+                    <span
+                      className="absolute inset-y-0 w-0.5 bg-fg"
+                      style={{ insetInlineStart: `${(100 / 140) * 100}%` }}
+                      aria-hidden
+                    />
+                  )}
                 </span>
               </div>
             );
@@ -224,13 +295,15 @@ function KpisInner() {
               <Td align="center">{p.sampleRequests}</Td>
               <Td align="center">{p.accountsSeen}</Td>
               <Td align="center">{p.activeDays}</Td>
-              <Td align="center" className="font-mono text-xs">{p.visitsPerDay}</Td>
+              <Td align="center" className="font-mono text-xs">{p.visitsPerDay ?? '—'}</Td>
               <Td align="center">
-                <Badge
-                  tone={p.dailyAttainmentPct >= 100 ? 'ok' : p.dailyAttainmentPct >= 60 ? 'warn' : 'danger'}
-                >
-                  {p.dailyAttainmentPct}%
-                </Badge>
+                {p.dailyAttainmentPct === null ? '—' : (
+                  <Badge
+                    tone={p.dailyAttainmentPct >= 100 ? 'ok' : p.dailyAttainmentPct >= 60 ? 'warn' : 'danger'}
+                  >
+                    {p.dailyAttainmentPct}%
+                  </Badge>
+                )}
               </Td>
               <Td align="center" className="font-mono text-xs text-fg-muted">
                 {p.carried.visits || '—'}
@@ -238,8 +311,10 @@ function KpisInner() {
               <Td align="center" className="font-mono text-xs text-fg-muted">
                 {p.carried.done || '—'}
               </Td>
-              <Td align="center" className="text-xs text-fg-muted">
-                {Object.entries(p.accountsOwned).map(([s, n]) => `${s} ${n}`).join(' · ') || '—'}
+              <Td align="center" className="font-mono text-xs text-fg-muted">
+                <span title={Object.entries(p.accountsOwned).map(([s, n]) => `${s}: ${n}`).join(' · ')}>
+                  {Object.values(p.accountsOwned).reduce((a, b) => a + b, 0) || '—'}
+                </span>
               </Td>
             </tr>
           ))}

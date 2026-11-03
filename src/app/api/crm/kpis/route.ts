@@ -54,11 +54,19 @@ export async function computeKpis(
     const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0);
     const weekStart = startOfWeek(now);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const from = period === 'day' ? dayStart : period === 'month' ? monthStart : weekStart;
+    /**
+     * "Since the start" is everything a rep has done, the sales sheet included.
+     * It has no time to divide by, so it reports totals and no daily rate; the
+     * dated periods keep the sheet apart, as before, and judge the rate.
+     */
+    const allTime = period === 'all';
+    const from = allTime ? new Date(0) : period === 'day' ? dayStart : period === 'month' ? monthStart : weekStart;
 
     // Only work counts towards a target: a stage change is written by the system
     // when a visit is logged, and crediting both would double every rep's day.
-    const live = { backfilled: { $ne: true }, type: { $in: [...ENGAGEMENT_TYPES] } };
+    const live = allTime
+      ? { type: { $in: [...ENGAGEMENT_TYPES] } }
+      : { backfilled: { $ne: true }, type: { $in: [...ENGAGEMENT_TYPES] } };
     /**
      * Who this screen is allowed to describe. A rep reads his own line; the
      * commercial manager and the country manager read the whole team, which is
@@ -69,7 +77,6 @@ export async function computeKpis(
     // ObjectIds, not strings: these go into aggregation pipelines, which are
     // not schema-cast — a string id there matches nothing at all.
     const branch = await visibleOwnerObjectIds(user);
-    const onlyMe = all ? {} : { byId: { $in: branch } };
     const groupOf = new Map(CRM_CATEGORIES.map((c) => [c.key, c.mixGroup]));
 
     const [target, reps, rows, carriedRows, owned] = await Promise.all([
@@ -84,7 +91,9 @@ export async function computeKpis(
       // Everything each rep did in the period, with the account's sector so the
       // 60/30/10 split can be measured rather than assumed.
       CrmActivity.aggregate([
-        { $match: { ...live, ...onlyMe, at: { $gte: from }, byId: { $ne: null } } },
+        // One byId condition: written as two keys, the second silently replaced
+        // the first and every manager read the whole company's week.
+        { $match: { ...live, at: { $gte: from }, byId: all ? { $ne: null } : { $in: branch } } },
         {
           $lookup: {
             from: 'crmaccounts', localField: 'accountId', foreignField: '_id',
@@ -94,7 +103,7 @@ export async function computeKpis(
         { $unwind: { path: '$acc', preserveNullAndEmptyArrays: true } },
         {
           $project: {
-            byId: 1, byName: 1, type: 1, accountId: 1,
+            byId: 1, byName: 1, type: 1, accountId: 1, backfilled: 1,
             checklist: 1,
             category: '$acc.category',
             day: { $dateToString: { format: '%Y-%m-%d', date: '$at' } },
@@ -106,7 +115,7 @@ export async function computeKpis(
       CrmActivity.aggregate([
         {
           $match: {
-            backfilled: true, byId: { $ne: null }, ...onlyMe,
+            backfilled: true, byId: all ? { $ne: null } : { $in: branch },
             type: { $in: [...ENGAGEMENT_TYPES] },
           },
         },
@@ -163,7 +172,8 @@ export async function computeKpis(
       b.actions++;
       if (r.type === 'visit' || r.type === 'meeting') {
         b.visits++;
-        b.days.add(r.day);
+        // The sheet's meetings carry the day they were imported, not a day worked.
+        if (!r.backfilled) b.days.add(r.day);
         const g = groupOf.get(r.category) || 'scattered';
         b.mix[g] = (b.mix[g] || 0) + 1;
       }
@@ -214,6 +224,7 @@ export async function computeKpis(
       const b = buckets.get(id) || empty();
       const visitsPerDay = b.visits / daysElapsed;
       const accountsSeen = b.accounts.size;
+      const rated = !allTime;
 
       return {
         id,
@@ -226,11 +237,11 @@ export async function computeKpis(
         sampleRequests: b.samples,
         accountsSeen,
         activeDays: b.days.size,
-        visitsPerDay: Number(visitsPerDay.toFixed(1)),
+        visitsPerDay: rated ? Number(visitsPerDay.toFixed(1)) : null,
         /** Against the sheet's own numbers. */
         dailyTarget: daily,
         weeklyClientTarget: weekly,
-        dailyAttainmentPct: daily.min ? Math.round((visitsPerDay / daily.min) * 100) : 0,
+        dailyAttainmentPct: !rated ? null : daily.min ? Math.round((visitsPerDay / daily.min) * 100) : 0,
         weeklyClientAttainmentPct:
           period === 'week' && weekly.min ? Math.round((accountsSeen / weekly.min) * 100) : null,
         mix: (t.sectorMix || []).map((g) => ({
@@ -279,9 +290,9 @@ export async function computeKpis(
         role: 'other',
         actions: b.actions, visits: b.visits, meetings: b.meetings, calls: b.calls,
         sampleRequests: b.samples, accountsSeen: b.accounts.size, activeDays: b.days.size,
-        visitsPerDay: Number((b.visits / daysElapsed).toFixed(1)),
+        visitsPerDay: allTime ? null : Number((b.visits / daysElapsed).toFixed(1)),
         dailyTarget: daily, weeklyClientTarget: weekly,
-        dailyAttainmentPct: daily.min ? Math.round((b.visits / daysElapsed / daily.min) * 100) : 0,
+        dailyAttainmentPct: allTime ? null : daily.min ? Math.round((b.visits / daysElapsed / daily.min) * 100) : 0,
         weeklyClientAttainmentPct: null,
         mix: [],
         accountsOwned: ownedBy.get(id) || {},
@@ -304,9 +315,9 @@ export async function computeKpis(
         role: 'other',
         actions: 0, visits: 0, meetings: 0, calls: 0,
         sampleRequests: 0, accountsSeen: 0, activeDays: 0,
-        visitsPerDay: 0,
+        visitsPerDay: allTime ? null : 0,
         dailyTarget: daily, weeklyClientTarget: weekly,
-        dailyAttainmentPct: 0,
+        dailyAttainmentPct: allTime ? null : 0,
         weeklyClientAttainmentPct: null,
         mix: [],
         accountsOwned: ownedBy.get(id) || {},
@@ -323,6 +334,7 @@ export async function computeKpis(
     return {
       ...{
         period,
+        allTime,
         from,
         daysElapsed,
         targets: {

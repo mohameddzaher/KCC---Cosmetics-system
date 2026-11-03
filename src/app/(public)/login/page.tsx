@@ -8,6 +8,7 @@ import { Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import PasswordToggle from '@/components/common/PasswordToggle';
+import { isStaffRole } from '@/lib/roles';
 
 export default function LoginPage() {
   const { t } = useLanguage();
@@ -31,7 +32,8 @@ export default function LoginPage() {
       try {
         const res = await fetch('/api/auth/me');
         const data = await res.json();
-        if (data.user && ['SUPER_ADMIN', 'ADMIN', 'STAFF'].includes(data.user.role)) {
+        // Every member of the team works from the panel, not only the admins.
+        if (data.user && isStaffRole(data.user.role)) {
           router.push('/admin');
         } else {
           router.push('/account');

@@ -249,6 +249,13 @@ async function main() {
             'steps.scheduled': new Date(),
           },
         });
+        // Whoever made the visits owns the account, unless somebody already does.
+        if (credit) {
+          await CrmAccount.updateOne(
+            { _id: (account as { _id: unknown })._id, $or: [{ ownerId: { $exists: false } }, { ownerId: null }] },
+            { $set: { ownerId: credit.id, ownerName: credit.name } }
+          );
+        }
       }
     }
   }

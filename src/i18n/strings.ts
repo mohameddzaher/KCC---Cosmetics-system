@@ -1023,6 +1023,14 @@ export const AR_STRINGS: Record<string, string> = {
   'Failed to save item': 'تعذّر حفظ الصنف',
   'Failed to delete item': 'تعذّر حذف الصنف',
   'Not found': 'غير موجود',
+  'Accounts from the sales sheet have no owner': 'حسابات الشيت ليس لها مسؤول',
+  'Every visit each rep has made, the sales sheet included. Pick a week or a month to judge the daily target.': 'كل زيارة قام بها كل مندوب، ومنها زيارات الشيت. اختر أسبوعًا أو شهرًا لمقارنة الزيارات اليومية بالهدف.',
+  'Give them to their reps': 'تعيينها لمندوبيها',
+  'Includes the sales sheet:': 'منها من الشيت:',
+  'Since the start': 'منذ البداية',
+  'The sheet says who visited them. Give each one to that rep, so it shows in their pipeline and in "Owns". Accounts that already have an owner are not touched.': 'الشيت يوضح من زارها. عيّن كل حساب للمندوب الذي زاره ليظهر في حساباته وفي عمود «يملك». الحسابات التي لها مسؤول لن تتغير.',
+  'Visits since the start': 'الزيارات منذ البداية',
+  'included in the visits': 'محسوبة ضمن الزيارات',
 };
 
 

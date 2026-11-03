@@ -173,11 +173,13 @@ export async function GET() {
         .lean(),
 
       CrmAccount.countDocuments({ ...activeAccounts, 'orderIds.0': { $exists: true } }),
-      CrmActivity.countDocuments({ backfilled: true }),
+      CrmActivity.countDocuments({ backfilled: true, type: { $in: [...ENGAGEMENT_TYPES] }, ...mine }),
 
       // Who did what this week.
       CrmActivity.aggregate([
-        { $match: { ...work, ...mine, at: { $gte: weekStart }, byId: { $ne: null } } },
+        // Merged, not spread: a second byId key would replace the viewer's scope
+        // and show a rep the whole company's week.
+        { $match: { ...work, at: { $gte: weekStart }, byId: { $ne: null, ...((mine as { byId?: object }).byId || {}) } } },
         {
           $group: {
             _id: { id: '$byId', name: '$byName' },

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { isStaffRole } from '@/lib/roles';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu, X, Globe, ChevronDown, User, LogOut,
@@ -65,7 +66,8 @@ export default function Navbar() {
     return pathname.startsWith(href);
   };
 
-  const isAdminUser = user && ['SUPER_ADMIN', 'ADMIN', 'STAFF'].includes(user.role);
+  // Every staff role has a panel to work in; the customer pages are for customers.
+  const isAdminUser = Boolean(user && isStaffRole(user.role));
 
   return (
     <>
@@ -187,6 +189,8 @@ export default function Navbar() {
                             <User size={15} />
                             {t('nav.account')}
                           </Link>
+                          {!isAdminUser && (
+                            <>
                           <Link href="/account/my-samples" className="flex items-center gap-2 px-4 py-2.5 text-sm text-ink-600 hover:text-kcc-green hover:bg-blush-50 transition-colors">
                             <Package size={15} />
                             {t('nav.mySamples')}
@@ -195,6 +199,8 @@ export default function Navbar() {
                             <ShoppingBag size={15} />
                             {t('nav.myOrders')}
                           </Link>
+                            </>
+                          )}
                           <button
                             type="button"
                             onClick={logout}

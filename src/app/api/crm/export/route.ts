@@ -245,7 +245,9 @@ export const GET = audited(async function GET(req: NextRequest) {
       const data = await computeKpis(user, period);
       const people = data.people as Array<Record<string, unknown>>;
       sheetName = 'Sales KPIs';
-      title = `KCC — sales KPIs, ${period} to ${stamp}`;
+      title = period === 'all'
+        ? `KCC — sales KPIs since the start, sales sheet included, to ${stamp}`
+        : `KCC — sales KPIs, ${period} to ${stamp}`;
       columns = [
         { header: 'Rep', key: 'name', width: 24 },
         { header: 'Role', key: 'role', width: 18 },
@@ -262,7 +264,7 @@ export const GET = audited(async function GET(req: NextRequest) {
         { header: 'Attainment', key: 'attainment', width: 13, type: 'percent' },
         { header: 'Calls with the checklist', key: 'callsWithChecklist', width: 20, type: 'number' },
         // The sheet's own record, kept in its own columns: it has no date, so it
-        // belongs to no period and must never be added to the ones that do.
+        // belongs to no dated period. "Since the start" already counts it in Visits.
         { header: 'Visited (sales sheet, undated)', key: 'carriedVisits', width: 26, type: 'number' },
         { header: 'Done (sales sheet, undated)', key: 'carriedDone', width: 24, type: 'number' },
       ];
@@ -297,7 +299,7 @@ export const GET = audited(async function GET(req: NextRequest) {
         activeDays: x.activeDays,
         visitsPerDay: x.visitsPerDay,
         target: `${(x.dailyTarget as { min: number }).min}-${(x.dailyTarget as { max: number }).max}`,
-        attainment: Number(x.dailyAttainmentPct) / 100,
+        attainment: x.dailyAttainmentPct === null ? null : Number(x.dailyAttainmentPct) / 100,
         callsWithChecklist: x.callsWithChecklist,
         carriedVisits: (x.carried as { visits: number }).visits,
         carriedDone: (x.carried as { done: number }).done,
