@@ -75,3 +75,6 @@ CREDENTIALS.local.json
 *.xls
 *.csv
 CRM data.xlsx
+
+# QA screenshots
+qa-screenshots/
