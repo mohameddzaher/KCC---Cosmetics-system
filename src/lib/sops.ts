@@ -160,7 +160,7 @@ export const ROLE_SOPS: RoleSop[] = [
   {
     role: 'ACCOUNT_MANAGER',
     daily: [
-      t('Check your queue on the dashboard: Submitted, Under Review, Approved, Quotation Sent, Payment Received, Production Complete, Delivered.', 'راجع قائمتك في لوحة التحكم: كل طلب ينتظر خطوة منك.'),
+      t('Check your queue on the dashboard: Submitted, Under Review, Approved, Quotation Sent, Payment Received, Production Complete, Delivered, On Hold.', 'راجع قائمتك في لوحة التحكم: كل طلب ينتظر خطوة منك.'),
       t('Review your team\'s KPIs weekly.', 'راجع مؤشرات فريقك أسبوعيًا.'),
       t('Keep every open complaint moving.', 'تابع كل شكوى مفتوحة حتى تُغلق.'),
     ],

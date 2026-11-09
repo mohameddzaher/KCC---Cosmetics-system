@@ -1,5 +1,6 @@
 'use client';
 
+import { useLivePoll } from '@/lib/useLivePoll';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, ExternalLink, Inbox, RefreshCw } from 'lucide-react';
@@ -70,6 +71,8 @@ export default function OperationsQueue({
   useEffect(() => {
     load();
   }, [load]);
+  // The board follows the floor: a move made at another desk lands here within seconds.
+  useLivePoll(load, 8000);
 
   const grouped = useMemo(
     () =>

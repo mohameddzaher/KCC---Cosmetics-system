@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -19,6 +19,7 @@ import { usePermission } from '@/contexts/AuthContext';
 import { statusBadgeClass, statusLabel } from '@/lib/orderWorkflow';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatCurrency } from '@/lib/money';
+import { useLivePoll } from '@/lib/useLivePoll';
 
 const PAYMENT_STATUSES = ['pending', 'paid', 'refunded'];
 
@@ -40,17 +41,28 @@ export default function OrderDetailPage() {
   const [paymentStatus, setPaymentStatus] = useState('');
   const [internalNotes, setInternalNotes] = useState('');
 
-  const loadOrder = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  // What the server last said, so a background refresh can tell an edit in
+  // progress (kept) from a field nobody touched (brought up to date).
+  const server = useRef({ notes: '', payment: '' });
+
+  const loadOrder = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
     try {
-      const res = await fetch(`/api/orders/${orderId}`);
+      const res = await fetch(`/api/orders/${orderId}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
+        const notes = data.internalNotes || '';
+        const payment = data.paymentStatus || 'pending';
         setOrder(data);
         setStatus(data.status || '');
-        setPaymentStatus(data.paymentStatus || 'pending');
-        setInternalNotes(data.internalNotes || '');
+        setPaymentStatus((p) => (silent && p !== server.current.payment ? p : payment));
+        setInternalNotes((n) => (silent && n !== server.current.notes ? n : notes));
+        server.current = { notes, payment };
+      } else if (silent) {
+        // A refresh that fails leaves the page as it was.
       } else if (res.status === 404) {
         setError('Order not found');
       } else {
@@ -58,12 +70,17 @@ export default function OrderDetailPage() {
         setError(err.error || 'Failed to load order');
       }
     } catch (err) {
-      console.error('Failed to load order:', err);
-      setError('Failed to load order');
+      if (!silent) {
+        console.error('Failed to load order:', err);
+        setError('Failed to load order');
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [orderId]);
+
+  // Another desk moving the order shows up here within seconds.
+  useLivePoll(useCallback(() => loadOrder(true), [loadOrder]), 8000);
 
   useEffect(() => {
     if (orderId) {
@@ -102,6 +119,7 @@ export default function OrderDetailPage() {
       if (res.ok) {
         const updated = await res.json();
         setOrder({ ...updated, invoice: order?.invoice, crmAccount: order?.crmAccount });
+        server.current = { notes: updated.internalNotes || '', payment: updated.paymentStatus || 'pending' };
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
       } else {
@@ -224,13 +242,21 @@ export default function OrderDetailPage() {
           <OrderFeedbackPanel orderId={orderId} />
           <AuditTrail entityId={orderId} />
 
-          {can('orders.assign') && (
+          {can('orders.assign') ? (
             <OrderAssignments
               orderId={orderId}
               assignments={order.assignments || {}}
               onSaved={loadOrder}
             />
-          )}
+          ) : can('logistics.act') && !can('orders.edit') ? (
+            // Dispatch names the courier before shipping: their step.
+            <OrderAssignments
+              orderId={orderId}
+              assignments={order.assignments || {}}
+              onSaved={loadOrder}
+              courierOnly
+            />
+          ) : null}
 
           <div className="bg-surface border border-line rounded-xl p-5">
             <h2 className="text-sm font-semibold text-fg mb-4 flex items-center gap-2">

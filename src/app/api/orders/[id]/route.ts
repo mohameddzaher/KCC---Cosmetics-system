@@ -98,6 +98,32 @@ export const PUT = audited(async function PUT(
 
     const body = await req.json();
 
+    // Dispatch: ships orders and so names the courier and the tracking number
+    // (SOP step 6), and nothing else on the order.
+    if (!can(user.role, 'orders.edit') && can(user.role, 'logistics.act')) {
+      const COURIER_FIELDS = ['courierName', 'courierPhone', 'trackingNumber'];
+      const a = (body.assignments || {}) as Record<string, unknown>;
+      const otherKeys = Object.keys(body).filter((k) => k !== 'assignments');
+      const otherAssignments = Object.keys(a).filter((k) => !COURIER_FIELDS.includes(k));
+      if (!body.assignments || otherKeys.length || otherAssignments.length) {
+        return NextResponse.json(
+          { error: 'Dispatch can set the courier and the tracking number only.' },
+          { status: 403 }
+        );
+      }
+      const set: Record<string, unknown> = {};
+      for (const k of COURIER_FIELDS) {
+        if (a[k] !== undefined) set[`assignments.${k}`] = String(a[k] ?? '').trim().slice(0, 200);
+      }
+      if (!existingOrder.assignments?.logisticsUserId) set['assignments.logisticsUserId'] = user.id;
+      const updatedOrder = await Order.findByIdAndUpdate(id, { $set: set }, { new: true, runValidators: true })
+        .populate('userId', 'name email company')
+        .populate('assignments.accountManagerId', 'name email role')
+        .populate('assignments.factoryUserId', 'name email role')
+        .populate('assignments.logisticsUserId', 'name email role');
+      return NextResponse.json(updatedOrder);
+    }
+
     // Staff edits. `status` is deliberately NOT settable here — it moves only
     // through POST /api/orders/[id]/transition, which enforces the workflow
     // rules and writes the audit timeline.

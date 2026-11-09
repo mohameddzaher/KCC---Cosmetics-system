@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useLivePoll } from '@/lib/useLivePoll';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Package, Calendar, Truck, Beaker, Eye, Hash, RefreshCw, Search } from 'lucide-react';
@@ -95,26 +96,27 @@ export default function MySamplesPage() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchSamples = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch('/api/orders?type=sample');
-        if (res.ok) {
-          const data = await res.json();
-          // Show exactly what the customer has, including nothing. This page
-          // used to fall back to four invented samples, whose links went
-          // nowhere because they were never real orders.
-          setSamples(Array.isArray(data.orders) ? data.orders : []);
-        }
-      } catch {
-        setSamples([]);
-      } finally {
-        setLoading(false);
+  const fetchSamples = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const res = await fetch('/api/orders?type=sample', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        // Show exactly what the customer has, including nothing. This page
+        // used to fall back to four invented samples, whose links went
+        // nowhere because they were never real orders.
+        setSamples(Array.isArray(data.orders) ? data.orders : []);
       }
-    };
-    fetchSamples();
+    } catch {
+      // A failed refresh keeps what is on screen.
+      if (!silent) setSamples([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+  useEffect(() => { fetchSamples(); }, [fetchSamples]);
+  // The list follows the team's moves without a reload.
+  useLivePoll(useCallback(() => fetchSamples(true), [fetchSamples]), 15000);
 
   /* Only attributes that actually say something. The old line printed
      "| all | " for a sample whose skin type was simply "all". */

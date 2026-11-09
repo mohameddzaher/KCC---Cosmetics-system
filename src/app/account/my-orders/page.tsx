@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useLivePoll } from '@/lib/useLivePoll';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -106,25 +107,26 @@ export default function MyOrdersPage() {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<FilterType>('all');
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch('/api/orders');
-        if (res.ok) {
-          const data = await res.json();
-          // Show exactly what the customer has, including nothing — this page
-          // used to fall back to invented orders whose links went nowhere.
-          setOrders(Array.isArray(data.orders) ? data.orders : []);
-        }
-      } catch {
-        setOrders([]);
-      } finally {
-        setLoading(false);
+  const fetchOrders = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const res = await fetch('/api/orders', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        // Show exactly what the customer has, including nothing — this page
+        // used to fall back to invented orders whose links went nowhere.
+        setOrders(Array.isArray(data.orders) ? data.orders : []);
       }
-    };
-    fetchOrders();
+    } catch {
+      // A failed refresh keeps what is on screen.
+      if (!silent) setOrders([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+  // The list follows the team's moves without a reload.
+  useLivePoll(useCallback(() => fetchOrders(true), [fetchOrders]), 15000);
 
   const filteredOrders = filter === 'all'
     ? orders

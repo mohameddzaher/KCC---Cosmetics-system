@@ -89,7 +89,11 @@ export function useApi<T>(url: string | null, options: { poll?: number } = {}) {
     staleTime: 0,
     // Changing a filter keeps the current rows up until the new ones land.
     placeholderData: keepPreviousData,
-    refetchInterval: options.poll,
+    // Every screen built on this follows changes made elsewhere: quietly every
+    // 30 s while the tab is visible (React Query pauses in the background),
+    // and at once on coming back to the tab.
+    refetchInterval: options.poll ?? 30000,
+    refetchOnWindowFocus: true,
     retry: 1,
   });
 

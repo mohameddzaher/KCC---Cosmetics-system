@@ -24,7 +24,7 @@ interface Feedback {
  * Renders nothing until the order is actually delivered, so it never nags a
  * customer whose sample is still in production.
  */
-export default function OrderFeedbackCard({ orderId }: { orderId: string }) {
+export default function OrderFeedbackCard({ orderId, status }: { orderId: string; status?: string }) {
   const { t, locale } = useLanguage();
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [canSubmit, setCanSubmit] = useState(false);
@@ -58,9 +58,10 @@ export default function OrderFeedbackCard({ orderId }: { orderId: string }) {
     }
   }, [orderId]);
 
+  // Asked again when the order moves: the form appears the moment it is delivered.
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, status]);
 
   async function submit() {
     if (!rating) {

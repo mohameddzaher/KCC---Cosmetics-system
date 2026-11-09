@@ -1,5 +1,6 @@
 'use client';
 
+import { useLivePoll } from '@/lib/useLivePoll';
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -116,29 +117,9 @@ export default function OrderDetailPage() {
     }
   }, [orderId, loadOrder]);
 
-  useEffect(() => {
-    if (!orderId) return;
-
-    const intervalId = window.setInterval(() => {
-      loadOrder(true);
-    }, 1000);
-
-    const onFocus = () => loadOrder(true);
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        loadOrder(true);
-      }
-    };
-
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onVisibility);
-
-    return () => {
-      window.clearInterval(intervalId);
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onVisibility);
-    };
-  }, [orderId, loadOrder]);
+  // Within seconds of the team moving it, without asking the server every
+  // second: paused while the tab is hidden, refreshed the moment it is back.
+  useLivePoll(useCallback(() => { if (orderId) loadOrder(true); }, [orderId, loadOrder]), 8000);
 
   if (loading) {
     return (
@@ -265,7 +246,7 @@ export default function OrderDetailPage() {
       <OrderProgressTracker status={order.status} updatedAt={order.updatedAt} />
 
       {/* Once it is delivered, ask how it went — and show any reply from KCC. */}
-      <OrderFeedbackCard orderId={order._id} />
+      <OrderFeedbackCard orderId={order._id} status={order.status} />
 
       {/* Detail sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -225,7 +225,15 @@ test('B. a free sample goes all the way, with a failed QC and a failed delivery'
   const blocked = await call('logistics', `/api/orders/${id}/transition`, 'POST', { to: 'Shipped' });
   assert.equal(blocked.status, 400);
   assert.equal((await order(id)).status, 'Ready to Ship');
-  assert.equal((await call('account_manager', `/api/orders/${id}`, 'PUT', { assignments: { courierName: 'Omar', courierPhone: '0509998888', trackingNumber: 'TRK-1' } })).status, 200);
+  // Dispatch names the courier itself: it is their step (SOP 6).
+  const assign = await call('logistics', `/api/orders/${id}`, 'PUT', { assignments: { courierName: 'Omar', courierPhone: '0509998888', trackingNumber: 'TRK-1' } });
+  assert.equal(assign.status, 200, JSON.stringify(assign.json));
+  // …and nothing else: not the account manager, not the notes, not the money.
+  const overreach = await call('logistics', `/api/orders/${id}`, 'PUT', { assignments: { accountManagerId: String(ids.logistics) }, internalNotes: 'x', totals: { subtotal: 1 } });
+  assert.equal(overreach.status, 403);
+  const kept = await order(id);
+  assert.notEqual(String(kept.assignments.accountManagerId), String(ids.logistics));
+  assert.equal(kept.totals.subtotal, 0);
   await move('logistics', id, 'Shipped');
   await move('logistics', id, 'Out for Delivery');
   assert.equal((await call('logistics', `/api/orders/${id}/transition`, 'POST', { to: 'Shipped' })).status, 400, 'a failed attempt needs a reason');
@@ -250,9 +258,11 @@ test('B. a free sample goes all the way, with a failed QC and a failed delivery'
   // Each move told the team by mail, and each is a readable line in the log.
   assert.ok(await smtp.waitFor((m) => m.subject.includes('→ Delivered')));
   await new Promise((r) => setTimeout(r, 300));
-  const rows = await db.collection('auditlogs').find({ entity: 'Order', entityId: id, action: 'update' }).toArray();
+  const rows = await db.collection('auditlogs').find({ entity: 'Order', entityId: id, action: 'update', outcome: 'success' }).toArray();
   assert.ok(rows.length >= 15);
   assert.ok(rows.every((r) => r.actorName && r.changes?.length), 'each says who and what changed');
+  // The refused overreach by dispatch is on record too, as refused.
+  assert.ok(await db.collection('auditlogs').findOne({ entityId: id, outcome: 'denied', actorName: 'logistics' }));
 });
 
 test('B. feedback before delivery is refused, and only the owner gives it', opts, async () => {
@@ -587,4 +597,25 @@ test('a customer reaches none of the staff data', opts, async () => {
     const r = await call('customer', api);
     assert.ok(r.status === 401 || r.status === 403, `${api} gave a customer ${r.status}`);
   }
+});
+
+/* ------------------------------------------------------------------ */
+/* Public forms                                                        */
+/* ------------------------------------------------------------------ */
+
+test('the public forms are rate limited, and say so', opts, async () => {
+  const send = (path: string, body: unknown) => fetch(BASE + path, {
+    method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.7' }, body: JSON.stringify(body),
+  });
+  const statuses: number[] = [];
+  for (let i = 0; i < 7; i++) {
+    statuses.push((await send('/api/contact', { name: 'A', email: 'a@b.co', message: `hello ${i}` })).status);
+  }
+  assert.deepEqual(statuses.slice(0, 5), [201, 201, 201, 201, 201]);
+  assert.equal(statuses[5], 429, 'the sixth in ten minutes is refused');
+  const bad = await fetch(BASE + '/api/contact', {
+    method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.8' }, body: JSON.stringify({ name: 'A', email: 'not-an-email', message: 'x' }),
+  });
+  assert.equal(bad.status, 400);
+  assert.equal((await bad.json()).error, 'Please enter a valid email address');
 });

@@ -35,10 +35,13 @@ export default function OrderAssignments({
   orderId,
   assignments,
   onSaved,
+  courierOnly = false,
 }: {
   orderId: string;
   assignments: Assignments;
   onSaved?: () => void;
+  /** Dispatch: only the courier and the tracking number. */
+  courierOnly?: boolean;
 }) {
   const { t, locale } = useLanguage();
   const [staff, setStaff] = useState<StaffOption[]>([]);
@@ -55,11 +58,12 @@ export default function OrderAssignments({
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
+    if (courierOnly) return;
     fetch('/api/users', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setStaff(Array.isArray(d) ? d : []))
       .catch(() => setStaff([]));
-  }, []);
+  }, [courierOnly]);
 
   const optionsFor = useCallback(
     (roles: Role[]) => staff.filter((s) => roles.includes(s.role)),
@@ -73,7 +77,11 @@ export default function OrderAssignments({
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assignments: form }),
+        body: JSON.stringify({
+          assignments: courierOnly
+            ? { courierName: form.courierName, courierPhone: form.courierPhone, trackingNumber: form.trackingNumber }
+            : form,
+        }),
       });
       if (!res.ok) throw new Error((await res.json()).error || t('admin.saveFailed'));
       setSaved(true);
@@ -115,9 +123,13 @@ export default function OrderAssignments({
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {picker(t('admin.accountManager'), 'accountManagerId', ASSIGNABLE_ROLES.accountManager)}
-        {picker(t('admin.factoryOwner'), 'factoryUserId', ASSIGNABLE_ROLES.factory)}
-        {picker(t('admin.dispatchOwner'), 'logisticsUserId', ASSIGNABLE_ROLES.courierDesk)}
+        {!courierOnly && (
+          <>
+            {picker(t('admin.accountManager'), 'accountManagerId', ASSIGNABLE_ROLES.accountManager)}
+            {picker(t('admin.factoryOwner'), 'factoryUserId', ASSIGNABLE_ROLES.factory)}
+            {picker(t('admin.dispatchOwner'), 'logisticsUserId', ASSIGNABLE_ROLES.courierDesk)}
+          </>
+        )}
 
         <Field label={t('admin.courierName')}>
           <TextInput

@@ -370,7 +370,9 @@ export const ROLE_QUEUE: Partial<Record<Role, OrderStatus[]>> = {
 export function scopeFilterForRole(role: string, userId: string): Record<string, unknown> | null {
   switch (role) {
     case 'FACTORY':
-      return { status: { $in: ROLE_QUEUE.FACTORY } };
+      // Their queue, plus what they just finished: the production board has
+      // a "Completed" column, which stayed empty while this left it out.
+      return { status: { $in: [...(ROLE_QUEUE.FACTORY || []), 'Production Complete'] } };
     case 'LOGISTICS':
       // Dispatch also needs recent history to answer "where is my order?".
       return { status: { $in: [...(ROLE_QUEUE.LOGISTICS || []), 'Production Complete', 'Delivered', 'Closed'] } };

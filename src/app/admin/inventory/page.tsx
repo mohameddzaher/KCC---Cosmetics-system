@@ -1,5 +1,6 @@
 'use client';
 
+import { useLivePoll } from '@/lib/useLivePoll';
 import { useEffect, useState } from 'react';
 import {
   Package, Plus, Edit2, Trash2, ArrowUpCircle, ArrowDownCircle,
@@ -40,10 +41,13 @@ export default function InventoryPage() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // Stock moves when production starts on another screen; follow it quietly.
+  useLivePoll(() => loadData(true), 15000);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [itemsRes, movementsRes] = await Promise.allSettled([
         fetch('/api/inventory'),

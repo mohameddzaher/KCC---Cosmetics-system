@@ -1031,6 +1031,13 @@ export const AR_STRINGS: Record<string, string> = {
   'The sheet says who visited them. Give each one to that rep, so it shows in their pipeline and in "Owns". Accounts that already have an owner are not touched.': 'الشيت يوضح من زارها. عيّن كل حساب للمندوب الذي زاره ليظهر في حساباته وفي عمود «يملك». الحسابات التي لها مسؤول لن تتغير.',
   'Visits since the start': 'الزيارات منذ البداية',
   'included in the visits': 'محسوبة ضمن الزيارات',
+  'Something went wrong. Please try again.': 'حدث خطأ. حاول مرة أخرى.',
+  'Network error. Please check your connection and try again.': 'خطأ في الاتصال. تحقق من الإنترنت وحاول مرة أخرى.',
+  'Name, email, and message are required': 'الاسم والبريد الإلكتروني والرسالة مطلوبة',
+  'Please enter a valid email address': 'أدخل بريدًا إلكترونيًا صحيحًا',
+  'Failed to submit your message. Please try again.': 'تعذّر إرسال رسالتك. حاول مرة أخرى.',
+  'Too many requests. Please try again shortly.': 'طلبات كثيرة. حاول مرة أخرى بعد قليل.',
+  'Dispatch can set the courier and the tracking number only.': 'الشحن يمكنه تحديد المندوب ورقم التتبع فقط.',
 };
 
 

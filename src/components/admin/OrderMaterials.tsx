@@ -1,5 +1,6 @@
 'use client';
 
+import { useLivePoll } from '@/lib/useLivePoll';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, Boxes, Copy, Plus, Save, Trash2 } from 'lucide-react';
@@ -63,6 +64,8 @@ export default function OrderMaterials({ orderId, status, onChanged }: { orderId
   }, [orderId]);
 
   useEffect(() => { load(); }, [load, status]);
+  // Stock levels move under the list; never while the list is being edited.
+  useLivePoll(load, 8000, !editing);
 
   useEffect(() => {
     if (!editing || store.length) return;

@@ -7,7 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import PageHero from '@/components/public/PageHero';
 
 export default function ContactPage() {
-  const { t, locale } = useLanguage();
+  const { t, locale, tx } = useLanguage();
   const [settings, setSettings] = useState<any>(null);
   const [form, setForm] = useState({
     name: '',
@@ -48,10 +48,11 @@ export default function ContactPage() {
         setSuccess(true);
         setForm({ name: '', email: '', phone: '', company: '', message: '' });
       } else {
-        setError(data.error || 'Something went wrong. Please try again.');
+        // The server answers in English; the visitor reads it in their language.
+        setError(tx(data.error || 'Something went wrong. Please try again.'));
       }
     } catch {
-      setError('Network error. Please check your connection and try again.');
+      setError(tx('Network error. Please check your connection and try again.'));
     } finally {
       setLoading(false);
     }

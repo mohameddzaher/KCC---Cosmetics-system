@@ -1,5 +1,6 @@
 'use client';
 
+import { useLivePoll } from '@/lib/useLivePoll';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2, Inbox } from 'lucide-react';
@@ -54,6 +55,7 @@ export default function MyQueue() {
   useEffect(() => {
     load();
   }, [load]);
+  useLivePoll(load, 15000);
 
   if (!queue || queue.length === 0) return null;
 
