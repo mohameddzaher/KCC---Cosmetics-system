@@ -132,3 +132,37 @@ seconds.
 Rate limiting on public forms is in place and tested: contact (5 per 10 min per
 IP), newsletter (5 per 10 min), login (10 per 5 min), registration, uploads,
 reviews and the AI chat.
+
+## Phases 3 and 4 — Responsive, motion, and the website redesign
+
+Phase 3 (responsive, 320 px to a 4K screen) and 4.1–4.2 (motion at 60 fps)
+are in their own commits. Measured since: scrolling the home page with the
+CPU slowed 4×, desktop 1440 and phone 390 hold 60 fps (p95 frame 17 ms, no
+long tasks). The 4K figure from headless Chrome (35 fps) is software
+rendering without a GPU and is not representative.
+
+At the owner's request the public website (home, About) was then rebuilt
+from the company profile (KCC Commercial Profile 2027). Decisions worth
+knowing:
+
+- **Content** lives in `src/lib/storyContent.ts`, English with an Arabic
+  translation. The Arabic is ours and should be read by the team once.
+- **Hero**: the owner's vertical KCC film (`public/videos/hero-kcc.mp4`,
+  re-encoded from a 98 MB HEVC original to 4.5 MB H.264). It fades in over
+  its own first frame and loops by crossfading two copies, so there is no
+  hard cut on load or at the loop. Full screen on phones; framed beside the
+  words on wide screens, with the four facts (1st digitalized beauty hub,
+  rooted in the Netherlands, 40M units a year, 90 days to delivery) on a
+  rail beneath.
+- **Locations**: office and plant are both in Jeddah. This is stated in the
+  hero, the plant section, the contact block, and the default footer and
+  contact-page address. The footer and contact page show the admin's
+  Settings address first if one is set there.
+- **ECC**: the Unilever case study is ECC's (Egypt) and is labelled as the
+  group's sister company's work, not KCC's.
+- **Dark mode on the website** uses one family of deep greens (scoped with
+  `.site-public` in `globals.css`); the admin panel keeps its own dark theme.
+- **Removed from the home page**: services, stats, Vision 2030, process,
+  testimonials, contact form, newsletter, CTA and the market section. Their
+  components remain in `src/components/public/` if they are wanted back.
+- **Favicon**: a green K (`src/app/icon.svg`, `favicon.ico`, `apple-icon.png`).

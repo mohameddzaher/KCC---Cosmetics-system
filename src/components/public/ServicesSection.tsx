@@ -1,6 +1,5 @@
 'use client';
 
-import ProductSlot from '@/components/public/ProductSlot';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Beaker, FlaskConical, ShieldCheck, Package, Truck, FileCheck, Factory } from 'lucide-react';
@@ -210,7 +209,6 @@ export default function ServicesSection() {
           })}
         </motion.div>
       </div>
-      <ProductSlot name="services" className="z-[1] hidden lg:block end-[5%] top-10 w-[5.5rem]" />
     </section>
   );
 }

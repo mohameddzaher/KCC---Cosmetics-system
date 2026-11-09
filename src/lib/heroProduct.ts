@@ -1,12 +1,11 @@
 /**
- * The product that travels down the home page.
+ * The KCC product shown on the home page stage.
  *
- * To use the real photo: put a transparent PNG or WebP (portrait, about
- * 1200 x 2880 px, i.e. 5:12, the product filling the height) in
- * public/images/ and point this at it, or set `productImage` on the hero
- * section in the CMS, which wins over this file. Nothing else changes.
+ * A transparent WebP cut from the photograph the team supplied (bottle.jpeg
+ * in the project root). To use another product: a portrait PNG or WebP with
+ * a transparent background, then update the path and its width / height.
  */
-export const HERO_PRODUCT_IMAGE = '/images/hero-product.svg';
+export const HERO_PRODUCT_IMAGE = '/images/story/kcc-bottle.webp';
 
 /** Width / height of the image above, so its box never jumps when it loads. */
-export const HERO_PRODUCT_RATIO = 200 / 480;
+export const HERO_PRODUCT_RATIO = 394 / 1136;

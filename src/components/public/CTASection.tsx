@@ -1,6 +1,5 @@
 'use client';
 
-import ProductSlot from '@/components/public/ProductSlot';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
@@ -88,7 +87,6 @@ export default function CTASection() {
           {t('sections.ctaTrustBadges')}
         </motion.p>
       </div>
-      <ProductSlot name="cta" className="z-[1] hidden lg:block start-[4%] top-1/2 -translate-y-1/2 w-[6rem]" />
     </section>
   );
 }

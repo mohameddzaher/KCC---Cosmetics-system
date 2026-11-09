@@ -30,7 +30,6 @@ export const metadata: Metadata = {
     template: `%s | ${COMPANY.shortName}`,
   },
   applicationName: COMPANY.shortName,
-  icons: { icon: '/favicon.ico' },
   ...buildMetadata({
     title: `${COMPANY.legalName} — Cosmetics Contract Manufacturing`,
     description: COMPANY.descriptionEn,

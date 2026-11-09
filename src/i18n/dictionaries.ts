@@ -180,7 +180,7 @@ const dictionaries = {
       successDesc: 'We will get back to you shortly.',
       sendAnother: 'Send Another Message',
       addressLabel: 'Address',
-      addressValue: 'Jeddah, Kingdom of Saudi Arabia',
+      addressValue: 'Office & plant: Jeddah, Kingdom of Saudi Arabia',
       phoneLabel: 'Phone',
       emailLabel: 'Email',
       officeHoursLabel: 'Office Hours',
@@ -454,7 +454,7 @@ const dictionaries = {
       quickLinks: 'Quick Links',
       contactInfo: 'Contact Info',
       followUs: 'Follow Us',
-      address: 'Jeddah, Saudi Arabia',
+      address: 'Office & plant: Jeddah, Saudi Arabia',
     },
     // AI
     ai: {
@@ -645,7 +645,7 @@ const dictionaries = {
       successDesc: 'سنتواصل معك قريبًا.',
       sendAnother: 'إرسال رسالة أخرى',
       addressLabel: 'العنوان',
-      addressValue: 'جدة، المملكة العربية السعودية',
+      addressValue: 'المكتب والمصنع: جدة، المملكة العربية السعودية',
       phoneLabel: 'الهاتف',
       emailLabel: 'البريد الإلكتروني',
       officeHoursLabel: 'ساعات العمل',
@@ -908,7 +908,7 @@ const dictionaries = {
       quickLinks: 'روابط سريعة',
       contactInfo: 'معلومات الاتصال',
       followUs: 'تابعنا',
-      address: 'جدة، المملكة العربية السعودية',
+      address: 'المكتب والمصنع: جدة، المملكة العربية السعودية',
     },
     ai: {
       title: 'المساعد الذكي',

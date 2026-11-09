@@ -2,41 +2,51 @@
 
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import HeroSection from '@/components/public/HeroSection';
-import ServicesSection from '@/components/public/ServicesSection';
-import StatsSection from '@/components/public/StatsSection';
-import ProcessSection from '@/components/public/ProcessSection';
-import Vision2030Section from '@/components/public/Vision2030Section';
 import FAQSection from '@/components/public/FAQSection';
-import TestimonialsSection from '@/components/public/TestimonialsSection';
-import ContactFormSection from '@/components/public/ContactFormSection';
 import NewsSection from '@/components/public/NewsSection';
-import NewsletterSection from '@/components/public/NewsletterSection';
-import CTASection from '@/components/public/CTASection';
-import dynamic from 'next/dynamic';
+import ProductStage from '@/components/story/ProductStage';
+import { SmoothScroll, VelocityBand, LinesStrips, TextureShowcase } from '@/components/story/Motion2';
+import {
+  StoryHero, DirectionSection, NumbersSection, CommitmentSection, PlantSection,
+  LinesSlider, MakeSection, FormulateXSection, OdmSection, QualitySection,
+  PartnersSection, CaseSection, PromiseSection,
+} from '@/components/story/HomeStory';
 
-// Loaded after the page itself: the hero and its image never wait for it.
-const TravellingProduct = dynamic(() => import('@/components/public/TravellingProduct'), { ssr: false });
-
+/**
+ * The home page tells the company's story in the order of its commercial
+ * profile (KCC Commercial Profile 2027): the cover, the product on its stage
+ * opening onto the Jeddah plant, who we are, the scale behind us, what we
+ * make, how we work, quality, and the promise. The FAQ and news
+ * stay, managed from the admin panel as before.
+ */
 export default function HomePage() {
   return (
-    <>
+    // site-public: the website's own dark palette (see globals.css).
+    <div className="site-public contents">
+      <SmoothScroll />
       <Navbar />
       <main>
-        <HeroSection />
-        <ServicesSection />
-        <StatsSection />
-        <Vision2030Section />
-        <ProcessSection />
+        <StoryHero />
+        <ProductStage />
+        <PlantSection />
+        <DirectionSection />
+        <NumbersSection />
+        <VelocityBand />
+        <CommitmentSection />
+        <LinesStrips />
+        <LinesSlider />
+        <MakeSection />
+        <TextureShowcase />
+        <FormulateXSection />
+        <OdmSection />
+        <QualitySection />
+        <PartnersSection />
+        <CaseSection />
         <FAQSection />
-        <TestimonialsSection />
-        <ContactFormSection />
         <NewsSection />
-        <NewsletterSection />
-        <CTASection />
+        <PromiseSection />
       </main>
       <Footer />
-      <TravellingProduct />
-    </>
+    </div>
   );
 }

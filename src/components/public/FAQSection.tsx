@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -11,6 +11,9 @@ interface FAQItem {
   question: { en: string; ar: string };
   answer: { en: string; ar: string };
 }
+
+/** One easing for the whole section: a quick start that settles softly. */
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 const faqItems: FAQItem[] = [
   {
@@ -125,17 +128,16 @@ export default function FAQSection() {
   return (
     <section className="relative py-12 lg:py-16 bg-cream-50 overflow-hidden">
       {/* Background accents */}
-      <div className="absolute top-0 start-0 w-96 h-96 orb [--orb:color-mix(in_srgb,var(--color-kcc-rose-light)_40%,transparent)] rounded-full " />
-      <div className="absolute bottom-0 end-0 w-80 h-80 orb [--orb:color-mix(in_srgb,var(--color-kcc-beige-light)_35%,transparent)] rounded-full " />
-      <div className="absolute inset-0 noise-soft pointer-events-none" />
+      <div className="absolute top-0 start-0 w-96 h-96 orb [--orb:color-mix(in_srgb,var(--color-kcc-rose-light)_40%,transparent)] rounded-full dark:opacity-20" />
+      <div className="absolute bottom-0 end-0 w-80 h-80 orb [--orb:color-mix(in_srgb,var(--color-kcc-beige-light)_35%,transparent)] rounded-full dark:opacity-20" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          viewport={{ once: true, margin: '0px 0px -12% 0px' }}
+          transition={{ duration: 0.9, ease: EASE }}
           className="text-center mb-12"
         >
           <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 text-[0.6875rem] uppercase tracking-[0.25em] chip-champagne rounded-full font-medium">
@@ -151,13 +153,7 @@ export default function FAQSection() {
         </motion.div>
 
         {/* FAQ Items */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="space-y-4"
-        >
+        <div className="space-y-4">
           {!ready ? (
             <ContentSkeleton count={4} className="space-y-3" height="h-16" />
           ) : list.map((item, index) => {
@@ -165,11 +161,11 @@ export default function FAQSection() {
             return (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.06 }}
-                className={`group rounded-2xl bg-surface/85 backdrop-blur-sm border transition-all duration-300 overflow-hidden ${
+                viewport={{ once: true, margin: '0px 0px -8% 0px' }}
+                transition={{ duration: 0.8, delay: Math.min(index, 6) * 0.07, ease: EASE }}
+                className={`group rounded-2xl bg-surface border transition-[border-color,box-shadow] duration-300 overflow-hidden ${
                   isOpen
                     ? 'border-kcc-rose-dark/40 shadow-soft'
                     : 'border-cream-300 hover:border-kcc-beige/50 hover:shadow-soft'
@@ -186,7 +182,7 @@ export default function FAQSection() {
                   </span>
                   <motion.div
                     animate={{ rotate: isOpen ? 180 : 0 }}
-                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    transition={{ duration: 0.45, ease: EASE }}
                     className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
                       isOpen ? 'bg-kcc-rose-light/50 text-kcc-rose-dark' : 'bg-cream-200 text-cream-700'
                     }`}
@@ -202,7 +198,7 @@ export default function FAQSection() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      transition={{ duration: 0.45, ease: EASE }}
                       className="overflow-hidden"
                     >
                       <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-0">
@@ -217,7 +213,7 @@ export default function FAQSection() {
               </motion.div>
             );
           })}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

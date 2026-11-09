@@ -370,6 +370,32 @@
   --muted: var(--fg-muted);
 }
 
+/* The public website in dark mode: one family of deep greens, so every
+   section, whether it was cream or already dark green, lands in the same
+   palette as the brand. The admin panel keeps the neutral dark above. */
+[data-theme="dark"]:has(.site-public) {
+  --warm-50: #0E1712;   --warm-100: #121D17;  --warm-200: #18251E;
+  --warm-300: #223129;  --warm-400: #2D3F35;  --warm-500: #4E6358;
+  --warm-600: #8FA79A;  --warm-700: #A9BDB2;  --warm-800: #CADAD1;
+  --warm-900: #E3ECE7;
+
+  --ink-50: #15211A;   --ink-100: #1B2A21;  --ink-200: #2D3F35;
+  --ink-300: #5F7468;  --ink-400: #90A69A;
+
+  --blush-50: #141F19;  --blush-100: #18251E;  --blush-200: #223129;
+
+  --bg: #0E1712;
+  --bg-subtle: #0B130F;
+  --surface: #15211A;
+  --surface-2: #1A281F;
+  --surface-3: #223129;
+  --line: #223129;
+  --line-strong: #2D3F35;
+  --fg-muted: #9DB2A6;
+  --fg-subtle: #8FA79A;
+  --fg-inverse: #0E1712;
+}
+
 /* -----------------------------------------------------------------------------
    Status-hue overrides.
 
@@ -1126,17 +1152,19 @@ select.field {
    Marketing buttons
    ========================================================================== */
 .btn-luxe {
-  /* Deepened from the original blush→beige pair, which left the white label
-     at ~2.5:1. This keeps the brand gradient while reaching AA. */
-  background: linear-gradient(135deg, #B4626F 0%, #8A6222 100%);
+  /* The brand green, deep to fresh. The lightest stop still holds the white
+     label above 4.5:1. */
+  background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 55%, #2F7A55 100%);
+  background-size: 160% 100%;
+  background-position: 0% 50%;
   color: #FFFCF8;
-  box-shadow: 0 14px 40px -16px rgba(184, 134, 74, 0.55);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+  box-shadow: 0 14px 40px -16px rgba(45, 106, 79, 0.6);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-position 0.5s ease;
 }
 .btn-luxe:hover {
   transform: translateY(-1px);
-  filter: brightness(1.05);
-  box-shadow: 0 18px 50px -16px rgba(184, 134, 74, 0.65);
+  background-position: 100% 50%;
+  box-shadow: 0 18px 50px -16px rgba(45, 106, 79, 0.7);
 }
 
 .btn-luxe-outline {
@@ -1280,41 +1308,120 @@ select.field {
 }
 
 
-/* =============================================================================
-   The travelling product (src/components/public/TravellingProduct.tsx)
-   ========================================================================== */
-
-/* A slow idle float, so the product never sits dead still. */
-@keyframes travel-float {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(0, -0.5rem, 0); }
-}
-.travel-float {
-  animation: travel-float 6s ease-in-out infinite;
-}
-
-/* The still image inside each landing slot shows only when the product does
-   not travel: under reduced motion, and on narrower screens (where only the
-   slots marked for phones keep it). */
-[data-product-slot] > .product-static-img {
-  display: none;
-}
-html.product-static [data-product-slot] > .product-static-img {
-  display: block;
-}
-@media (max-width: 1023px) {
-  html.product-static [data-product-slot]:not([data-product-mobile]) > .product-static-img {
-    display: none;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .travel-float { animation: none; }
-}
-
 /* A soft glow behind a section. It used to be a solid circle under
    blur(120-180px): one of those, animated, is repainted every frame, and the
    home page had fifteen, which took scrolling from 60 to 17 fps on a mid-range
    phone. A radial gradient draws the same glow once and is free to move. */
 .orb {
   background: radial-gradient(closest-side, var(--orb), transparent);
+}
+
+/* =============================================================================
+   Story sections (src/components/story)
+   ========================================================================== */
+
+/* Endless band: two copies of the row, the track slides by exactly one. */
+@keyframes story-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(calc(-50% - var(--gap, 3rem) / 2), 0, 0); }
+}
+.story-marquee-track {
+  animation: story-marquee 40s linear infinite;
+}
+[dir="rtl"] .story-marquee-track {
+  animation-direction: reverse;
+}
+.story-marquee:hover .story-marquee-track,
+.story-marquee:focus-within .story-marquee-track {
+  animation-play-state: paused;
+}
+.story-marquee {
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+/* A slow drift across a still photograph. */
+@keyframes story-kenburns {
+  from { transform: scale(1.04) translate3d(0, 0, 0); }
+  to { transform: scale(1.14) translate3d(-2%, -1.5%, 0); }
+}
+.story-kenburns {
+  animation: story-kenburns 18s ease-in-out infinite alternate;
+}
+
+/* Number cards turn over to tell the story behind the figure. */
+.story-flip {
+  perspective: 1200px;
+}
+.story-flip-inner {
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-style: preserve-3d;
+}
+.story-flip:hover .story-flip-inner,
+.story-flip:focus-within .story-flip-inner {
+  transform: rotateY(180deg);
+}
+.story-flip-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.story-flip-back {
+  transform: rotateY(180deg);
+}
+
+/* Floating cutouts (textures), each on its own rhythm. */
+@keyframes story-bob {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(0, -0.6rem, 0) rotate(-2deg); }
+}
+.story-bob {
+  animation: story-bob 7s ease-in-out infinite;
+}
+
+/* The stage's product, hovering once it has landed, its shadow breathing with it. */
+@keyframes story-levitate {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -1.4vmin, 0); }
+}
+@keyframes story-shadow-breathe {
+  0%, 100% { transform: scaleX(1); opacity: 1; }
+  50% { transform: scaleX(0.82); opacity: 0.7; }
+}
+.story-levitate { animation: story-levitate 5.5s ease-in-out infinite; }
+.story-shadow-breathe { animation: story-shadow-breathe 5.5s ease-in-out infinite; }
+
+/* Bubbles of formula rising behind the product. */
+@keyframes story-rise {
+  0% { transform: translate3d(0, 0, 0) scale(0.6); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate3d(var(--drift, 0), -70svh, 0) scale(1.1); opacity: 0; }
+}
+.story-bubble { animation: story-rise var(--dur, 9s) linear infinite; animation-delay: var(--delay, 0s); }
+@media (prefers-reduced-motion: reduce) {
+  .story-levitate, .story-shadow-breathe, .story-bubble { animation: none; }
+}
+
+/* The light orbiting each of the hero's fact marks. */
+@keyframes story-orbit { to { transform: rotate(360deg); } }
+.story-orbit { animation: story-orbit 5.5s linear infinite; }
+/* The dot travelling the road from the Netherlands to the Kingdom. */
+@keyframes story-route {
+  0% { transform: translateX(0); opacity: 0; }
+  15%, 85% { opacity: 1; }
+  100% { transform: translateX(41px); opacity: 0; }
+}
+.story-route { animation: story-route 2.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .story-orbit, .story-route { animation: none; } }
+
+/* The line that draws itself between steps. */
+@keyframes story-dash {
+  to { stroke-dashoffset: -32; }
+}
+.story-dash {
+  stroke-dasharray: 6 10;
+  animation: story-dash 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story-marquee-track, .story-kenburns, .story-bob, .story-dash { animation: none; }
+  .story-flip:hover .story-flip-inner, .story-flip:focus-within .story-flip-inner { transform: none; }
 }

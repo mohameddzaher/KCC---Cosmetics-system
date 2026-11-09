@@ -1,6 +1,5 @@
 'use client';
 
-import ProductSlot from '@/components/public/ProductSlot';
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, Leaf, ShieldCheck, Sparkles, BriefcaseBusiness, Cpu } from 'lucide-react';
@@ -249,7 +248,6 @@ export default function Vision2030Section() {
           </motion.aside>
         </div>
       </div>
-      <ProductSlot name="vision" className="z-[1] hidden lg:block end-[5%] top-10 w-[5.5rem]" />
     </section>
   );
 }

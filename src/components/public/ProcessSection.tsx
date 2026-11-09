@@ -1,6 +1,5 @@
 'use client';
 
-import ProductSlot from '@/components/public/ProductSlot';
 import { motion } from 'framer-motion';
 import { Lightbulb, Beaker, FlaskConical, ClipboardCheck, Factory, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -208,7 +207,6 @@ export default function ProcessSection() {
         </>
         )}
       </div>
-      <ProductSlot name="process" className="z-[1] hidden lg:block start-[5%] top-10 w-[5.5rem]" />
     </section>
   );
 }

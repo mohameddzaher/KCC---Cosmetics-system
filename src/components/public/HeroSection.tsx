@@ -1,6 +1,5 @@
 'use client';
 
-import ProductSlot from '@/components/public/ProductSlot';
 import { useRef } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -265,10 +264,6 @@ export default function HeroSection() {
         hands over in the last stretch.
       */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent via-transparent to-cream-100" />
-      {/* Where the travelling product starts (large screens), and its still
-          image on phones: small, in the top corner, clear of the copy. */}
-      <ProductSlot name="hero" className="z-[1] hidden lg:block end-[7%] top-1/2 -translate-y-1/2 w-[clamp(7rem,9vw,11rem)]" />
-      <ProductSlot name="hero-mobile" mobile className="z-[1] lg:hidden end-4 top-20 w-10 opacity-90" />
     </section>
   );
 }
