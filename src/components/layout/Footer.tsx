@@ -86,7 +86,7 @@ export default function Footer() {
       <div className="h-px w-full bg-gradient-to-r from-transparent via-kcc-beige/45 to-transparent" />
 
       {/* A single, very soft warm glow. No competing colour fields. */}
-      <div className="pointer-events-none absolute -top-24 start-1/4 h-[23.75rem] w-[23.75rem] rounded-full bg-kcc-rose-dark/10 blur-[150px]" />
+      <div className="pointer-events-none absolute -top-24 start-1/4 h-[23.75rem] w-[23.75rem] rounded-full orb [--orb:color-mix(in_srgb,var(--color-kcc-rose-dark)_10%,transparent)]" />
 
       <div className="page-shell relative z-10 py-14 lg:py-16">
         <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr] lg:gap-12">

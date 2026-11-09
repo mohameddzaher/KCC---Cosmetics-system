@@ -1,5 +1,6 @@
 'use client';
 
+import ProductSlot from '@/components/public/ProductSlot';
 import { motion } from 'framer-motion';
 import { Lightbulb, Beaker, FlaskConical, ClipboardCheck, Factory, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -76,8 +77,8 @@ export default function ProcessSection() {
   return (
     <section className="relative py-12 lg:py-16 bg-cream-100 overflow-hidden">
       {/* Background accent */}
-      <div className="absolute top-0 end-0 w-96 h-96 bg-kcc-rose-light/40 rounded-full blur-[200px]" />
-      <div className="absolute bottom-0 start-0 w-80 h-80 bg-kcc-beige-light/35 rounded-full blur-[180px]" />
+      <div className="absolute top-0 end-0 w-96 h-96 orb [--orb:color-mix(in_srgb,var(--color-kcc-rose-light)_40%,transparent)] rounded-full " />
+      <div className="absolute bottom-0 start-0 w-80 h-80 orb [--orb:color-mix(in_srgb,var(--color-kcc-beige-light)_35%,transparent)] rounded-full " />
       <div className="absolute inset-0 noise-soft pointer-events-none" />
 
       <div className="relative z-10 page-shell">
@@ -207,6 +208,7 @@ export default function ProcessSection() {
         </>
         )}
       </div>
+      <ProductSlot name="process" className="z-[1] hidden lg:block start-[5%] top-10 w-[5.5rem]" />
     </section>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import ProductSlot from '@/components/public/ProductSlot';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Beaker, FlaskConical, ShieldCheck, Package, Truck, FileCheck, Factory } from 'lucide-react';
@@ -117,8 +118,8 @@ export default function ServicesSection() {
   return (
     <section className="relative py-12 lg:py-16 bg-cream-50 overflow-hidden">
       {/* Background subtle glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[37.5rem] h-[37.5rem] bg-kcc-rose-light/40 rounded-full blur-[200px]" />
-      <div className="absolute bottom-0 right-0 w-[25rem] h-[25rem] bg-kcc-beige-light/30 rounded-full blur-[180px]" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[37.5rem] h-[37.5rem] orb [--orb:color-mix(in_srgb,var(--color-kcc-rose-light)_40%,transparent)] rounded-full " />
+      <div className="absolute bottom-0 right-0 w-[25rem] h-[25rem] orb [--orb:color-mix(in_srgb,var(--color-kcc-beige-light)_30%,transparent)] rounded-full " />
       <div className="absolute inset-0 dot-pattern opacity-50 pointer-events-none" />
 
       <div className="relative z-10 page-shell">
@@ -209,6 +210,7 @@ export default function ServicesSection() {
           })}
         </motion.div>
       </div>
+      <ProductSlot name="services" className="z-[1] hidden lg:block end-[5%] top-10 w-[5.5rem]" />
     </section>
   );
 }

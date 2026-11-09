@@ -1,5 +1,6 @@
 'use client';
 
+import ProductSlot from '@/components/public/ProductSlot';
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, Leaf, ShieldCheck, Sparkles, BriefcaseBusiness, Cpu } from 'lucide-react';
@@ -164,8 +165,8 @@ export default function Vision2030Section() {
   return (
     <section className="relative py-12 lg:py-16 bg-cream-50 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-0 w-[26.25rem] h-[26.25rem] -translate-y-1/2 rounded-full bg-kcc-rose-light/40 blur-[140px]" />
-        <div className="absolute top-10 right-10 w-[18.75rem] h-[18.75rem] rounded-full bg-kcc-beige-light/35 blur-[120px]" />
+        <div className="absolute top-1/2 left-0 w-[26.25rem] h-[26.25rem] -translate-y-1/2 rounded-full orb [--orb:color-mix(in_srgb,var(--color-kcc-rose-light)_40%,transparent)]" />
+        <div className="absolute top-10 right-10 w-[18.75rem] h-[18.75rem] rounded-full orb [--orb:color-mix(in_srgb,var(--color-kcc-beige-light)_35%,transparent)]" />
         <div className="absolute inset-0 dot-pattern opacity-50" />
         <div className="absolute inset-0 diagonal-lines opacity-60" />
       </div>
@@ -248,6 +249,7 @@ export default function Vision2030Section() {
           </motion.aside>
         </div>
       </div>
+      <ProductSlot name="vision" className="z-[1] hidden lg:block end-[5%] top-10 w-[5.5rem]" />
     </section>
   );
 }

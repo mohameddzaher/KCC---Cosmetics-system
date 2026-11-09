@@ -1,5 +1,6 @@
 'use client';
 
+import ProductSlot from '@/components/public/ProductSlot';
 import { useEffect, useRef, useState } from 'react';
 import { motion, useInView, useReducedMotion } from 'framer-motion';
 import { Award, Globe2, Package, Users } from 'lucide-react';
@@ -153,6 +154,7 @@ export default function StatsSection() {
           })}
         </div>
       </div>
+      <ProductSlot name="stats" className="z-[1] hidden lg:block start-[6%] top-8 w-[5rem]" />
     </section>
   );
 }

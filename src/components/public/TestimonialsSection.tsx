@@ -79,8 +79,8 @@ export default function TestimonialsSection() {
     <section className="relative py-12 lg:py-16 bg-cream-100 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 dot-pattern opacity-40" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[37.5rem] h-[25rem] bg-kcc-rose-light/40 rounded-full blur-[200px]" />
-      <div className="absolute top-0 end-0 w-[18.75rem] h-[18.75rem] bg-kcc-beige-light/30 rounded-full blur-[150px]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[37.5rem] h-[25rem] orb [--orb:color-mix(in_srgb,var(--color-kcc-rose-light)_40%,transparent)] rounded-full " />
+      <div className="absolute top-0 end-0 w-[18.75rem] h-[18.75rem] orb [--orb:color-mix(in_srgb,var(--color-kcc-beige-light)_30%,transparent)] rounded-full " />
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}

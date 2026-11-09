@@ -13,6 +13,10 @@ import ContactFormSection from '@/components/public/ContactFormSection';
 import NewsSection from '@/components/public/NewsSection';
 import NewsletterSection from '@/components/public/NewsletterSection';
 import CTASection from '@/components/public/CTASection';
+import dynamic from 'next/dynamic';
+
+// Loaded after the page itself: the hero and its image never wait for it.
+const TravellingProduct = dynamic(() => import('@/components/public/TravellingProduct'), { ssr: false });
 
 export default function HomePage() {
   return (
@@ -32,6 +36,7 @@ export default function HomePage() {
         <CTASection />
       </main>
       <Footer />
+      <TravellingProduct />
     </>
   );
 }

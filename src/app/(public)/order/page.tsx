@@ -67,8 +67,8 @@ function OrderPageContent() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-bg px-4 pb-24 pt-16 sm:px-6 lg:pt-24">
       {/* Two very soft warm fields, nothing with an edge. */}
-      <div className="pointer-events-none absolute -top-24 start-1/4 h-[26.25rem] w-[26.25rem] -translate-x-1/2 rounded-full bg-kcc-rose-light/35 blur-[140px]" />
-      <div className="pointer-events-none absolute -bottom-32 end-0 h-[23.75rem] w-[23.75rem] rounded-full bg-kcc-beige-light/40 blur-[130px]" />
+      <div className="pointer-events-none absolute -top-24 start-1/4 h-[26.25rem] w-[26.25rem] -translate-x-1/2 rounded-full orb [--orb:color-mix(in_srgb,var(--color-kcc-rose-light)_35%,transparent)]" />
+      <div className="pointer-events-none absolute -bottom-32 end-0 h-[23.75rem] w-[23.75rem] rounded-full orb [--orb:color-mix(in_srgb,var(--color-kcc-beige-light)_40%,transparent)]" />
 
       <div className="relative z-10 mx-auto w-full max-w-5xl">
         <motion.header {...rise()} className="text-center">

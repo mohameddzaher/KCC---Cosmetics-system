@@ -125,8 +125,8 @@ export default function FAQSection() {
   return (
     <section className="relative py-12 lg:py-16 bg-cream-50 overflow-hidden">
       {/* Background accents */}
-      <div className="absolute top-0 start-0 w-96 h-96 bg-kcc-rose-light/40 rounded-full blur-[200px]" />
-      <div className="absolute bottom-0 end-0 w-80 h-80 bg-kcc-beige-light/35 rounded-full blur-[180px]" />
+      <div className="absolute top-0 start-0 w-96 h-96 orb [--orb:color-mix(in_srgb,var(--color-kcc-rose-light)_40%,transparent)] rounded-full " />
+      <div className="absolute bottom-0 end-0 w-80 h-80 orb [--orb:color-mix(in_srgb,var(--color-kcc-beige-light)_35%,transparent)] rounded-full " />
       <div className="absolute inset-0 noise-soft pointer-events-none" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

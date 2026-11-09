@@ -1,11 +1,12 @@
-import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
   // A stray package-lock.json higher up the disk made Next pick the wrong
-  // workspace root; this project's folder is the root.
-  turbopack: { root: path.resolve(__dirname) },
+  // workspace root; this project's folder is the root. process.cwd(), not
+  // __dirname: in `next dev` the compiled config's __dirname is not this
+  // folder, and Turbopack then could not find tailwindcss.
+  turbopack: { root: process.cwd() },
   poweredByHeader: false,
   images: {
     // Restrict the image optimizer to known hosts (avoid being used as an open proxy).

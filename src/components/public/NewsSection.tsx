@@ -121,8 +121,8 @@ export default function NewsSection() {
   return (
     <section className="relative py-12 lg:py-16 bg-cream-100 overflow-hidden">
       {/* Background */}
-      <div className="absolute bottom-0 start-0 w-96 h-96 bg-kcc-rose-light/40 rounded-full blur-[200px]" />
-      <div className="absolute top-0 end-0 w-72 h-72 bg-kcc-beige-light/30 rounded-full blur-[150px]" />
+      <div className="absolute bottom-0 start-0 w-96 h-96 orb [--orb:color-mix(in_srgb,var(--color-kcc-rose-light)_40%,transparent)] rounded-full " />
+      <div className="absolute top-0 end-0 w-72 h-72 orb [--orb:color-mix(in_srgb,var(--color-kcc-beige-light)_30%,transparent)] rounded-full " />
       <div className="absolute inset-0 dot-pattern opacity-40 pointer-events-none" />
 
       <div className="relative z-10 page-shell">

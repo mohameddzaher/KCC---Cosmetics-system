@@ -1,5 +1,6 @@
 'use client';
 
+import ProductSlot from '@/components/public/ProductSlot';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
@@ -27,8 +28,8 @@ export default function CTASection() {
   return (
     <section className="relative overflow-hidden bg-espresso-900 py-12 lg:py-16">
       {/* Two very soft warm fields — no hard shapes. */}
-      <div className="pointer-events-none absolute -top-32 left-1/2 h-[32.5rem] w-[32.5rem] -translate-x-1/2 rounded-full bg-kcc-rose-dark/12 blur-[170px]" />
-      <div className="pointer-events-none absolute -bottom-40 end-0 h-[26.25rem] w-[26.25rem] rounded-full bg-kcc-beige/10 blur-[160px]" />
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-[32.5rem] w-[32.5rem] -translate-x-1/2 rounded-full orb [--orb:color-mix(in_srgb,var(--color-kcc-rose-dark)_12%,transparent)]" />
+      <div className="pointer-events-none absolute -bottom-40 end-0 h-[26.25rem] w-[26.25rem] rounded-full orb [--orb:color-mix(in_srgb,var(--color-kcc-beige)_10%,transparent)]" />
 
       <div className="relative z-10 mx-auto w-full max-w-3xl px-4 text-center sm:px-6">
         <motion.p
@@ -87,6 +88,7 @@ export default function CTASection() {
           {t('sections.ctaTrustBadges')}
         </motion.p>
       </div>
+      <ProductSlot name="cta" className="z-[1] hidden lg:block start-[4%] top-1/2 -translate-y-1/2 w-[6rem]" />
     </section>
   );
 }

@@ -52,8 +52,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-cream-100 flex items-center justify-center pt-8 pb-20 px-4">
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 -left-32 w-80 h-80 rounded-full bg-kcc-rose-light/40 blur-[120px]" />
-        <div className="absolute bottom-1/3 -right-32 w-80 h-80 rounded-full bg-kcc-beige-light/45 blur-[100px]" />
+        <div className="absolute top-1/3 -left-32 w-80 h-80 rounded-full orb [--orb:color-mix(in_srgb,var(--color-kcc-rose-light)_40%,transparent)]" />
+        <div className="absolute bottom-1/3 -right-32 w-80 h-80 rounded-full orb [--orb:color-mix(in_srgb,var(--color-kcc-beige-light)_45%,transparent)]" />
       </div>
 
       <motion.div

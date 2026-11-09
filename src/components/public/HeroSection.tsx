@@ -1,5 +1,6 @@
 'use client';
 
+import ProductSlot from '@/components/public/ProductSlot';
 import { useRef } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -60,7 +61,7 @@ export default function HeroSection() {
 
       {/* Animated rose & champagne orbs */}
       <motion.div
-        className="absolute top-1/4 -start-32 w-[28rem] h-[28rem] rounded-full bg-kcc-rose/20 blur-[140px]"
+        className="absolute top-1/4 -start-32 w-[28rem] h-[28rem] rounded-full orb [--orb:color-mix(in_srgb,var(--color-kcc-rose)_20%,transparent)]"
         animate={{
           x: [0, 60, 0],
           y: [0, -40, 0],
@@ -73,7 +74,7 @@ export default function HeroSection() {
         }}
       />
       <motion.div
-        className="absolute bottom-1/4 -end-32 w-[22rem] h-[22rem] rounded-full bg-kcc-beige/18 blur-[120px]"
+        className="absolute bottom-1/4 -end-32 w-[22rem] h-[22rem] rounded-full orb [--orb:color-mix(in_srgb,var(--color-kcc-beige)_18%,transparent)]"
         animate={{
           x: [0, -50, 0],
           y: [0, 50, 0],
@@ -86,7 +87,7 @@ export default function HeroSection() {
         }}
       />
       <motion.div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[35rem] h-[35rem] rounded-full bg-kcc-gold/10 blur-[160px]"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[35rem] h-[35rem] rounded-full orb [--orb:color-mix(in_srgb,var(--color-kcc-gold)_10%,transparent)]"
         animate={{
           scale: [1, 1.3, 1],
           opacity: [0.3, 0.6, 0.3],
@@ -152,11 +153,13 @@ export default function HeroSection() {
 
       {/* Content */}
       <div className="relative z-10 page-shell text-center">
-        {/* Overline */}
+        {/* Overline and wordmark: fixed copy, not from the CMS, so they are
+            painted at once (they are the page's largest text, its LCP) and
+            only rise into place. The CMS-driven lines below still wait. */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={reveal}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          initial={{ y: 12 }}
+          animate={{ y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
           className="mb-6"
         >
           <span className="inline-flex items-center gap-2 px-5 py-2 text-[0.6875rem] font-medium uppercase tracking-[0.28em] chip-on-dark-rose rounded-full">
@@ -167,9 +170,9 @@ export default function HeroSection() {
 
         {/* Main Title */}
         <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={reveal}
-          transition={{ duration: 0.7, delay: 0.4 }}
+          initial={{ y: 16 }}
+          animate={{ y: 0 }}
+          transition={{ duration: 0.7, delay: 0.15 }}
           className="text-3xl sm:text-4xl lg:text-6xl font-black tracking-tight mb-5"
         >
           <span className="text-kcc-green drop-shadow-[0_4px_24px_rgba(45,106,79,0.45)]">K</span>
@@ -262,6 +265,10 @@ export default function HeroSection() {
         hands over in the last stretch.
       */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent via-transparent to-cream-100" />
+      {/* Where the travelling product starts (large screens), and its still
+          image on phones: small, in the top corner, clear of the copy. */}
+      <ProductSlot name="hero" className="z-[1] hidden lg:block end-[7%] top-1/2 -translate-y-1/2 w-[clamp(7rem,9vw,11rem)]" />
+      <ProductSlot name="hero-mobile" mobile className="z-[1] lg:hidden end-4 top-20 w-10 opacity-90" />
     </section>
   );
 }

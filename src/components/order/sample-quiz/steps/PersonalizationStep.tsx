@@ -107,8 +107,8 @@ export default function PersonalizationStep({
           transition={{ duration: 0.6 }}
           className="relative order-1 flex items-center justify-center overflow-hidden rounded-3xl border border-cream-300 bg-cream-100 px-6 py-10 shadow-soft lg:order-2 lg:py-14"
         >
-          <div className="pointer-events-none absolute start-10 top-8 h-48 w-48 rounded-full bg-kcc-rose-light/45 blur-[100px]" />
-          <div className="pointer-events-none absolute bottom-8 end-10 h-48 w-48 rounded-full bg-kcc-beige-light/45 blur-[90px]" />
+          <div className="pointer-events-none absolute start-10 top-8 h-48 w-48 rounded-full orb [--orb:color-mix(in_srgb,var(--color-kcc-rose-light)_45%,transparent)]" />
+          <div className="pointer-events-none absolute bottom-8 end-10 h-48 w-48 rounded-full orb [--orb:color-mix(in_srgb,var(--color-kcc-beige-light)_45%,transparent)]" />
           <BottlePreview name={state.customerName} placeholder={t('quiz.namePlaceholder')} size="md" />
         </motion.div>
       </div>
