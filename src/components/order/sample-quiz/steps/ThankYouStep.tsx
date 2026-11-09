@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import BottlePreview from '../BottlePreview';
@@ -18,22 +17,20 @@ interface Confetto {
 
 const confettiColors = ['#D89BA3', '#E8B4BC', '#D4A574', '#C9A84C', '#FFF6F1', '#43301F'];
 
+const CONFETTI: Confetto[] = Array.from({ length: 36 }).map((_, i) => ({
+  id: i,
+  x: (i * 37) % 100,
+  rotate: (i * 47) % 360,
+  delay: (i % 9) * 0.05,
+  duration: 1.4 + (i % 5) * 0.2,
+  color: confettiColors[i % confettiColors.length],
+}));
+
 export default function ThankYouStep() {
   const { state } = useQuiz();
   const { t } = useLanguage();
-  const [confetti, setConfetti] = useState<Confetto[]>([]);
-
-  useEffect(() => {
-    const items: Confetto[] = Array.from({ length: 36 }).map((_, i) => ({
-      id: i,
-      x: (i * 37) % 100,
-      rotate: (i * 47) % 360,
-      delay: (i % 9) * 0.05,
-      duration: 1.4 + (i % 5) * 0.2,
-      color: confettiColors[i % confettiColors.length],
-    }));
-    setConfetti(items);
-  }, []);
+  // Deterministic, so the server and the browser draw the same pieces.
+  const confetti = CONFETTI;
 
   return (
     <div className="relative flex min-h-[60vh] items-center justify-center overflow-hidden bg-cream-100 px-4 py-14 sm:px-6 sm:py-16">

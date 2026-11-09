@@ -24,7 +24,15 @@ export default function OrdersStats() {
       if (res.ok) setS(await res.json());
     } catch { /* ignore */ }
   }, []);
-  useEffect(() => { load(); }, [load]);
+  // First load: the state is set in the promise callback, not in the effect body.
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/orders/stats', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => { if (alive && data) setS(data); })
+      .catch(() => { /* ignore */ });
+    return () => { alive = false; };
+  }, []);
   useLivePoll(load, 20000);
 
   if (!s) return null;

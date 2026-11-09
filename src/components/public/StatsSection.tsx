@@ -49,12 +49,9 @@ function AnimatedCounter({ target, suffix, inView }: { target: number; suffix: s
     // CMS, which lands after first paint. Without this, a number that had
     // already counted up to its built-in default would never move to the
     // edited one.
-    if (!inView || hasAnimated.current === target) return;
+    // Reduced motion shows the figure as it is (below), with no count-up.
+    if (!inView || reduce || hasAnimated.current === target) return;
     hasAnimated.current = target;
-    if (reduce) {
-      setCount(target);
-      return;
-    }
     const duration = 1400;
     const steps = 40;
     const stepTime = duration / steps;
@@ -73,7 +70,7 @@ function AnimatedCounter({ target, suffix, inView }: { target: number; suffix: s
 
   return (
     <span>
-      {count}
+      {reduce && inView ? target : count}
       {suffix}
     </span>
   );

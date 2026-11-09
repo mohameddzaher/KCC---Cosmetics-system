@@ -35,14 +35,22 @@ export default function Navbar() {
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    // The page may open already scrolled (a reload half way down): read it
+    // on the next frame rather than synchronously inside the effect.
+    const frame = requestAnimationFrame(handleScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [handleScroll]);
 
-  useEffect(() => {
+  // Menus close on navigation, adjusted while rendering.
+  const [menuPath, setMenuPath] = useState(pathname);
+  if (menuPath !== pathname) {
+    setMenuPath(pathname);
     setIsOpen(false);
     setUserMenuOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     if (!userMenuOpen) return;

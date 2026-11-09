@@ -21,19 +21,23 @@ export default function PersonalizationStep({
   const { state, dispatch } = useQuiz();
   const { t } = useLanguage();
   const reduce = useReducedMotion();
-  const [recentlyEnabled, setRecentlyEnabled] = useState(false);
+  const [recentlyEnabled, setRecentlyEnabled] = useState(() => state.customerName.trim().length >= 1);
+  // A change of name lights the button again; adjusted while rendering.
+  const [seenName, setSeenName] = useState(state.customerName);
+  if (seenName !== state.customerName) {
+    setSeenName(state.customerName);
+    if (state.customerName.trim().length >= 1) setRecentlyEnabled(true);
+  }
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
   useEffect(() => {
-    if (state.customerName.trim().length >= 1) {
-      setRecentlyEnabled(true);
-      const timer = setTimeout(() => setRecentlyEnabled(false), 2400);
-      return () => clearTimeout(timer);
-    }
-  }, [state.customerName]);
+    if (!recentlyEnabled) return;
+    const timer = setTimeout(() => setRecentlyEnabled(false), 2400);
+    return () => clearTimeout(timer);
+  }, [recentlyEnabled, state.customerName]);
 
   function handleSubmit() {
     if (state.customerName.trim().length === 0) return;

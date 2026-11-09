@@ -64,6 +64,10 @@ export function LanguageProvider({
     try {
       const saved = localStorage.getItem(STORAGE_KEY) as Locale | null;
       if (saved === 'en' || saved === 'ar') {
+        // Deliberate: adopted once, after hydration, from storage the server
+        // cannot see. Reading it during render would make the server and the
+        // first client render disagree.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLocaleState(saved);
         document.cookie = `${STORAGE_KEY}=${saved}; path=/; max-age=31536000; samesite=lax`;
       }

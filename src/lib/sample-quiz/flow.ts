@@ -220,20 +220,24 @@ async function getJSON<T>(url: string, fallback: T): Promise<T> {
 
 export function useQuizData(state: QuizState): QuizData {
   const [general, setGeneral] = useState<QuestionDoc[]>([]);
-  const [scopedMain, setScopedMain] = useState<QuestionDoc[]>([]);
-  const [scopedSub, setScopedSub] = useState<QuestionDoc[]>([]);
-  const [scopedProduct, setScopedProduct] = useState<QuestionDoc[]>([]);
-  const [specs, setSpecs] = useState<ProductSpecDoc[]>([]);
   const [masters, setMasters] = useState<SpecMasterDoc[]>([]);
   const [loadingGeneral, setLoadingGeneral] = useState(true);
-  const [loadingScoped, setLoadingScoped] = useState(false);
-  const [loadingSpecs, setLoadingSpecs] = useState(false);
+  /*
+   * Each scoped set remembers which key it was fetched for. "Empty" and
+   * "loading" are then read from that rather than set inside the effect: the
+   * set for the key on screen, or the previous one while the new one is on its
+   * way (as before), and nothing at all once the key is cleared.
+   */
+  const [mainData, setMainData] = useState<{ key: string; qs: QuestionDoc[] } | null>(null);
+  const [subData, setSubData] = useState<{ key: string; qs: QuestionDoc[] } | null>(null);
+  const [productData, setProductData] = useState<{ key: string; qs: QuestionDoc[] } | null>(null);
+  const [specData, setSpecData] = useState<{ key: string; specs: ProductSpecDoc[] } | null>(null);
 
   const { mainSlug, subSlug, productKey } = state.category;
+  const subKey = mainSlug && subSlug ? `${mainSlug}__${subSlug}` : '';
 
   useEffect(() => {
     let cancelled = false;
-    setLoadingGeneral(true);
     Promise.all([
       getJSON<QuestionDoc[]>('/api/sample-quiz/brief-questions?scope=general', []),
       getJSON<{ categories: SpecMasterDoc[] }>('/api/sample-quiz/spec-options', { categories: [] }),
@@ -251,19 +255,13 @@ export function useQuizData(state: QuizState): QuizData {
   // Each level is fetched independently so choosing a main category does not
   // discard (and re-request) the sub-family and product sets.
   useEffect(() => {
-    if (!mainSlug) {
-      setScopedMain([]);
-      return;
-    }
+    if (!mainSlug) return;
     let cancelled = false;
-    setLoadingScoped(true);
     getJSON<QuestionDoc[]>(
       `/api/sample-quiz/brief-questions?scope=main&scopeKey=${encodeURIComponent(mainSlug)}`,
       []
     ).then((qs) => {
-      if (cancelled) return;
-      setScopedMain(Array.isArray(qs) ? qs : []);
-      setLoadingScoped(false);
+      if (!cancelled) setMainData({ key: mainSlug, qs: Array.isArray(qs) ? qs : [] });
     });
     return () => {
       cancelled = true;
@@ -271,33 +269,27 @@ export function useQuizData(state: QuizState): QuizData {
   }, [mainSlug]);
 
   useEffect(() => {
-    if (!mainSlug || !subSlug) {
-      setScopedSub([]);
-      return;
-    }
+    if (!subKey) return;
     let cancelled = false;
     getJSON<QuestionDoc[]>(
-      `/api/sample-quiz/brief-questions?scope=sub&scopeKey=${encodeURIComponent(`${mainSlug}__${subSlug}`)}`,
+      `/api/sample-quiz/brief-questions?scope=sub&scopeKey=${encodeURIComponent(subKey)}`,
       []
     ).then((qs) => {
-      if (!cancelled) setScopedSub(Array.isArray(qs) ? qs : []);
+      if (!cancelled) setSubData({ key: subKey, qs: Array.isArray(qs) ? qs : [] });
     });
     return () => {
       cancelled = true;
     };
-  }, [mainSlug, subSlug]);
+  }, [subKey]);
 
   useEffect(() => {
-    if (!productKey) {
-      setScopedProduct([]);
-      return;
-    }
+    if (!productKey) return;
     let cancelled = false;
     getJSON<QuestionDoc[]>(
       `/api/sample-quiz/brief-questions?scope=product&scopeKey=${encodeURIComponent(productKey)}`,
       []
     ).then((qs) => {
-      if (!cancelled) setScopedProduct(Array.isArray(qs) ? qs : []);
+      if (!cancelled) setProductData({ key: productKey, qs: Array.isArray(qs) ? qs : [] });
     });
     return () => {
       cancelled = true;
@@ -305,24 +297,25 @@ export function useQuizData(state: QuizState): QuizData {
   }, [productKey]);
 
   useEffect(() => {
-    if (!productKey) {
-      setSpecs([]);
-      return;
-    }
+    if (!productKey) return;
     let cancelled = false;
-    setLoadingSpecs(true);
     getJSON<{ specs?: ProductSpecDoc[] }>(
       `/api/sample-quiz/product-config/${encodeURIComponent(productKey)}`,
       {}
     ).then((cfg) => {
-      if (cancelled) return;
-      setSpecs(Array.isArray(cfg.specs) ? cfg.specs : []);
-      setLoadingSpecs(false);
+      if (!cancelled) setSpecData({ key: productKey, specs: Array.isArray(cfg.specs) ? cfg.specs : [] });
     });
     return () => {
       cancelled = true;
     };
   }, [productKey]);
+
+  const scopedMain = useMemo(() => (mainSlug ? mainData?.qs ?? [] : []), [mainSlug, mainData]);
+  const scopedSub = useMemo(() => (subKey ? subData?.qs ?? [] : []), [subKey, subData]);
+  const scopedProduct = useMemo(() => (productKey ? productData?.qs ?? [] : []), [productKey, productData]);
+  const specs = useMemo(() => (productKey ? specData?.specs ?? [] : []), [productKey, specData]);
+  const loadingScoped = !!mainSlug && mainData?.key !== mainSlug;
+  const loadingSpecs = !!productKey && specData?.key !== productKey;
 
   // Memoised: a fresh object here would invalidate `buildSteps` on every
   // render, re-creating every navigation callback and re-rendering the whole
@@ -475,10 +468,7 @@ export function useQuizFlow(state: QuizState) {
   // where the customer was rather than at step 0.
   const rawIndex = useMemo(() => steps.findIndex((s) => s.id === currentId), [steps, currentId]);
   const [fallbackIndex, setFallbackIndex] = useState(0);
-
-  useEffect(() => {
-    if (rawIndex >= 0) setFallbackIndex(rawIndex);
-  }, [rawIndex]);
+  if (rawIndex >= 0 && rawIndex !== fallbackIndex) setFallbackIndex(rawIndex);
 
   const index = rawIndex >= 0 ? rawIndex : Math.min(fallbackIndex, Math.max(0, steps.length - 1));
 
@@ -493,10 +483,8 @@ export function useQuizFlow(state: QuizState) {
     (!state.category.mainSlug || !data.loadingScoped) &&
     (!state.category.productKey || !data.loadingSpecs);
 
-  useEffect(() => {
-    if (!settled) return;
-    if (current && current.id !== currentId) setCurrentId(current.id);
-  }, [settled, current, currentId]);
+  // Adjusted while rendering: the step on screen is the one recorded.
+  if (settled && current && current.id !== currentId) setCurrentId(current.id);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

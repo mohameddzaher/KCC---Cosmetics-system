@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Pipette } from 'lucide-react';
 import OptionGrid from './OptionGrid';
@@ -69,9 +69,13 @@ export default function ColorSwatchGrid({
   // valid colour, so it cannot be the answer until it parses.
   const [draft, setDraft] = useState(chosenHex || '#C9A84C');
 
-  useEffect(() => {
+  // A colour chosen elsewhere (a swatch, a restored draft) fills the field;
+  // adjusted while rendering rather than in an effect.
+  const [seenHex, setSeenHex] = useState(chosenHex);
+  if (seenHex !== chosenHex) {
+    setSeenHex(chosenHex);
     if (chosenHex) setDraft(chosenHex);
-  }, [chosenHex]);
+  }
 
   function toggle(v: string) {
     if (selected.includes(v)) {

@@ -11,6 +11,7 @@ import ThemeToggle from '@/components/common/ThemeToggle';
 import { can, isStaffRole, roleLabel, type Permission } from '@/lib/roles';
 import { useQueryClient } from '@tanstack/react-query';
 import { CRM_FIRST_REQUEST, prefetchApi, useCrmWarmup } from '@/lib/useApi';
+import { useStoredState } from '@/lib/useStoredState';
 import {
   BarChart3,
   BookOpen,
@@ -166,52 +167,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useStoredState<boolean>(COLLAPSE_KEY, false, (r) => r === '1', (v) => (v ? '1' : '0'));
   /** Sections opened or closed by hand. Absent means "open if you are in it". */
-  const [sections, setSections] = useState<Record<string, boolean>>({});
+  const [sections, setSections] = useStoredState<Record<string, boolean>>(SECTIONS_KEY, {});
   const queryClient = useQueryClient();
   useCrmWarmup(queryClient, !!user && canDo('crm.view'));
 
-  useEffect(() => {
-    try {
-      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === '1');
-      setSections(JSON.parse(localStorage.getItem(SECTIONS_KEY) || '{}'));
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
   const toggleSection = useCallback((key: string, open: boolean) => {
-    setSections((prev) => {
-      const next = { ...prev, [key]: !open };
-      try {
-        localStorage.setItem(SECTIONS_KEY, JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
-  }, []);
+    setSections((prev) => ({ ...prev, [key]: !open }));
+  }, [setSections]);
 
   const toggleCollapsed = useCallback(() => {
-    setCollapsed((c) => {
-      try {
-        localStorage.setItem(COLLAPSE_KEY, c ? '0' : '1');
-      } catch {
-        /* ignore */
-      }
-      return !c;
-    });
-  }, []);
+    setCollapsed((c) => !c);
+  }, [setCollapsed]);
 
   useEffect(() => {
     if (!loading && (!user || !isStaffRole(user.role))) router.push('/login');
   }, [user, loading, router]);
 
-  // Close the mobile drawer on navigation.
-  useEffect(() => {
+  // Close the mobile drawer on navigation: adjusted while rendering, the way
+  // React recommends, instead of an effect that renders twice.
+  const [drawerPath, setDrawerPath] = useState(pathname);
+  if (drawerPath !== pathname) {
+    setDrawerPath(pathname);
     setDrawerOpen(false);
-  }, [pathname]);
+  }
 
   // Lock body scroll while the mobile drawer is open.
   useEffect(() => {
@@ -250,7 +230,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       // the same list the server will actually enforce.
       .map((g) => ({ ...g, items: g.items.filter((i) => canDo(i.permission)) }))
       .filter((g) => g.items.length > 0);
-  }, [user]);
+  }, [user, canDo]);
 
   const currentTitle = useMemo(() => {
     const flat = visibleGroups.flatMap((g) => g.items);
@@ -261,7 +241,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .filter((i) => i.href !== '/admin' ? pathname === i.href || pathname.startsWith(i.href + '/') : pathname === '/admin')
       .sort((a, b) => b.href.length - a.href.length)[0];
     return match ? t(`admin.${match.key}`) : t('admin.adminPanel');
-  }, [visibleGroups, isActive, t]);
+  }, [visibleGroups, pathname, t]);
 
   if (loading) {
     return (

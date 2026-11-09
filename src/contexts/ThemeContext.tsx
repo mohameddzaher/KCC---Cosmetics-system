@@ -48,6 +48,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       /* private mode — fall back to light */
     }
     const next = saved === 'system' ? systemTheme() : saved;
+    // Deliberate: the stored preference is read once, after hydration, so
+    // the server render and the first client render agree (see above).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setThemeState(saved);
     setResolved(next);
     applyTheme(next);
