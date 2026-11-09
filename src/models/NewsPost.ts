@@ -39,7 +39,6 @@ const NewsPostSchema = new Schema<INewsPost>(
   { timestamps: true }
 );
 
-NewsPostSchema.index({ slug: 1 }, { unique: true });
 NewsPostSchema.index({ status: 1 });
 NewsPostSchema.index({ publishedAt: -1 });
 

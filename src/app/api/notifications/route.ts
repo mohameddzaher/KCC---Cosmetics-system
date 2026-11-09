@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     }
     await connectDB();
 
-    let filter: any = {};
+    const filter: any = {};
     if (!can(user.role, 'dashboard.view')) {
       filter.$or = [
         { userId: user.id },

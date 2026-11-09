@@ -39,7 +39,6 @@ const PortfolioItemSchema = new Schema<IPortfolioItem>(
   { timestamps: true }
 );
 
-PortfolioItemSchema.index({ slug: 1 }, { unique: true });
 
 PortfolioItemSchema.plugin(auditTrail);
 

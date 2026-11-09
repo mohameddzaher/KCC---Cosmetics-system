@@ -121,7 +121,6 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
   { timestamps: true }
 );
 
-SiteSettingsSchema.index({ key: 1 }, { unique: true });
 
 SiteSettingsSchema.plugin(auditTrail);
 

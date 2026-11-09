@@ -12,7 +12,7 @@
     "start:backend": "next start --port 3001",
     "lint": "eslint",
     "test": "tsx --test tests/unit/*.test.ts",
-    "test:e2e": "next build && tsx --test --test-concurrency=1 tests/e2e/*.test.ts",
+    "test:e2e": "tsx scripts/test-e2e.ts",
     "seed": "npx tsx scripts/seed.ts",
     "sync:questions": "npx tsx scripts/sync-brief-questions.ts",
     "sync:categories": "npx tsx scripts/sync-categories.ts",

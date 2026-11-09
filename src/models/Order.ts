@@ -218,7 +218,6 @@ const OrderSchema = new Schema<IOrder>(
   { timestamps: true }
 );
 
-OrderSchema.index({ orderNumber: 1 }, { unique: true });
 OrderSchema.index({ type: 1 });
 OrderSchema.index({ status: 1 });
 OrderSchema.index({ userId: 1 });

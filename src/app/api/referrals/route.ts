@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     }
     await connectDB();
 
-    let filter: any = {};
+    const filter: any = {};
     if (!can(user.role, 'referrals.manage')) {
       filter.referrerId = user.id;
     }

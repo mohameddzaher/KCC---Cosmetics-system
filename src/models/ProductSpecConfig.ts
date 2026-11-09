@@ -68,7 +68,6 @@ const ProductSpecConfigSchema = new Schema<IProductSpecConfig>(
   { timestamps: true }
 );
 
-ProductSpecConfigSchema.index({ productKey: 1 }, { unique: true });
 ProductSpecConfigSchema.index({ mainSlug: 1, subSlug: 1 });
 
 ProductSpecConfigSchema.plugin(auditTrail);

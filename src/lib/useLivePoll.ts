@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 
 /**
  * Calls `callback` on an interval to keep admin views live, and immediately
@@ -8,21 +8,21 @@ import { useEffect, useRef } from 'react';
  * wasteful requests. The callback should be a stable (useCallback) reference.
  */
 export function useLivePoll(callback: () => void, intervalMs = 15000, enabled = true) {
-  const cbRef = useRef(callback);
-  cbRef.current = callback;
+  // Always the latest callback, without restarting the timer when it changes.
+  const run = useEffectEvent(() => callback());
 
   useEffect(() => {
     if (!enabled) return;
 
     const tick = () => {
-      if (document.visibilityState === 'visible') cbRef.current();
+      if (document.visibilityState === 'visible') run();
     };
 
     const intervalId = window.setInterval(tick, intervalMs);
 
-    const onFocus = () => cbRef.current();
+    const onFocus = () => run();
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') cbRef.current();
+      if (document.visibilityState === 'visible') run();
     };
 
     window.addEventListener('focus', onFocus);

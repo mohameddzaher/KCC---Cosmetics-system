@@ -60,7 +60,6 @@ const InvoiceSchema = new Schema<IInvoice>(
   { timestamps: true }
 );
 
-InvoiceSchema.index({ invoiceNumber: 1 }, { unique: true });
 InvoiceSchema.index({ userId: 1 });
 InvoiceSchema.index({ status: 1 });
 // One live invoice per order, enforced by the database: an order moved to

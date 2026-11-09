@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const type = searchParams.get('type');
     const limit = parseInt(searchParams.get('limit') || '50', 10);
 
-    let filter: any = {};
+    const filter: any = {};
     if (itemId) filter.itemId = itemId;
     if (type && ['IN', 'OUT', 'ADJUSTMENT'].includes(type)) filter.type = type;
 

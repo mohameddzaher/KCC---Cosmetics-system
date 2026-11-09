@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    let filter: any = {};
+    const filter: any = {};
     if (category) filter.category = category;
     if (startDate || endDate) {
       filter.date = {};

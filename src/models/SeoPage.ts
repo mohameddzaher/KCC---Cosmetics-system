@@ -47,7 +47,6 @@ const SeoPageSchema = new Schema<ISeoPage>(
   { timestamps: true }
 );
 
-SeoPageSchema.index({ page: 1 }, { unique: true });
 
 SeoPageSchema.plugin(auditTrail);
 

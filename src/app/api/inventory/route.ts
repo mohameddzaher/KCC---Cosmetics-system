@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search');
     const lowStock = searchParams.get('lowStock');
 
-    let filter: any = {};
+    const filter: any = {};
     if (search) {
       const safe = escapeRegex(search);
       filter.$or = [

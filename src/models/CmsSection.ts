@@ -48,7 +48,6 @@ const CmsSectionSchema = new Schema<ICmsSection>(
 );
 
 CmsSectionSchema.index({ type: 1 });
-CmsSectionSchema.index({ slug: 1 }, { unique: true });
 CmsSectionSchema.index({ order: 1 });
 
 CmsSectionSchema.plugin(auditTrail);

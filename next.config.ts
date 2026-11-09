@@ -1,7 +1,11 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  // A stray package-lock.json higher up the disk made Next pick the wrong
+  // workspace root; this project's folder is the root.
+  turbopack: { root: path.resolve(__dirname) },
   poweredByHeader: false,
   images: {
     // Restrict the image optimizer to known hosts (avoid being used as an open proxy).

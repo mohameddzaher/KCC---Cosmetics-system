@@ -36,7 +36,6 @@ const InventoryItemSchema = new Schema<IInventoryItem>(
   { timestamps: true }
 );
 
-InventoryItemSchema.index({ sku: 1 }, { unique: true });
 
 InventoryItemSchema.plugin(auditTrail);
 

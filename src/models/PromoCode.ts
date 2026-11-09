@@ -32,7 +32,6 @@ const PromoCodeSchema = new Schema<IPromoCode>(
   { timestamps: true }
 );
 
-PromoCodeSchema.index({ code: 1 }, { unique: true });
 
 PromoCodeSchema.plugin(auditTrail);
 
