@@ -7,11 +7,16 @@ import {
 import { useLivePoll } from '@/lib/useLivePoll';
 import ExportButton from '@/components/admin/ExportButton';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { usePermission } from '@/contexts/AuthContext';
 
 type Tab = 'messages' | 'subscribers';
 
 export default function InboxPage() {
   const { tx } = useLanguage();
+  const { can } = usePermission();
+  // Each part of the page shows to those whose API will answer it.
+  const canAct = can('inbox.act');
+  const seesSubscribers = can('cms.manage');
   const [tab, setTab] = useState<Tab>('messages');
   const [messages, setMessages] = useState<any[]>([]);
   const [subs, setSubs] = useState<any[]>([]);
@@ -23,14 +28,14 @@ export default function InboxPage() {
     try {
       const [mRes, sRes] = await Promise.allSettled([
         fetch('/api/contact', { cache: 'no-store' }),
-        fetch('/api/newsletter', { cache: 'no-store' }),
+        seesSubscribers ? fetch('/api/newsletter', { cache: 'no-store' }) : Promise.reject(new Error('not permitted')),
       ]);
       if (mRes.status === 'fulfilled' && mRes.value.ok) setMessages(await mRes.value.json());
       if (sRes.status === 'fulfilled' && sRes.value.ok) setSubs(await sRes.value.json());
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [seesSubscribers]);
 
   useEffect(() => { load(); }, [load]);
   useLivePoll(useCallback(() => load(true), [load]), 30000);
@@ -68,7 +73,9 @@ export default function InboxPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2">
-          {([['messages', `Messages (${messages.length})`, Mail], ['subscribers', `Subscribers (${subs.length})`, Users]] as const).map(([k, label, Icon]) => (
+          {([['messages', `Messages (${messages.length})`, Mail], ['subscribers', `Subscribers (${subs.length})`, Users]] as const)
+            .filter(([k]) => k === 'messages' || seesSubscribers)
+            .map(([k, label, Icon]) => (
             <button key={k} type="button" onClick={() => setTab(k as Tab)}
               className={`flex items-center gap-2 px-3.5 py-2 text-sm font-medium rounded-lg border transition-colors ${
                 tab === k ? 'bg-kcc-green/10 text-kcc-green border-kcc-green/40' : 'text-fg-muted border-line hover:text-fg'}`}>
@@ -111,7 +118,7 @@ export default function InboxPage() {
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <a href={`mailto:${m.email}`} className="p-1.5 text-fg-muted hover:text-kcc-green hover:bg-surface-2 rounded-lg" title={tx('Reply')}><Mail size={15} /></a>
-                    <button type="button" onClick={() => delMessage(m._id)} className="p-1.5 text-fg-muted hover:text-red-400 hover:bg-surface-2 rounded-lg" title={tx('Delete')}><Trash2 size={15} /></button>
+                    {canAct && <button type="button" onClick={() => delMessage(m._id)} className="p-1.5 text-fg-muted hover:text-red-400 hover:bg-surface-2 rounded-lg" title={tx('Delete')}><Trash2 size={15} /></button>}
                   </div>
                 </div>
               </div>

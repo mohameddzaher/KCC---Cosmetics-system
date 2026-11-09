@@ -41,7 +41,9 @@ export const POST = audited(async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const user = await getSession();
-    if (!user || !can(user.role, 'inbox.act')) {
+    // Reading the inbox is inbox.view, as the sidebar says; acting on a
+    // message (deleting, replying) stays with inbox.act.
+    if (!user || !can(user.role, 'inbox.view')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     await connectDB();

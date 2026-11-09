@@ -195,8 +195,18 @@ be edited away.
 | Ready to Ship → Shipped | **Logistics** | blocked until a delivery rep is assigned |
 | Shipped → Out for Delivery → Delivered | **Logistics** | a failed attempt returns to Shipped with a reason |
 | Delivered → Closed | Account Manager, Sales | |
+| Submitted → Cancelled | Account Manager, Sales | needs a reason |
+| Approved → On Hold | Account Manager, Sales | needs a reason |
+| Quotation Sent → Approved | Account Manager, Sales | revise the quotation |
+| Quotation Sent → Cancelled | Account Manager, Sales | needs a reason |
+| Awaiting Payment → On Hold | Account Manager, Sales | needs a reason |
+| Queued → On Hold | Factory, Account Manager, Sales | needs a reason |
+| On Hold → Under Review | Account Manager, Sales, Factory | resume; it goes back to review, not to where it was held |
+| On Hold → Cancelled | Account Manager, Sales | needs a reason |
 
-Admins and Super Admins may make any move.
+Admins and Super Admins may make any move. `tests/e2e/full-journey.test.ts`
+holds this same table, written out by hand, and tries every move with every
+one of the 11 roles; it also fails if the code gains a move this table lacks.
 
 **This is enforced on the server, not in the UI.** `POST /api/orders/[id]/transition`
 is the only endpoint that can change a status — `PUT /api/orders/[id]` rejects a

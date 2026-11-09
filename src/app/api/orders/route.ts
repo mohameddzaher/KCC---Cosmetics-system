@@ -145,6 +145,15 @@ export const POST = audited(async function POST(req: NextRequest) {
       // claim, simply does not discount this order.
     }
 
+    // A bulk order may name the sample it grew from, but only one of this
+    // customer's own samples: the link is shown back with the sample's number
+    // and status, so naming anyone else's would read it.
+    let convertedFromSample: string | undefined;
+    if (body.type === 'bulk' && typeof body.convertedFromSample === 'string' && /^[a-f0-9]{24}$/i.test(body.convertedFromSample)) {
+      const own = await Order.exists({ _id: body.convertedFromSample, type: 'sample', userId: user.id });
+      if (own) convertedFromSample = body.convertedFromSample;
+    }
+
     // Calculate totals server-side, by the same rule a quotation uses.
     const totals = computeTotals(subtotal, discount, toNonNegNumber(body.totals?.tax));
     const { tax, total } = totals;
@@ -174,7 +183,7 @@ export const POST = audited(async function POST(req: NextRequest) {
       internalNotes: can(user.role, 'orders.edit') ? body.internalNotes || '' : '',
       attachments: body.attachments || [],
       bulkDetails: body.bulkDetails || undefined,
-      convertedFromSample: body.convertedFromSample || undefined,
+      convertedFromSample,
       timeline: [
         {
           to: 'Submitted',
