@@ -150,7 +150,7 @@ export default function AboutPage() {
       */}
       <section className="border-y border-cream-300 bg-cream-50 py-12 lg:py-16">
         <div className="page-shell">
-          <p className="mb-8 text-center text-[10px] font-medium uppercase tracking-[0.32em] text-kcc-beige-dark">
+          <p className="mb-8 text-center text-[0.625rem] font-medium uppercase tracking-[0.32em] text-kcc-beige-dark">
             {locale === 'ar' ? 'بالأرقام' : 'By the numbers'}
           </p>
 
@@ -172,7 +172,7 @@ export default function AboutPage() {
                 <p className="font-serif text-3xl leading-none text-ink-800 sm:text-4xl">
                   {stat.number}
                 </p>
-                <p className="mt-3 text-[11px] uppercase tracking-[0.16em] text-cream-700">
+                <p className="mt-3 text-[0.6875rem] uppercase tracking-[0.16em] text-cream-700">
                   {stat.label}
                 </p>
               </motion.div>

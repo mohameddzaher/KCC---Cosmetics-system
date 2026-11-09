@@ -99,10 +99,10 @@ export default function Navbar() {
                 <span className="text-ink-700">CC</span>
               </span>
               <div className="hidden sm:block">
-                <span className="text-[9px] uppercase tracking-[0.22em] text-cream-700 leading-tight block font-medium">
+                <span className="text-[0.5625rem] uppercase tracking-[0.22em] text-cream-700 leading-tight block font-medium">
                   {locale === 'ar' ? 'الشركة السعودية' : 'Saudi Company'}
                 </span>
-                <span className="text-[9px] uppercase tracking-[0.22em] text-cream-700 leading-tight block font-medium">
+                <span className="text-[0.5625rem] uppercase tracking-[0.22em] text-cream-700 leading-tight block font-medium">
                   {locale === 'ar' ? 'لمستحضرات التجميل' : 'for Cosmetics'}
                 </span>
               </div>
@@ -114,7 +114,7 @@ export default function Navbar() {
                 <Link
                   key={link.key}
                   href={link.href}
-                  className={`px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 ${
+                  className={`px-3 py-2 text-[0.8125rem] font-medium rounded-lg transition-all duration-200 ${
                     isActive(link.href)
                       ? 'text-kcc-green bg-kcc-green/8 shadow-inner-soft'
                       : 'text-ink-600 hover:text-kcc-green hover:bg-blush-50'
@@ -130,7 +130,7 @@ export default function Navbar() {
               {/* AI Assistant - desktop only */}
               <Link
                 href="/ai-assistant"
-                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] text-cream-700 hover:text-kcc-rose-dark transition-colors rounded-lg hover:bg-blush-100/60"
+                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-[0.8125rem] text-cream-700 hover:text-kcc-rose-dark transition-colors rounded-lg hover:bg-blush-100/60"
                 title={t('nav.aiAssistant')}
               >
                 <Bot size={15} />
@@ -152,7 +152,7 @@ export default function Navbar() {
               {/* Order CTA */}
               <Link
                 href="/order"
-                className="hidden sm:flex items-center gap-1.5 px-4 py-2 btn-luxe text-[13px] font-semibold rounded-lg"
+                className="hidden sm:flex items-center gap-1.5 px-4 py-2 btn-luxe text-[0.8125rem] font-semibold rounded-lg"
               >
                 <ShoppingBag size={14} />
                 <span>{t('nav.order')}</span>
@@ -164,12 +164,12 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setUserMenuOpen(!userMenuOpen); }}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] text-ink-600 hover:text-ink-800 border border-cream-400 rounded-lg hover:border-kcc-rose-dark/60 hover:bg-cream-50 transition-all"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-[0.8125rem] text-ink-600 hover:text-ink-800 border border-cream-400 rounded-lg hover:border-kcc-rose-dark/60 hover:bg-cream-50 transition-all"
                   >
                     <div className="w-6 h-6 rounded-full bg-gradient-to-br from-kcc-rose-light to-kcc-beige-light flex items-center justify-center text-ink-700 text-xs font-bold">
                       {user.name.charAt(0)}
                     </div>
-                    <span className="hidden md:inline max-w-[80px] truncate">{user.name}</span>
+                    <span className="hidden md:inline max-w-[5rem] truncate">{user.name}</span>
                     <ChevronDown size={12} className={`transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
                   <AnimatePresence>
@@ -225,7 +225,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   href="/login"
-                  className="hidden sm:flex items-center gap-1 px-3 py-1.5 text-[13px] text-ink-600 hover:text-kcc-green transition-colors"
+                  className="hidden sm:flex items-center gap-1 px-3 py-1.5 text-[0.8125rem] text-ink-600 hover:text-kcc-green transition-colors"
                 >
                   <User size={14} />
                   <span>{t('nav.login')}</span>
@@ -236,7 +236,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="lg:hidden p-2 text-ink-600 hover:text-kcc-green transition-colors"
+                className="lg:hidden inline-flex h-11 w-11 items-center justify-center text-ink-600 hover:text-kcc-green transition-colors"
                 aria-label={t('a11y.toggleMenu')}
               >
                 {isOpen ? <X size={22} /> : <Menu size={22} />}

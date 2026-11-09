@@ -20,7 +20,7 @@ interface PageHeroProps {
  */
 export default function PageHero({ title, subtitle, image, eyebrow }: PageHeroProps) {
   return (
-    <section className="relative -mt-16 flex min-h-[340px] items-center justify-center overflow-hidden bg-espresso-950 pb-16 pt-32 sm:min-h-[400px]">
+    <section className="relative -mt-16 flex min-h-[21.25rem] items-center justify-center overflow-hidden bg-espresso-950 pb-16 pt-32 sm:min-h-[25rem]">
       {/* Background image */}
       {image && (
         <div className="absolute inset-0">
@@ -39,7 +39,7 @@ export default function PageHero({ title, subtitle, image, eyebrow }: PageHeroPr
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-block px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-on-dark-rose rounded-full"
+            className="inline-block px-4 py-1.5 mb-4 text-[0.6875rem] uppercase tracking-[0.25em] chip-on-dark-rose rounded-full"
           >
             {eyebrow}
           </motion.span>

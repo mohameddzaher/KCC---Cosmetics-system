@@ -33,7 +33,7 @@ export default function PasswordToggle({
       aria-pressed={shown}
       title={label}
       // tabIndex -1 would hide it from keyboard users; it stays reachable.
-      className={`absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-fg-subtle transition-colors hover:text-fg ${className}`}
+      className={`absolute end-1 top-1/2 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center rounded-md text-fg-subtle transition-colors hover:text-fg ${className}`}
     >
       {shown ? <EyeOff size={17} /> : <Eye size={17} />}
     </button>

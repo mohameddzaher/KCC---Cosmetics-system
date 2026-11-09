@@ -27,13 +27,13 @@ export default function CTASection() {
   return (
     <section className="relative overflow-hidden bg-espresso-900 py-12 lg:py-16">
       {/* Two very soft warm fields — no hard shapes. */}
-      <div className="pointer-events-none absolute -top-32 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-kcc-rose-dark/12 blur-[170px]" />
-      <div className="pointer-events-none absolute -bottom-40 end-0 h-[420px] w-[420px] rounded-full bg-kcc-beige/10 blur-[160px]" />
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-[32.5rem] w-[32.5rem] -translate-x-1/2 rounded-full bg-kcc-rose-dark/12 blur-[170px]" />
+      <div className="pointer-events-none absolute -bottom-40 end-0 h-[26.25rem] w-[26.25rem] rounded-full bg-kcc-beige/10 blur-[160px]" />
 
       <div className="relative z-10 mx-auto w-full max-w-3xl px-4 text-center sm:px-6">
         <motion.p
           {...rise()}
-          className="mb-5 text-[10px] font-medium uppercase tracking-[0.34em] text-kcc-beige"
+          className="mb-5 text-[0.625rem] font-medium uppercase tracking-[0.34em] text-kcc-beige"
         >
           {t('hero.subtitle')}
         </motion.p>
@@ -82,7 +82,7 @@ export default function CTASection() {
 
         <motion.p
           {...rise(0.36)}
-          className="mt-9 text-[10px] uppercase tracking-[0.26em] text-on-dark-faint"
+          className="mt-9 text-[0.625rem] uppercase tracking-[0.26em] text-on-dark-faint"
         >
           {t('sections.ctaTrustBadges')}
         </motion.p>

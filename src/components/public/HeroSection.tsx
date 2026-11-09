@@ -7,6 +7,9 @@ import { ChevronDown, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCmsSection } from '@/lib/useCmsSection';
 
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1631729371254-42c2892f0e6e';
+const HERO_WIDTHS = [828, 1280, 1920, 2560, 3840];
+
 export default function HeroSection() {
   const { t } = useLanguage();
 
@@ -39,8 +42,14 @@ export default function HeroSection() {
     >
       {/* Background image */}
       <div className="absolute inset-0">
+        {/* The browser picks the smallest copy that fills the screen: a phone
+            does not download 1920 px, and a 4K wall is not shown a stretched one. */}
         <img
-          src="https://images.unsplash.com/photo-1631729371254-42c2892f0e6e?w=1920&q=80"
+          src={`${HERO_IMAGE}?w=1920&q=80`}
+          srcSet={HERO_WIDTHS.map((w) => `${HERO_IMAGE}?w=${w}&q=${w > 1920 ? 70 : 80} ${w}w`).join(', ')}
+          sizes="100vw"
+          fetchPriority="high"
+          decoding="async"
           alt={t('a11y.heroImageAlt')}
           className="w-full h-full object-cover scale-105"
         />
@@ -77,7 +86,7 @@ export default function HeroSection() {
         }}
       />
       <motion.div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[560px] h-[560px] rounded-full bg-kcc-gold/10 blur-[160px]"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[35rem] h-[35rem] rounded-full bg-kcc-gold/10 blur-[160px]"
         animate={{
           scale: [1, 1.3, 1],
           opacity: [0.3, 0.6, 0.3],
@@ -150,7 +159,7 @@ export default function HeroSection() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mb-6"
         >
-          <span className="inline-flex items-center gap-2 px-5 py-2 text-[11px] font-medium uppercase tracking-[0.28em] chip-on-dark-rose rounded-full">
+          <span className="inline-flex items-center gap-2 px-5 py-2 text-[0.6875rem] font-medium uppercase tracking-[0.28em] chip-on-dark-rose rounded-full">
             <Sparkles size={12} className="text-kcc-rose-light" />
             {t('hero.subtitle')}
           </span>
@@ -231,7 +240,7 @@ export default function HeroSection() {
         transition={{ duration: 0.6, delay: 1.5 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
       >
-        <span className="text-[10px] uppercase tracking-[0.25em] text-on-dark-soft/50">
+        <span className="text-[0.625rem] uppercase tracking-[0.25em] text-on-dark-soft/50">
           {t('hero.scroll')}
         </span>
         <motion.div

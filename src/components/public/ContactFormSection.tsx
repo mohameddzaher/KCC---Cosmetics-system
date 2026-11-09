@@ -151,7 +151,7 @@ export default function ContactFormSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <span className="inline-block px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-rose rounded-full font-medium">
+          <span className="inline-block px-4 py-1.5 mb-4 text-[0.6875rem] uppercase tracking-[0.25em] chip-rose rounded-full font-medium">
             {locale === 'ar' ? 'دعنا نتعرف عليك' : "Let's Connect"}
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] leading-tight text-ink-800 mb-3">

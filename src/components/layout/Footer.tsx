@@ -86,7 +86,7 @@ export default function Footer() {
       <div className="h-px w-full bg-gradient-to-r from-transparent via-kcc-beige/45 to-transparent" />
 
       {/* A single, very soft warm glow. No competing colour fields. */}
-      <div className="pointer-events-none absolute -top-24 start-1/4 h-[380px] w-[380px] rounded-full bg-kcc-rose-dark/10 blur-[150px]" />
+      <div className="pointer-events-none absolute -top-24 start-1/4 h-[23.75rem] w-[23.75rem] rounded-full bg-kcc-rose-dark/10 blur-[150px]" />
 
       <div className="page-shell relative z-10 py-14 lg:py-16">
         <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr] lg:gap-12">
@@ -97,7 +97,7 @@ export default function Footer() {
                 <span className="text-kcc-green-light">K</span>CC
               </span>
             </Link>
-            <p className="mt-2 text-[10px] uppercase tracking-[0.3em] text-kcc-beige">
+            <p className="mt-2 text-[0.625rem] uppercase tracking-[0.3em] text-kcc-beige">
               {t('hero.subtitle')}
             </p>
             <p className="mt-5 text-sm leading-relaxed text-on-dark-soft">{t('hero.description')}</p>
@@ -124,7 +124,7 @@ export default function Footer() {
           {/* ---------------- Link columns ---------------- */}
           {columns.map((col) => (
             <nav key={col.title} aria-label={col.title}>
-              <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-on-dark-muted">
+              <h3 className="text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-on-dark-muted">
                 {col.title}
               </h3>
               <ul className="mt-5 space-y-3">
@@ -148,7 +148,7 @@ export default function Footer() {
 
           {/* ---------------- Contact ---------------- */}
           <div>
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-on-dark-muted">
+            <h3 className="text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-on-dark-muted">
               {t('footer.contactInfo')}
             </h3>
             <ul className="mt-5 space-y-4 text-sm">

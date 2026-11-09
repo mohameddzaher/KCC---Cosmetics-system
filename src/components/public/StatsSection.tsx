@@ -104,7 +104,7 @@ export default function StatsSection() {
           transition={{ duration: 0.5 }}
           className="mb-10 text-center lg:mb-12"
         >
-          <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.32em] text-kcc-beige-dark">
+          <p className="mb-3 text-[0.625rem] font-medium uppercase tracking-[0.32em] text-kcc-beige-dark">
             {locale === 'ar' ? 'بالأرقام' : 'By the numbers'}
           </p>
           <h2 className="font-serif text-2xl leading-tight text-ink-800 sm:text-3xl lg:text-[2.25rem]">
@@ -145,7 +145,7 @@ export default function StatsSection() {
                   <AnimatedCounter target={value} suffix={suffix} inView={isInView} />
                 </p>
 
-                <p className="mt-3 text-[11px] uppercase tracking-[0.16em] text-cream-700">
+                <p className="mt-3 text-[0.6875rem] uppercase tracking-[0.16em] text-cream-700">
                   {stat.label}
                 </p>
               </motion.div>

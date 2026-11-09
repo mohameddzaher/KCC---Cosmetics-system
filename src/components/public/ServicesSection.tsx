@@ -117,8 +117,8 @@ export default function ServicesSection() {
   return (
     <section className="relative py-12 lg:py-16 bg-cream-50 overflow-hidden">
       {/* Background subtle glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-kcc-rose-light/40 rounded-full blur-[200px]" />
-      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-kcc-beige-light/30 rounded-full blur-[180px]" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[37.5rem] h-[37.5rem] bg-kcc-rose-light/40 rounded-full blur-[200px]" />
+      <div className="absolute bottom-0 right-0 w-[25rem] h-[25rem] bg-kcc-beige-light/30 rounded-full blur-[180px]" />
       <div className="absolute inset-0 dot-pattern opacity-50 pointer-events-none" />
 
       <div className="relative z-10 page-shell">
@@ -130,7 +130,7 @@ export default function ServicesSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <span className="inline-block px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-rose rounded-full font-medium">
+          <span className="inline-block px-4 py-1.5 mb-4 text-[0.6875rem] uppercase tracking-[0.25em] chip-rose rounded-full font-medium">
             {locale === 'ar' ? 'خدماتنا الفاخرة' : 'Our Luxe Services'}
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] leading-tight text-ink-800 mb-3">

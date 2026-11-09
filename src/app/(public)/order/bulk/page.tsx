@@ -599,20 +599,20 @@ function BulkOrderContent() {
                         >
                           <div className="flex items-center justify-between gap-2 mb-2">
                             <div className="font-mono text-xs text-cream-800">{sample.orderNumber}</div>
-                            <span className={`px-2 py-0.5 text-[10px] rounded-full border ${statusBadge[sample.status] || 'bg-cream-300 text-cream-700 border-cream-400'}`}>
+                            <span className={`px-2 py-0.5 text-[0.625rem] rounded-full border ${statusBadge[sample.status] || 'bg-cream-300 text-cream-700 border-cream-400'}`}>
                               {sample.status}
                             </span>
                           </div>
                           <p className="text-sm text-ink-700 font-medium mb-1">{itemName || surveyProductType || 'Custom Product'}</p>
                           <p className="text-xs text-cream-700">{surveyContainer || 'Container TBD'} {surveySize ? `· ${surveySize}` : ''}</p>
                           {sample.createdAt && (
-                            <div className="mt-2 inline-flex items-center gap-1 text-[11px] text-cream-600">
+                            <div className="mt-2 inline-flex items-center gap-1 text-[0.6875rem] text-cream-600">
                               <Calendar size={11} />
                               {new Date(sample.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </div>
                           )}
                           {active && (
-                            <div className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-kcc-rose-dark font-semibold">
+                            <div className="mt-3 inline-flex items-center gap-1.5 text-[0.6875rem] text-kcc-rose-dark font-semibold">
                               <Check size={11} strokeWidth={3} />
                               Selected
                             </div>

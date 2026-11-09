@@ -138,7 +138,7 @@ export default function FAQSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-champagne rounded-full font-medium">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 text-[0.6875rem] uppercase tracking-[0.25em] chip-champagne rounded-full font-medium">
             <HelpCircle size={12} />
             {locale === 'ar' ? 'مركز المساعدة' : 'Help Center'}
           </span>

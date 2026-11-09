@@ -77,7 +77,7 @@ export default function NewsletterSection() {
     <section className="relative py-12 lg:py-16 bg-cream-50 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 dot-pattern opacity-50" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-kcc-rose-light/40 rounded-full blur-[180px]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[31.25rem] h-[18.75rem] bg-kcc-rose-light/40 rounded-full blur-[180px]" />
 
       <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div

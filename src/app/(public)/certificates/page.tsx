@@ -232,7 +232,7 @@ export default function CertificatesPage() {
       <section className="border-t border-cream-300 bg-cream-50 py-16 lg:py-20">
         <div className="page-shell">
           <div className="mx-auto mb-12 max-w-2xl text-center">
-            <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.3em] text-kcc-rose-dark">
+            <p className="mb-3 text-[0.6875rem] font-medium uppercase tracking-[0.3em] text-kcc-rose-dark">
               {assurance.eyebrow}
             </p>
             <h2 className="font-serif text-2xl leading-tight text-ink-800 sm:text-3xl">

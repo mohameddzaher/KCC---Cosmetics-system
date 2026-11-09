@@ -67,12 +67,12 @@ function OrderPageContent() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-bg px-4 pb-24 pt-16 sm:px-6 lg:pt-24">
       {/* Two very soft warm fields, nothing with an edge. */}
-      <div className="pointer-events-none absolute -top-24 start-1/4 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-kcc-rose-light/35 blur-[140px]" />
-      <div className="pointer-events-none absolute -bottom-32 end-0 h-[380px] w-[380px] rounded-full bg-kcc-beige-light/40 blur-[130px]" />
+      <div className="pointer-events-none absolute -top-24 start-1/4 h-[26.25rem] w-[26.25rem] -translate-x-1/2 rounded-full bg-kcc-rose-light/35 blur-[140px]" />
+      <div className="pointer-events-none absolute -bottom-32 end-0 h-[23.75rem] w-[23.75rem] rounded-full bg-kcc-beige-light/40 blur-[130px]" />
 
       <div className="relative z-10 mx-auto w-full max-w-5xl">
         <motion.header {...rise()} className="text-center">
-          <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-kcc-rose-dark">
+          <p className="text-[0.6875rem] font-medium uppercase tracking-[0.32em] text-kcc-rose-dark">
             {t('orderExtra.eyebrow')}
           </p>
           <h1 className="mt-4 font-serif text-4xl leading-[1.08] text-fg sm:text-5xl">
@@ -96,7 +96,7 @@ function OrderPageContent() {
             className="hidden flex-col items-center justify-center gap-3 lg:flex"
           >
             <span className="h-16 w-px bg-line" />
-            <span className="text-[10px] uppercase tracking-[0.24em] text-fg-subtle">
+            <span className="text-[0.625rem] uppercase tracking-[0.24em] text-fg-subtle">
               {t('orderExtra.then')}
             </span>
             <span className="h-16 w-px bg-line" />
@@ -151,7 +151,7 @@ function OrderCard({
           <Icon size={22} />
         </span>
         <span className="min-w-0">
-          <span className="block text-[10px] font-semibold uppercase tracking-[0.24em] text-fg-subtle">
+          <span className="block text-[0.625rem] font-semibold uppercase tracking-[0.24em] text-fg-subtle">
             {step}
           </span>
           <span className={`block text-sm font-medium ${featured ? 'text-kcc-rose-dark' : 'text-fg-muted'}`}>

@@ -89,7 +89,7 @@ export default function ProcessSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12 lg:mb-14"
         >
-          <span className="inline-block px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-champagne rounded-full font-medium">
+          <span className="inline-block px-4 py-1.5 mb-4 text-[0.6875rem] uppercase tracking-[0.25em] chip-champagne rounded-full font-medium">
             {locale === 'ar' ? 'رحلة الإبداع' : 'Crafted Journey'}
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] leading-tight text-ink-800 mb-3">
@@ -116,7 +116,7 @@ export default function ProcessSection() {
         <div className="hidden lg:block">
           {/* Connecting line */}
           <div className="relative">
-            <div className="absolute top-7 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-kcc-rose/40 to-transparent" />
+            <div className="absolute top-7 left-0 right-0 h-[0.125rem] bg-gradient-to-r from-transparent via-kcc-rose/40 to-transparent" />
 
             {/* Columns follow the number of steps the CMS actually holds —
                 it was pinned at six while the CMS had four. */}
@@ -141,7 +141,7 @@ export default function ProcessSection() {
                     </div>
 
                     {/* Step number badge */}
-                    <span className="absolute top-0 -end-1 w-5 h-5 rounded-full bg-surface border border-kcc-beige/60 text-[10px] font-bold text-kcc-beige-dark flex items-center justify-center shadow-soft">
+                    <span className="absolute top-0 -end-1 w-5 h-5 rounded-full bg-surface border border-kcc-beige/60 text-[0.625rem] font-bold text-kcc-beige-dark flex items-center justify-center shadow-soft">
                       {index + 1}
                     </span>
 
@@ -165,7 +165,7 @@ export default function ProcessSection() {
         <div className="lg:hidden">
           <div className="relative">
             {/* Vertical connecting line */}
-            <div className="absolute start-7 top-0 bottom-0 w-[2px] bg-gradient-to-b from-kcc-rose/40 via-kcc-beige/40 to-transparent" />
+            <div className="absolute start-7 top-0 bottom-0 w-[0.125rem] bg-gradient-to-b from-kcc-rose/40 via-kcc-beige/40 to-transparent" />
 
             <div className="space-y-8">
               {items.map((step, index) => {

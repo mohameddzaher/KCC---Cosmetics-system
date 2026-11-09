@@ -121,7 +121,7 @@ export default function FactoriesPage() {
             >
               <div className="grid lg:grid-cols-5 gap-0">
                 {/* Factory image */}
-                <div className="lg:col-span-2 aspect-video lg:aspect-auto overflow-hidden min-h-[250px] relative">
+                <div className="lg:col-span-2 aspect-video lg:aspect-auto overflow-hidden min-h-[15.625rem] relative">
                   <img
                     onError={onImgError}
                     src={factory.image}

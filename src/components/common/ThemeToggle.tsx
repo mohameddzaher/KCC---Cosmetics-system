@@ -65,7 +65,7 @@ export default function ThemeToggle({
       onClick={toggle}
       aria-label={nextLabel}
       title={nextLabel}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-surface text-fg-muted transition-colors hover:text-fg hover:border-line-strong ${className}`}
+      className={`inline-flex h-11 w-11 sm:h-9 sm:w-9 items-center justify-center rounded-lg border border-line bg-surface text-fg-muted transition-colors hover:text-fg hover:border-line-strong ${className}`}
     >
       {resolved === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
     </button>

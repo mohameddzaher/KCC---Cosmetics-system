@@ -1038,6 +1038,7 @@ export const AR_STRINGS: Record<string, string> = {
   'Failed to submit your message. Please try again.': 'تعذّر إرسال رسالتك. حاول مرة أخرى.',
   'Too many requests. Please try again shortly.': 'طلبات كثيرة. حاول مرة أخرى بعد قليل.',
   'Dispatch can set the courier and the tracking number only.': 'الشحن يمكنه تحديد المندوب ورقم التتبع فقط.',
+  'Go to testimonial': 'انتقل إلى الرأي',
 };
 
 

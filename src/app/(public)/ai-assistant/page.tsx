@@ -197,7 +197,7 @@ export default function AIAssistantPage() {
 
                   {msg.sources && msg.sources.length > 0 && (
                     <div className="mt-1.5 px-1">
-                      <p className="text-[10px] text-cream-800 mb-1">{locale === 'ar' ? 'المصادر:' : 'Sources:'}</p>
+                      <p className="text-[0.625rem] text-cream-800 mb-1">{locale === 'ar' ? 'المصادر:' : 'Sources:'}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {msg.sources.map((source, i) => (
                           <button
@@ -205,7 +205,7 @@ export default function AIAssistantPage() {
                             key={`${source}-${i}`}
                             onClick={() => sendMessage(source)}
                             disabled={isTyping}
-                            className="text-[10px] px-2 py-0.5 bg-cream-200 text-cream-800 rounded-full border border-cream-400 hover:border-kcc-green/40 hover:text-kcc-green transition-all disabled:opacity-50"
+                            className="text-[0.625rem] px-2 py-0.5 bg-cream-200 text-cream-800 rounded-full border border-cream-400 hover:border-kcc-green/40 hover:text-kcc-green transition-all disabled:opacity-50"
                             title={locale === 'ar' ? 'اسأل بهذا السؤال' : 'Ask this question'}
                           >
                             {source}
@@ -217,7 +217,7 @@ export default function AIAssistantPage() {
 
                   {msg.related && msg.related.length > 0 && msg.role === 'assistant' && (
                     <div className="mt-3 px-1">
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-kcc-rose-dark font-semibold mb-1.5">
+                      <p className="text-[0.625rem] uppercase tracking-[0.2em] text-kcc-rose-dark font-semibold mb-1.5">
                         {locale === 'ar' ? 'أسئلة قريبة' : 'Related questions'}
                       </p>
                       <div className="flex flex-col gap-1.5">
@@ -330,7 +330,7 @@ export default function AIAssistantPage() {
             </button>
           </div>
 
-          <p className="text-[10px] text-cream-600 text-center mt-2">
+          <p className="text-[0.625rem] text-cream-600 text-center mt-2">
             {locale === 'ar'
               ? 'مساعد KCC الذكي يقدم معلومات عامة. للطلبات المحددة، يرجى التواصل مع فريقنا.'
               : 'KCC AI Assistant provides general information. For specific orders, please contact our team.'}

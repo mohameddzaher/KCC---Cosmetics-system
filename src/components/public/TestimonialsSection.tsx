@@ -45,7 +45,7 @@ const testimonials: Testimonial[] = [
 ];
 
 export default function TestimonialsSection() {
-  const { t, locale } = useLanguage();
+  const { t, locale, tx } = useLanguage();
   const [current, setCurrent] = useState(0);
   /* Waits for the real list — it used to show shipped quotes and swap. */
   const { items: list, ready } = useContentList<Testimonial>(
@@ -79,8 +79,8 @@ export default function TestimonialsSection() {
     <section className="relative py-12 lg:py-16 bg-cream-100 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 dot-pattern opacity-40" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-kcc-rose-light/40 rounded-full blur-[200px]" />
-      <div className="absolute top-0 end-0 w-[300px] h-[300px] bg-kcc-beige-light/30 rounded-full blur-[150px]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[37.5rem] h-[25rem] bg-kcc-rose-light/40 rounded-full blur-[200px]" />
+      <div className="absolute top-0 end-0 w-[18.75rem] h-[18.75rem] bg-kcc-beige-light/30 rounded-full blur-[150px]" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
@@ -91,7 +91,7 @@ export default function TestimonialsSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <span className="inline-block px-4 py-1.5 mb-4 text-[11px] uppercase tracking-[0.25em] chip-rose rounded-full font-medium">
+          <span className="inline-block px-4 py-1.5 mb-4 text-[0.6875rem] uppercase tracking-[0.25em] chip-rose rounded-full font-medium">
             {locale === 'ar' ? 'بصمات نلتزم بها' : 'Voices of Trust'}
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] leading-tight text-ink-800 mb-3">
@@ -164,7 +164,7 @@ export default function TestimonialsSection() {
             <button
               type="button"
               onClick={prevSlide}
-              className="p-2.5 rounded-xl bg-surface border border-cream-300 text-ink-600 hover:text-kcc-rose-dark hover:border-kcc-rose-dark/40 hover:shadow-soft transition-all duration-200"
+              className="p-3 rounded-xl bg-surface border border-cream-300 text-ink-600 hover:text-kcc-rose-dark hover:border-kcc-rose-dark/40 hover:shadow-soft transition-all duration-200"
               aria-label={t('a11y.previousTestimonial')}
             >
               <ChevronLeft size={20} className="rtl-flip" />
@@ -177,12 +177,14 @@ export default function TestimonialsSection() {
                   key={index}
                   type="button"
                   onClick={() => setCurrent(index)}
-                  className={`transition-all duration-300 rounded-full ${
+                  // The dot stays small; an invisible 44 px area around it is what a thumb hits.
+                  className={`relative transition-all duration-300 rounded-full before:absolute before:-inset-[17px] before:content-[''] ${
                     index === current
                       ? 'w-8 h-2.5 bg-gradient-to-r from-kcc-rose to-kcc-beige'
                       : 'w-2.5 h-2.5 bg-cream-500 hover:bg-cream-600'
                   }`}
-                  aria-label={`Go to testimonial ${index + 1}`}
+                  data-hit-area="44"
+                  aria-label={`${tx('Go to testimonial')} ${index + 1}`}
                 />
               ))}
             </div>
@@ -190,7 +192,7 @@ export default function TestimonialsSection() {
             <button
               type="button"
               onClick={nextSlide}
-              className="p-2.5 rounded-xl bg-surface border border-cream-300 text-ink-600 hover:text-kcc-rose-dark hover:border-kcc-rose-dark/40 hover:shadow-soft transition-all duration-200"
+              className="p-3 rounded-xl bg-surface border border-cream-300 text-ink-600 hover:text-kcc-rose-dark hover:border-kcc-rose-dark/40 hover:shadow-soft transition-all duration-200"
               aria-label={t('a11y.nextTestimonial')}
             >
               <ChevronRight size={20} className="rtl-flip" />

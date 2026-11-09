@@ -25,6 +25,13 @@
 @custom-variant rtl (&:where([dir="rtl"], [dir="rtl"] *));
 
 @theme {
+  /* ---------- Screens beyond a laptop ----------
+     Rem, like Tailwind's own: media queries read the browser's base size, so
+     these do not move when the big-screen scaling below enlarges the root. */
+  --breakpoint-3xl: 120rem; /* 1920px */
+  --breakpoint-4xl: 160rem; /* 2560px */
+  --breakpoint-5xl: 240rem; /* 3840px */
+
   /* ---------- Fonts ---------- */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Inter', system-ui, sans-serif;
@@ -480,6 +487,30 @@
 
 html {
   scroll-behavior: smooth;
+  /* Big screens: everything is sized in rem, so growing the root grows the
+     whole page together (type, spacing, containers) instead of leaving a
+     1440 px column in the middle of a 4K screen. Up to 1920x1080 nothing
+     changes. Height counts as much as width, so a short LED wall is not given
+     text taller than it can show. 100%, never px: a reader's own larger
+     default font is respected. */
+  --ui-scale: 1;
+  font-size: calc(var(--ui-scale) * 100%);
+}
+@media (min-width: 2400px) and (min-height: 1300px) {
+  html { --ui-scale: 1.33; }            /* 2560x1440 */
+}
+@media (min-width: 3200px) and (min-height: 1800px) {
+  html { --ui-scale: 2; }               /* 3840x2160 and 7680x2160 */
+}
+@media (min-width: 5000px) and (min-height: 2800px) {
+  html { --ui-scale: 2.6; }             /* 5K/8K panels */
+}
+@media (min-width: 4000px) and (max-height: 1299px) {
+  html { --ui-scale: 1.5; }             /* wide LED walls such as 5760x1080, read from a distance */
+}
+/* Icons are drawn at a fixed px size; they follow the same scale. */
+svg.lucide {
+  zoom: var(--ui-scale);
 }
 
 /* Respect users who ask for reduced motion — also kills the smooth-scroll jump. */
@@ -563,36 +594,6 @@ select:focus-visible:not([data-focus-self]) {
   outline: none;
   border-color: var(--brand);
   box-shadow: 0 0 0 3px var(--brand-ring);
-}
-
-/*
- * The one page container.
- *
- * The public site had grown five different widths — 7xl on the navbar and
- * some sections, 6xl on most inner pages, 5xl on the hero, 4xl and 3xl
- * elsewhere — so content shifted sideways as you moved between pages and
- * none of it used much of a wide screen. This is the single shell every
- * page and full-bleed section sits in.
- *
- * 90rem, not the full viewport: a section is allowed to be wide, but a line
- * of body copy is not, so narrow `max-w-*` caps INSIDE a shell (a paragraph,
- * a form column) are deliberate and stay.
- */
-.page-shell {
-  width: 100%;
-  max-width: 90rem;
-  margin-inline: auto;
-  padding-inline: 1rem;
-}
-@media (min-width: 640px) {
-  .page-shell {
-    padding-inline: 1.5rem;
-  }
-}
-@media (min-width: 1024px) {
-  .page-shell {
-    padding-inline: 2rem;
-  }
 }
 
 /*
@@ -689,6 +690,17 @@ select:focus-visible:not([data-focus-self]) {
   margin-inline: auto;
   max-width: 160rem;              /* 2560px — dashboards & tables */
   padding-inline: clamp(1rem, 2.5vw, 3rem);
+}
+
+/* A very wide wall (5760x1080 and the like): sections spread across it rather
+   than leave two empty bands either side. Paragraphs keep their own narrower
+   caps. (An older 90rem definition of .page-shell sat earlier in this file and
+   was always overridden by the one above; it is gone.) */
+@media (min-aspect-ratio: 21/9) and (min-width: 3000px) {
+  .page-shell,
+  .page-shell-wide {
+    max-width: min(94vw, 220rem);
+  }
 }
 
 /* Any horizontally-overflowing block (tables, chip rails) scrolls itself. */

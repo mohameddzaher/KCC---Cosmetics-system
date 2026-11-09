@@ -165,7 +165,7 @@ export default function NewsArticlePage() {
       {/* Header */}
       <header className="relative overflow-hidden pb-10 pt-10 lg:pb-14 lg:pt-16">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-cream-100 to-cream-50" />
-        <div className="pointer-events-none absolute -top-24 start-1/4 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-kcc-rose-light/35 blur-[140px]" />
+        <div className="pointer-events-none absolute -top-24 start-1/4 h-[26.25rem] w-[26.25rem] -translate-x-1/2 rounded-full bg-kcc-rose-light/35 blur-[140px]" />
 
         <div className="page-shell relative z-10">
           <motion.div
@@ -185,7 +185,7 @@ export default function NewsArticlePage() {
             </Link>
 
             {article.category && (
-              <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.3em] text-kcc-rose-dark">
+              <p className="mb-4 text-[0.6875rem] font-medium uppercase tracking-[0.3em] text-kcc-rose-dark">
                 {article.category}
               </p>
             )}
@@ -245,7 +245,7 @@ export default function NewsArticlePage() {
 
           {/* Body. The measure stays narrow on purpose — a 90rem-wide line of
               body copy is unreadable however much screen there is. */}
-          <div className="text-[17px] leading-[1.85] text-cream-800">
+          <div className="text-[1.0625rem] leading-[1.85] text-cream-800">
             {article.content.split('\n\n').map((paragraph, i) => {
               if (paragraph.startsWith('- ')) {
                 return (

@@ -164,8 +164,8 @@ export default function Vision2030Section() {
   return (
     <section className="relative py-12 lg:py-16 bg-cream-50 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-0 w-[420px] h-[420px] -translate-y-1/2 rounded-full bg-kcc-rose-light/40 blur-[140px]" />
-        <div className="absolute top-10 right-10 w-[300px] h-[300px] rounded-full bg-kcc-beige-light/35 blur-[120px]" />
+        <div className="absolute top-1/2 left-0 w-[26.25rem] h-[26.25rem] -translate-y-1/2 rounded-full bg-kcc-rose-light/40 blur-[140px]" />
+        <div className="absolute top-10 right-10 w-[18.75rem] h-[18.75rem] rounded-full bg-kcc-beige-light/35 blur-[120px]" />
         <div className="absolute inset-0 dot-pattern opacity-50" />
         <div className="absolute inset-0 diagonal-lines opacity-60" />
       </div>
@@ -222,7 +222,7 @@ export default function Vision2030Section() {
             transition={{ duration: 0.45 }}
             className="rounded-3xl border border-kcc-beige/40 bg-gradient-to-br from-white to-cream-200 p-6 lg:p-7 shadow-soft"
           >
-            <p className="text-[11px] uppercase tracking-[0.2em] text-kcc-beige-dark mb-5 font-semibold">{t('sections.strategicOutcomes')}</p>
+            <p className="text-[0.6875rem] uppercase tracking-[0.2em] text-kcc-beige-dark mb-5 font-semibold">{t('sections.strategicOutcomes')}</p>
             <div className="space-y-4 mb-7">
               {content.highlights.map((item, index) => (
                 <div key={`${item.label}-${index}`} className="flex items-end justify-between border-b border-cream-300 pb-3">
